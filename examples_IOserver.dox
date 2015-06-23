@@ -1,0 +1,86 @@
+/*! \example IOserver
+
+A very simple example to exhibit the usage of the I/O server. It will write two very simple file in ASCII, in which each compute core will write a single line. Such usage are clearly unrealistic, as a usual I/O will perform it faster due to the extremely small amount of data per message.
+
+The server work as follow. It need to be started only on the I/O cores. Then the compute core will process their usual computation. Once some I/O have to be performed. The compute cores have to open an "ostream" to the I/O cores. The files can be created and opened. Only one file can be open simultaneously currently, and there is no method to reopen a file which have been closed. This feature will be added, in the next update of the server. Once all data have been transferred to the I/O cores, one can close the "ostream". This operation will launch the writing to disks procedure and the server will be in a busy state until all data have been written on disks.
+
+\include IOserver.cpp
+
+\section Compile_IOserver  Compile and Run
+
+Travel to the LATfield2/examples folder. Then you can compile this example with (using mpic++, verify which compiler you want to use):
+
+\verbatim
+mpic++ -o ioserver_exec IOserver.cpp -I../ -DEXTERNAL_IO
+\endverbatim
+
+
+It can be executed using (here using "mpirun -np 4" to run with 4 process):
+
+\verbatim
+mpirun -np 24 ./ioserver_exec -n 4 -m 4 -i 8 -g 4
+\endverbatim
+
+The n and m parameter are as usual parameters to initialize the parallel object. Then 2 additional parameters are passed. First -i which is the total number of MPI processes of the IO server, then -g is the number of IO process which write data in a single file. Therefor n*m+i need to be equal to the total number of MPI processes used by the job and i/g must be an integer.
+
+\section code_IOserver Going through the code
+\dontinclude IOserver.cpp
+
+\subsection code_parallel_IOserver Parallel initialization and server launch
+
+
+The initialization of the parallel object is performed as without the IO server, the only difference is that two addition parameter are passed to the parallel object. The number of process of the IO server, and the size of one group of the server, which is the number of process which write in the same disk. It is advised to set the group size to be an integer multiple of the number of core on a node.  
+
+\until parallel
+
+
+Once the parallel object is initialized, the parallel object contain a list of compute and IO core. The method isIO() return true for IO process and false for compute ones. Basicaly, a IO process have to perform only one operation, launching the server. This is perform using the start() method.
+
+
+\until ;
+
+\subsection code_compute_IOServer Compute processes
+
+Then the part of the code executed by the compute process need to be in the else of the previous if, or in a block within 
+
+\verbatim
+if(!parallel.isIO()){…}.
+\endverbatim 
+
+In this simple example, each processes will write a simple sentence which contain his position in the processes grid.
+
+\line else
+\until {
+\until \n
+
+In real application the construction of the data which need to be send should be done only when the file is open, and send to the server by several message (order 5 is the most efficient). This allow a much better usage of the IOserver.
+
+First step to start a transfer from to the IOserver is to open an ostream to the server on the computes processes. The server have no method to wait until it is ready. And a ostream can be open only if the server is in the ready state. The server can be in busy state for to reason. First it has not finish to launch, and secondly the server is currently writing a file. This busy state will desapear from the next version of the server, but still need lot of development.
+
+\line openOstream
+
+Once a stream is open one can open a file. Currently it is possible to open 5 file within one ostream, but not simultaneously (next version of the server will be able to deal with multiple file simultaneously). Currently, there is no method to open an existing file. The only method which open a file is createFile, which will create a file or trunk it if existing.
+
+\line create
+
+Once a file is open, data can be transferred to the IOserver using the write method. In this method the size of the sendBuffer is given in bytes, and the buffer is expected to be a pointer to a char array. (so if not a char array, typecast it: (char*))
+
+\line write
+
+When all data have been send to the file, one can close the file. Which is very important, as when a file is open, the server will continuously look for data send by the compute process to this file.
+
+\line close
+
+Once every data have been send to the file where it should be written, and to launch the transfer from the server to the disks, the ostream must be closed. At that moment the server will start to write data on disks and will turn his state as busy. Once the data are written on the disk a new ostream can be open.
+
+\line Ostream
+
+One need to be aware that to correctly terminate MPI, the server have to shut down. Otherwise the process of the IOserver will never stop to listen the sync line to look for an instruction to open a ostream. And therefor the IO server cores will never reach the end of the executable…
+
+The call to stop the server is performed by the compute process for obvious reason:
+
+\line stop
+
+
+
+*/

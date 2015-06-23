@@ -1,0 +1,144 @@
+/*! \example gettingStarted
+
+A very simple example which aims to describe the main features of LATfield2. This example is composed by 5 blocks of code. First the parallel object is initialized, and this must be the first operation within a code which use LATfield2 as it initialize MPI. Secondly a Lattice object is declared. Thirdly Field objects are declared on the Lattice. Forth the some operation are performed on the fields, then finally the field are written on disk.
+
+\include gettingStarted.cpp
+
+
+\section Compile_gettingStarted  Compile and Run
+
+Travel to the LATfield2/examples folder. Then you can compile this example with (using mpic++, verify which compiler you want to use):
+
+\verbatim
+mpic++ -o getStart gettingStarted.cpp -I../ -DHDF5 -lhdf5
+\endverbatim
+
+Wich will compile using HDF5 for the Field I/O. If you have not HDF5 installed then you should compile with:
+
+\verbatim
+mpic++ -o getStart gettingStarted.cpp -I../
+\endverbatim
+
+It can be executed using (here using "mpirun -np 4" to run with 4 process):
+
+\verbatim
+mpirun -np 4 ./getStart -n 2 -m 2
+\endverbatim
+
+
+The executable will prompt the following text:
+
+\verbatim
+Parallel grid size: (2,2). 
+Lattice size: (25,57,32);
+Process ranks: 0,(0,0); Local lattice size: (25,28,16); First local point coordinate: (0,0,0).
+Process ranks: 1,(1,0); Local lattice size: (25,28,16); First local point coordinate: (0,0,16).
+Process ranks: 2,(0,1); Local lattice size: (25,29,16); First local point coordinate: (0,28,0).
+Process ranks: 3,(1,1); Local lattice size: (25,29,16); First local point coordinate: (0,28,16).
+\endverbatim
+
+First line give the size of the 2 dimension of the parallel grid. Second line give the size of a Lattice. Then each process output its ranks and the description of the local part of the lattice (the part of the lattice which is stored on the given process).
+
+
+
+\section code_gettingStarted Going through the code
+
+\dontinclude gettingStarted.cpp
+
+\subsection code_parallel_gettingStarted Parallel initialization
+
+The first operation to perform within any code which use LATfield2 is to initialize the parallel object by giving the size of the 2 dimensions of the parallel grid. This numbers depend on the number of process used to run, therefor it is advised to read this numbers from the executable arguments. Here this 2 integer are given using "-n XX -m YY":
+
+\until parallel
+\until }
+\until }
+
+Then the parallel object is initialized passing the two integer n and m:
+
+\line parallel
+\line
+
+This will initialize the parallel grid by calling MPI_initialize and will also construct all MPI communicators needed by the library.
+
+After this, one can output the size of the parallel grid:
+\line COUT
+The command COUT is a definition of \verbatim if(parallel.isRoot())cout \endverbatim and therefor only the root process (the one with rank 0) will perform the output. 
+
+
+
+\subsection code_lattice_gettingStarted Lattice declaration
+
+\skip Lattice
+\until Lattice
+
+LATfield2 can work with lattice of N-dimension, with N larger or equal to 2. In this example we will declare a lattice with 3 dimension. 
+
+\until Lattice
+
+Note that the halo (number of ghost cells) is a single integer, as each dimension of the lattice have the same halo within LATfield2.
+Also note that if boxSize is an integer (instead of a pointer) this will initialize the lattice with each dimension with the same size.
+
+Let output the description of the Lattice:
+
+First lets output the size of the 3 dimension using COUT to avoid that every process output the same information.
+\line COUT
+
+Then lets output on a single line the local description of the lattice. So first lets output the MPI ranks of each process, first the world rank then the 2d ranks (the position with the parallel grid). Then lets output the size of the part of the lattice which is stored in this given process. And finally the offset to this local part in respect to the global lattice.
+
+\line cout
+\until Coordinate
+ 
+
+\subsection code_field_gettingStarted Field declaration
+
+\skip Declaration
+\until Declaration
+
+In this simple example we want to work with 3 fields, \f$ \phi,\rho \f$ and \f$ \nabla \phi \f$ who are named in the code phi, rho and gradphi. One can declare, initialize and allocate field using:
+
+\until gradPhi
+
+In the case that declaration should be separately performed (as within a class declaration, or when several fields point to the same array and therefor should not be allocated), one can use the following 3 command:
+
+\until alloc
+
+
+\subsection code_fieldopp_gettingStarted Field opperations
+
+\skip Operation
+\until Operation
+
+First, we would like to initialize the value of \f$\phi\f$ to be a gaussian defined as \f$\phi=e^{-2(x-x_0)^2}\f$. To do so we have to declare a Site object on the lattice of \f$\phi\f$. This object will allow to work with coordinate.
+
+\line Site
+
+Then it is possible to loop over all site using the usual for loop:
+
+\skip x2
+\until }
+
+In that loop the exponential is built with \f$ x_0 = latticeSize/2 + 0.5 \f$ this mean that the gaussian is centered at the center of the lattice center cell. The coord method return the coordinate of the site object in lattice unite (integer).
+
+Then some spacial derivative are computed to build \f$gradPhi=\vec{\nabla}\phi\f$ and \f$\rho=\Delta\phi\f$. To do so, first thing to do is to update the ghost cells (halo) of \f$\phi\f$.
+
+\line updateHalo
+
+Then the derivation can be performed. Here for simplicity we have set dx to one. 
+
+\skip for
+\until }
+
+This shows how to work with file with multiple components (gradPhi). And exhibit the usage of the Site object for displacement in the Lattice. The 
+
+
+Indeed the operator + and - are overloaded to provide an extremely easy way to travel on the lattice. Both operator will return the neighbor site in the direction specified after the operator. 
+
+\subsection code_fieldIO_gettingStarted Field I/O
+
+\skip writing
+\until writing
+
+This method allow to write a file with different file format. Using HDF5 or using ASCII format.
+
+\until endif
+ */
