@@ -1,0 +1,127 @@
+/*! \example FFTs
+
+A simple example of the usage of the FFT wrapper of LATfield2. The wrapper use FFTW library to perform 1d serial FFTs. Therefor FFTW 2 (or higher) need to be installed on the cluster. (So do not forget to load the module fftw of your cluster…)
+
+\include fft.cpp
+
+\section fft_compile Compile and Run
+
+Travel to the LATfield2/examples folder. Then you can compile this example with (using mpic++, verify which compiler you want to use):
+
+Double precision:
+
+\verbatim
+mpic++ -o fft_exec fft.cpp -I../ -DFFT3D -lfftw 
+\endverbatim
+
+Single precision:
+
+\verbatim
+mpic++ -o fft_exec fft.cpp -I../ -DFFT3D -DSINGLE -lfftwf
+\endverbatim
+
+It can be executed using (here using "mpirun -np 4" to run with 4 process):
+
+\verbatim
+mpirun -np 4 ./ioserver_exec -n 2 -m 2
+\endverbatim
+
+The executable will not return anything, and the FFT are perform on fields which have not be assigned. Therefor it is not so useful to run this example, maybe just to see if it does not crash on your cluster. In that case, please report the crash to david.daverio@gmail.com. The FFT wrapper of LATfield2 is continuously under development, therefor your report will be extremely useful (for you as for other users).
+
+\section code_IOserver Going through the code
+\dontinclude fft.cpp
+
+\subsection latdec_fft Declaration of the lattice in real space.
+
+The lattice in real space is declared as usual.
+
+\skip Lattice
+\until Lattice
+
+
+\subsection r2c_fft Real to Complex (r2c) Fourier transform 
+
+First thing to do is to declare the lattice in fourier space. For a r2c FFT it is done using the initializeRealFFT method of the Lattice class.
+
+\skip Lattice
+\line Lattice
+\line init
+
+At that point, one should be aware that the lattice in fourier space have not the same data distribution in a single process and not the same distribution in the cluster. Therefor one should use different site objet for both lattice. For r2c transform, the fourier space site is the rKSite class.
+
+\line x
+\line k
+
+Once both lattice (real and Fourier one) are initialized, one can declare the fields. The PlanFFT class will allocate the needed memory both field and some temporary memory. Therefor the field need to be initialized but not allocated.
+
+
+
+For the real field one should use the Real datatype (which is a redefinition of float or double, depending the precision requirement)
+
+\line Field
+\line init
+
+For the fourier field one should use the Imag datatype (which is a redefinition of fftwf_complex or fftw_complex, depending the precision requirement)
+
+\line Field
+\line init
+
+Once both field are initialized, the planer can be declared and initialized:
+
+\line Plan
+
+One should notice that the reference of the field have to be pass as the initialization of the planer will allocate the field.
+
+Then you can perform the fourier transform using the execute method of the PlanFFT class.
+
+\line execute
+\line execute
+
+\subsection c2c_fft Complex to Complex (c2c) Fourier transform 
+
+First thing to do is to declare the lattice in fourier space. For a c2c FFT it is done using the initializeComplexFFT method of the Lattice class.
+
+\skip Lattice
+\line Lattice
+\line init
+
+At that point, one should be aware that the lattice in fourier space have not the same data distribution in a single process and not the same distribution in the cluster. Therefor one should use different site objet for both lattice. For r2c transform, the fourier space site is the cKSite class.
+
+\line x
+\line k
+
+Once both lattice (real and Fourier one) are initialized, one can declare the fields. The PlanFFT class will allocate the needed memory both field and some temporary memory. Therefor the field need to be initialized but not allocated.
+
+
+
+For both the real and the fourier fields one should use the Imag datatype (which is a redefinition of fftwf_complex or fftw_complex, depending the precision requirement)
+
+\line Field
+\line init
+
+\line Field
+\line init
+
+Once both field are initialized, the planer can be declared and initialized:
+
+\line Plan
+
+One should notice that the reference of the field have to be pass as the initialization of the planer will allocate the field.
+
+Then you can perform the fourier transform using the execute method of the PlanFFT class.
+
+\line execute
+\line execute
+
+
+\subsection Additional important points
+
+One should notice that the wrapper is based on the FFTW library, more precisely the 1d serial transform of FFTW. Therefore to know exactly what is computed the best is to refer to the FFTW documentation and look at the 1d version of FFTW.
+
+http://www.fftw.org/doc/What-FFTW-Really-Computes.html
+
+Secondly, one should notice that FFTW forward methods will return a result which have been multiply by the size of the array. Therefor, to have the correct result once should divide by Lattice.sites() the result given by the wrapper. This is not done within the wrapper to return the same result than FFTW.
+
+
+*/
+

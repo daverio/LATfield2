@@ -22,7 +22,7 @@ For user who would like to contribute to LATfield, the library git repository is
 
 \section getstart_sec Getting Started
 
-The best way to start with LATfield is to jump into the examples starting with the "getting started" example. 
+The best way to start with LATfield is to jump into the examples starting with the "getting started" example. The FFT example will explain the usage of the PlanFFT class and the IOserver example the IO server. There is a forth example which show how to build a poisson solver, but this example is currently not documented.
 
 
 

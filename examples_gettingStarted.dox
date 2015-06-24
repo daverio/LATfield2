@@ -128,10 +128,7 @@ Then the derivation can be performed. Here for simplicity we have set dx to one.
 \skip for
 \until }
 
-This shows how to work with file with multiple components (gradPhi). And exhibit the usage of the Site object for displacement in the Lattice. The 
-
-
-Indeed the operator + and - are overloaded to provide an extremely easy way to travel on the lattice. Both operator will return the neighbor site in the direction specified after the operator. 
+This shows how to work with file with multiple components (gradPhi). And exhibit the usage of the Site object for displacement in the Lattice. The operator + and - are overloaded to provide an extremely easy way to travel on the lattice. Both operator will return the neighbor site in the direction specified after the operator. 
 
 \subsection code_fieldIO_gettingStarted Field I/O
 
