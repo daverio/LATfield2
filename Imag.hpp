@@ -16,7 +16,7 @@ typedef double Real;
 #endif
 
 /*! \class Imag
-    \brief complex numbers
+    \brief A utility class for complex arithmetic, invested from LATfield 1.0
  
     Complex number, defined as Real[2] if FFT capability of latfield are not used, and with FFTW complex if it is use. Commun operation over complex number are also defined.
  

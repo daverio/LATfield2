@@ -9,9 +9,11 @@
 
 
 /*! \class Site  
-    \brief A small class which aim to point to given lattice site.
+    \brief A class for referencing values of an instance of the field class at a given point on a lattice.
  
-    A class which simplify the map of the field data array index. This class allow to get coordinate on the lattice, loop over each site of the lattice and perform displacment on the lattice
+    A class which simplify the map of the field data array index. This class allow to get coordinate on the lattice, loop over each site of the lattice and perform displacment on the lattice.
+ 
+    The site class encapsulates the mapping between the coordinate on the lattice and the index of the Field::data_ array which store the value of an instance of the Field class. It also contain method to loop over each site of the lattice, and to perform spacial displacement on the lattice.
  */
 class Site
 	{
@@ -23,30 +25,36 @@ class Site
         
         /*!
          Constructor with initialization.
-         \sa initialize(Lattice& lattice);
-         \param lattice: the lattice on which the Site is defined.
+         
+         \param lattice : the lattice on which the Site is defined.
+         
+         \sa initialize(Lattice& lattice)
+         
          */
 		Site(Lattice& lattice);
         
         /*!
          Constructor with initialization.
-         \sa initialize(Lattice& lattice, long index);
-         \param lattice: the lattice on which the Site is defined.
-         \param index  : set the current index of the field. 
+         
+         \param lattice : the lattice on which the Site is defined.
+         \param index   : set the current index of the field. 
+         
+         \sa initialize(Lattice& lattice, long index)
+         
          */
 		Site(Lattice& lattice, long index);
 		
 		//INITIALIZATION=================
 		/*!
          Initialization.
-         \param lattice: the lattice on which the Site is defined.
+         \param lattice : the lattice on which the Site is defined.
          */
 		void initialize(Lattice& lattice);
         
         /*!
          Constructor with initialization.
-         \param lattice: the lattice on which the Site is defined.
-         \param index  : set the current index of the field. 
+         \param lattice : the lattice on which the Site is defined.
+         \param index   : set the current index of the field. 
          */
 		void initialize(Lattice& lattice, long index);
 		
@@ -118,13 +126,13 @@ class Site
         /*!
          Overloaded operator +
          The + operator is used to make a displacement of +1 site the the asked direction.
-         \param direction: direction of the displacement 
+         \param direction : direction of the displacement 
          */
 		Site operator+(int direction);
         /*!
          Overloaded operator -
          The - operator is used to make a displacement of -1 site the the asked direction.
-         \param direction: direction of the displacement
+         \param direction : direction of the displacement
          */
 		Site operator-(int direction);
 		
@@ -148,28 +156,28 @@ class Site
         
         /*!
          Method which return the site coordinate of a give dimension
-         \param direction: label of the coordinate.
+         \param direction : label of the coordinate.
          \return site coordinate of the "direction" dimension
          */
 		int coord(int direction);
         /*!
          Method which return the local site coordinate of a give dimension
-         \param direction: label of the coordinate.
+         \param direction : label of the coordinate.
          \return site local coordinate of the "direction" dimension
          */
 		int coordLocal(int direction);
         /*!
          Method to set the site to a given coordinate.
-         \param r: array which contain the coordinate. The array size must be equal to the number of dimension of the lattice
+         \param r : array which contain the coordinate. The array size must be equal to the number of dimension of the lattice
          \return True: if the coordinate is local.
                  False: if the local part of the lattice does not have this coordinate.
          */
 		bool setCoord(int* r);
         /*!
          Method to set the site to a given coordinate for 3d lattices.
-         \param x: coordinate of the 0 dimension.
-         \param y: coordinate of the 1 dimension.
-         \param z: coordinate of the 2 dimension.
+         \param x : coordinate of the 0 dimension.
+         \param y : coordinate of the 1 dimension.
+         \param z : coordinate of the 2 dimension.
          \return True: if the coordinate is local.
                  False: if the local part of the lattice does not have this coordinate.
          */
@@ -326,7 +334,7 @@ Lattice& Site::lattice() { return *lattice_ ; }
 #ifdef FFT3D
 
 /*! \class cKSite  
- \brief A child of Site, built to work with the fourier space lattices for complex to complex transforms.
+ \brief A child of Site, built to work with the Fourier space lattices for complex to complex transforms.
  
  A class which simplify the map of the field data array index. This class allow to get coordinate on the lattice, loop over each site of the lattice and perform displacment on the lattice. 
  
@@ -463,13 +471,13 @@ bool cKSite::setCoord(int x, int y=0, int z=0)
 }   
 
 /*! \class rKSite  
- \brief A child of Site, built to work with the fourier space lattices for real to complex transforms.
+ \brief A child of Site, built to work with the Fourier space lattices for real to complex transforms.
  
- A class which simplify the map of the field data array index. This class allow to get coordinate on the lattice, loop over each site of the lattice and perform displacment on the lattice. 
+ A class which simplifies the map of the field data array index. This class allow to get coordinate on the lattice, loop over each site of the lattice and access neighboring lattices sites
  
- WARNING: this site class must be used only on lattices initialized using initializeRealFFT() method of the Lattice class.
+ WARNING: the rKSite class must be used only on lattices initialized using initializeRealFFT() method of the Lattice class.
  
- This class have same binding that the Site class, so one can refer to the Site class for the documentation.
+ This class has same binding as the Site class, please refer to the Site class for the documentation.
  
  */
 class rKSite:public Site{

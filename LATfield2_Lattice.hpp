@@ -13,7 +13,7 @@
 
 /*! \class Lattice  
  
-    \brief The Lattice class describe a n-toroidal cartesian mesh (with n>=2). 
+    \brief The Lattice class describe a cartesian mesh (with 2 or more dimensions). The updateHalo method of the Field class generate the periodicity.
  
  
     It store the global and local geometry of the mesh. The last 2 dimension of the lattice are scattered into the MPI processes grid. 
@@ -31,7 +31,7 @@ class Lattice
          \sa initialize(int dim, const int* size, int halo);
          \param dim : number of dimension
          \param size : array containing the size of each dimension.
-         \param halo : size of the halo (same for each dimension)
+         \param halo : size of the halo (ghost cells, same for each dimension)
          */ 
 		Lattice(int dim, const int* size, int halo); 
         
@@ -48,17 +48,20 @@ class Lattice
 		~Lattice();
 		
         /*!
-         Initialization of a "dim"-dimension lattice. The size of each dimension are given by the array "size" which much contain "dim" numbers. The lattice have "halo" ghost cells in each dimension.
+         Initialization of a dim-dimensional lattice, the size of each dimension is set by the second parameter: int *size. The ghost cell number (halo) is the same for each dimension.  
+         
          \param dim : number of dimension
          \param size : array containing the size of each dimension.
          \param halo : size of the halo (same for each dimension)
          */ 
         void initialize(int dim, const int* size, int halo);
         
-        /*! Initialization of a "dim"-dimension cubic lattice. Each dimension have the same size given by the parameter "size". The lattice have "halo" ghost cells in each dimension.
-         Initialization
+        /*!
+         Initialization of a dim-dimensional lattice, each dimension have the same size. The ghost cell number (halo) is the same for each dimension. 
+         
+         
          \param dim : number of dimension
-         \param size : array containing the size of each dimension.
+         \param size : size of each dimension (same for each dimension)
          \param halo : size of the halo (same for each dimension)
          */ 
 		void initialize(int dim, const int size, int halo);
@@ -67,15 +70,15 @@ class Lattice
         
         
         /*!
-         Initialization of a lattice for fourier space in case of real to complex transform. The fourier space lattice size is defined according to the real space one. The fourier space lattice have "halo" ghost cells in each dimension (which can be different than the halo of the real space lattice).
-         \param lat_real : pointer to a "real" space lattice.
+         Initialization of a lattice for Fourier space in case of real to complex transform. The Fourier space lattice size is defined according to the real space one. The fourier space lattice have "halo" ghost cells in each dimension (which can be different than the halo of the real space lattice).
+         \param lat_real : pointer to a real space lattice.
          \param halo : size of the halo (same for each dimension)
          */ 
 		void initializeRealFFT(Lattice & lat_real, int halo);
         
         /*!
-         Initialization of a lattice for fourier space in case of complex to complex transform. The fourier space lattice size is defined according to the real space one.. The fourier space lattice have "halo" ghost cells in each dimension (which can be different than the halo of the real space lattice).
-         \param lat_real : pointer to a "real" space lattice.
+         Initialization of a lattice for Fourier space in case of complex to complex transform. The Fourier space lattice size is defined according to the real space one.. The fourier space lattice have "halo" ghost cells in each dimension (which can be different than the halo of the real space lattice).
+         \param lat_real : pointer to a real space lattice.
          \param halo : size of the halo (same for each dimension)
          */  
 		void initializeComplexFFT(Lattice & lat_real, int halo);
@@ -84,100 +87,102 @@ class Lattice
     
         
         /*!
-         \return int , number of dimension of the lattice.
+         \return int. Number of dimensions of the lattice.
          */
         int  dim();
         /*!
-         \return int , the size of the halo.
+         \return int. Size of the halo (ghost cells).
          */
 		int  halo();
         
         /*!
-         \return int* , pointer to the array of the size of each dimension of the lattice.
+         \return int*. Pointer to the array of the size of each dimension of the lattice.
          */
         int* size();               
         
         /*!
-         Function which return the global size of a given dimension of the lattice.
+         Function which returns the size of a given dimension of the lattice.
          \param direction : asked dimension.
-         \return int , the global size of the asked dimension.
+         \return int. Global size of the lattice in the given dimension.
          */
         int  size(int direction);  //Size in a particular dimension
         
         /*!
-         \return int* , pointer to the array of the size of each dimension of the sublattice stored in this MPI process.
+         \return int*. Pointer to the array of the size of each dimension of the sublattice stored in this MPI process.
          */
         int* sizeLocal();               //Local version
         
         /*!
-         Function which return the size of a given dimension of the sublattice stored in this MPI process.
+         Function which returns the size of a given dimension of the sublattice stored in this MPI process.
          \param direction : asked dimension.
-         \return int , the local(in this MPI process) size of the asked dimension.
+         \return int. Global size of the sublattice (of this MPI process) in the given dimension.
          */
 		int  sizeLocal(int direction);  //Local version
         
         
         /*!
-         \return long , the lattice number of site (excluding halo sites).
+         \return long. Number of sites on the lattice (excluding halo sites).
          */
         long  sites();              //Number of (global) sites
         /*!
-         \return long , the lattice number of site (including halo sites).
+         \return long. Number of sites on the lattice (including halo sites).
          */
 		long  sitesGross();         //Number of (global) sites including halo
         
         /*!
-         \return long , the number of site (excluding halo sites) of the sublattice stored in this MPI process.
+         \return long. Number of sites (excluding halo sites) of the sublattice stored in this MPI process.
          */
         long  sitesLocal();              //Local version
         
         /*!
-         \return long , the number of site (including halo sites) of the sublattice stored in this MPI process.
+         \return long. Number of sites (including halo sites) of the sublattice stored in this MPI process.
          */
 		long  sitesLocalGross();         //Local version
         
 		/*!
-         \return int , the index of the first site which is not within the halo.
+         \return long. Array index of the first site which is not within the halo.
          */
-        int siteFirst();
+        long siteFirst();
         
         /*!
-         \return int , the index of the last site which is not within the halo.
+         \return long. Array index of the last site which is not within the halo.
          */
-		int siteLast();
+		long siteLast();
 		
 		
 		
 		/*!
-         Function which return the number of site to jump to move to the next site in a given direction.
+         Function which return the number of data_ array elements to jump to move to the next site in the given direction. (does not take into account the number of component of the fields, therefor should be multiplied by Field.components().) Should not be used by user.
          \param direction : asked direction.
-         \return long , number of sites to jump.
+         \return long. Number of array elements to jump.
          */
 		long  jump(int direction);       //Number of sites jumped to move in direction
 		
         /*!
-         \return long , Number of sites before first local site in lattice (say in a file)
+         \return long. Number of sites before first local site in lattice. Should not be used by users.
          */
         long  sitesSkip();               //Number of sites before first local site in lattice (say in a file)
 		
         /*!
-         \return long , Number of sites before first local site in lattice (say in a file, where each proc have dump data in serial and ordered by their rank in MPI_WORLD_COMM)
+         \return long. Number of sites before first local site in lattice. Should not be used by users.
          */
         long  sitesSkip2d();
         
         /*!
-         \return long* , pointer to a array which store the last 2 dimension coordinate of the first local(in this MPI process) sites. !!!!!!! index 0 is for dim-1, index 1 is for dim-2 !!!!!!!
+         \return *long. Pointer to an array which store the last 2 dimensions coordinate of the first local(in this MPI process) sites. Index 0 is for dim-1, index 1 is for dim-2/
          */
 		long*  coordSkip();              //Number to add to coord[dim_-1] to get global value
 		
 		/*!
-         Function which save in serial and in ASCII a description of the Lattice, both localy and globaly
+         Function which save in serial and in ASCII the global and local description of the Lattice. Usefull to read a file writen by fast_save or fast_write methods of the Field class.
          \param filename : filename of the architectur file.
          */
         void save_arch(const string filename);
         
         /*!
-         \return return true if the description of the lattice have been writen on disk.
+         \return return true if the description of the lattice has been written on disk.
+         
+         \sa save_arch(const string filename)
          */
 		bool is_arch_saved();
         
@@ -544,8 +549,8 @@ long  Lattice::jump(int i) { return jump_[i]; }
 long  Lattice::sitesSkip() { return sitesSkip_; }
 long  Lattice::sitesSkip2d() { return sitesSkip2d_; }
 long*  Lattice::coordSkip() { return coordSkip_; }
-int Lattice::siteFirst() { return siteFirst_; }
-int Lattice::siteLast() { return siteLast_; }
+long Lattice::siteFirst() { return siteFirst_; }
+long Lattice::siteLast() { return siteLast_; }
 
 #endif
 

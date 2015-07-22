@@ -29,7 +29,7 @@ const int FFT_OUT_OF_PLACE = -16;
 
 
 /*! \class temporaryMemFFT
- \brief A class wich handle the additional memory needed by the class PlanFFT; No documentation!
+ \brief A class wich handle the additional memory needed by the class PlanFFT; Should never be used, internal temporary memroy handler, if real need, can be hacked, but could comflict with the PlanFFT!
  */
 class temporaryMemFFT
 	{
@@ -132,18 +132,18 @@ temporaryMemFFT tempMemory;
 
 /*! \class PlanFFT  
  
- \brief Class which handle fourier transforms of fields on 3d cubic lattices.
+ \brief Class which handle Fourier transforms of fields (real/complex, single/double precision) on cubic lattices. (currently implemented only for 3d)
  
   
- This class allow to perform fourier transform of real and complex fields. See poissonSolver example to have have a short intro of usage.
+ This class allow to perform Fourier transform of real and complex fields. See the FFTs example to have have a short intro of the usage.  See the PoissonSolver example for more advanced usage (as linking several field to the same Fourier image)
  
- One should understand that first a plan is created then execute (in the FFTW fashion). The plan link to fields, one on fourier space, one on real space. Both field will be allocated by the planer. But need to be initialized. 
+ One should understand that first a plan is created then executed (in the FFTW fashion). The plan links two fields, one on Fourier space, one on real space. Boths field will be allocated by the planer when the plan is initilized. But need to be initialized before passing them to the planer. 
  
  One need to be carefull to corretly define the lattice and field.
  \sa void Lattice::initializeRealFFT(Lattice & lat_real, int halo);
  \sa void Lattice::initializeComplexFFT(Lattice & lat_real, int halo);
- 
- For more detail see the QuickStart guide.
+ \sa cKSite class
+ \sa rKSite class
  
  */
 template<class compType>
@@ -156,37 +156,41 @@ class PlanFFT
 #ifndef SINGLE
 		
         /*!
-         Constructor with initialization for complex to complex tranform.
-         \sa initialize(Field<compType>*  rfield,Field<compType>*   kfield,const int mem_type = FFT_OUT_OF_PLACE);
+         Constructor with initialization for complex to complex transform.
+         
          \param rfield : real space field
-         \param kfield : fourier space field
-         \param mem_type : memory type (FFT_OUT_OF_PLACE or FFT_IN_PLACE). In place mean that both fourier and real space field point to the same data array.
-            
+         \param kfield : Fourier space field
+         \param mem_type : memory type (FFT_OUT_OF_PLACE or FFT_IN_PLACE). In place mean that both Fourier and real space field point to the same data array.
+         
+         \sa initialize(Field<compType>*  rfield,Field<compType>*   kfield,const int mem_type = FFT_OUT_OF_PLACE);
+         
          */ 
 		PlanFFT(Field<compType>* rfield, Field<compType>*  kfield,const int mem_type = FFT_OUT_OF_PLACE);
 		/*!
-         initialization for complex to complex tranform.
-         For more detail see the QuickStart guide.
+         Initialization for complex to complex transform.
+         
          \param rfield : real space field
-         \param kfield : fourier space field
-         \param mem_type : memory type (FFT_OUT_OF_PLACE or FFT_IN_PLACE). In place mean that both fourier and real space field point to the same data array.
+         \param kfield : Fourier space field
+         \param mem_type : memory type (FFT_OUT_OF_PLACE or FFT_IN_PLACE). In place mean that both Fourier and real space field point to the same data array.
          */
         void initialize(Field<compType>*  rfield,Field<compType>*   kfield,const int mem_type = FFT_OUT_OF_PLACE);
 		
 		/*!
-         Constructor with initialization for real to complex tranform.
-         \sa initialize(Field<compType>*  rfield,Field<compType>*   kfield,const int mem_type = FFT_OUT_OF_PLACE);
+         Constructor with initialization for real to complex transform.
+        
          \param rfield : real space field
-         \param kfield : fourier space field
-         \param mem_type : memory type (FFT_OUT_OF_PLACE or FFT_IN_PLACE). In place mean that both fourier and real space field point to the same data array.
+         \param kfield : Fourier space field
+         \param mem_type : memory type (FFT_OUT_OF_PLACE or FFT_IN_PLACE). In place mean that both Fourier and real space fields point to the same data array.
+         
+         \sa initialize(Field<compType>*  rfield,Field<compType>*   kfield,const int mem_type = FFT_OUT_OF_PLACE);
          */
 		PlanFFT(Field<double>* rfield, Field<compType>*  kfield,const int mem_type = FFT_OUT_OF_PLACE);
         /*!
-         initialization for real to complex tranform.
-         For more detail see the QuickStart guide.
+         Initialization for real to complex transform.
+         
          \param rfield : real space field
-         \param kfield : fourier space field
-         \param mem_type : memory type (FFT_OUT_OF_PLACE or FFT_IN_PLACE). In place mean that both fourier and real space field point to the same data array.
+         \param kfield : Fourier space field
+         \param mem_type : memory type (FFT_OUT_OF_PLACE or FFT_IN_PLACE). In place mean that both Fourier and real space fields point to the same data array.
          */
 		void initialize(Field<double>*  rfield,Field<compType>*   kfield,const int mem_type = FFT_OUT_OF_PLACE);
 		
@@ -208,8 +212,9 @@ class PlanFFT
 		
 		
 		/*!
-         Execute the fourier transform.
-         \param fft_type: dirrection of the transform. Can be FFT_BACKWARD or FFT_FORWARD.
+         Execute the Fourier transform.
+         
+         \param fft_type : dirrection of the transform. Can be FFT_BACKWARD or FFT_FORWARD.
          */
 		void execute(int fft_type);
         
@@ -256,9 +261,9 @@ class PlanFFT
 		fftwf_plan bPlan_j_real_;
 		fftwf_plan bPlan_k_;
 		
-		///transpostion fonction
+		//transpostion fonction
 		
-		/// forward real to complex
+		// forward real to complex
 		// first transopsition
 		void transpose_0_2( fftwf_complex * in, fftwf_complex * out,int dim_i,int dim_j ,int dim_k);
 		void transpose_0_2_last_proc( fftwf_complex * in, fftwf_complex * out,int dim_i,int dim_j ,int dim_k);
@@ -268,7 +273,7 @@ class PlanFFT
 		//third transposition 
 		void transpose_back_0_3(fftwf_complex * in, fftwf_complex * out,int r2c,int local_r2c,int local_size_j,int local_size_k,int proc_size,int halo,int components,int comp);
 		void implement_0(fftwf_complex * in, fftwf_complex * out,int r2c_size,int local_size_j,int local_size_k,int halo,int components,int comp);
-		////backward real to complex
+		//backward real to complex
 		void b_arrange_data_0(fftwf_complex *in, fftwf_complex * out,int dim_i,int dim_j ,int dim_k, int khalo, int components, int comp);
 		void b_transpose_back_0_1(fftwf_complex * in, fftwf_complex * out,int r2c,int local_r2c,int local_size_j,int local_size_k,int proc_size);
 		void b_implement_0(fftwf_complex * in, fftwf_complex * out,int r2c_size,int local_size_j,int local_size_k);
@@ -358,7 +363,7 @@ void PlanFFT<compType>::initialize(Field<compType>*  rfield,Field<compType>*  kf
 	if(rfield->components() != kfield->components())
 	{
 		cerr<<"Latfield2d::PlanFFT::initialize : fft curently work only for fields with same number of components"<<endl;
-		cerr<<"Latfield2d::PlanFFT::initialize : coordinate and fourier space fields have not the same number of components"<<endl;
+		cerr<<"Latfield2d::PlanFFT::initialize : coordinate and Fourier space fields have not the same number of components"<<endl;
 		cerr<<"Latfield2d : Abort Process Requested"<<endl;
 		
 	}
@@ -470,7 +475,7 @@ void PlanFFT<compType>::initialize(Field<float>*  rfield,Field<compType>*   kfie
 	if(rfield->components() != kfield->components())
 	{
 		cerr<<"Latfield2d::PlanFFT::initialize : fft curently work only for fields with same number of components"<<endl;
-		cerr<<"Latfield2d::PlanFFT::initialize : coordinate and fourier space fields have not the same number of components"<<endl;
+		cerr<<"Latfield2d::PlanFFT::initialize : coordinate and Fourier space fields have not the same number of components"<<endl;
 		cerr<<"Latfield2d : Abort Process Requested"<<endl;
 		
 	}
@@ -603,7 +608,7 @@ void PlanFFT<compType>::initialize(Field<compType>*  rfield,Field<compType>*  kf
 	if(rfield->components() != kfield->components())
 	{
 		cerr<<"Latfield2d::PlanFFT::initialize : fft curently work only for fields with same number of components"<<endl;
-		cerr<<"Latfield2d::PlanFFT::initialize : coordinate and fourier space fields have not the same number of components"<<endl;
+		cerr<<"Latfield2d::PlanFFT::initialize : coordinate and Fourier space fields have not the same number of components"<<endl;
 		cerr<<"Latfield2d : Abort Process Requested"<<endl;
 		
 	}
@@ -720,7 +725,7 @@ void PlanFFT<compType>::initialize(Field<double>*  rfield,Field<compType>*   kfi
 	if(rfield->components() != kfield->components())
 	{
 		cerr<<"Latfield2d::PlanFFT::initialize : fft curently work only for fields with same number of components"<<endl;
-		cerr<<"Latfield2d::PlanFFT::initialize : coordinate and fourier space fields have not the same number of components"<<endl;
+		cerr<<"Latfield2d::PlanFFT::initialize : coordinate and Fourier space fields have not the same number of components"<<endl;
 		cerr<<"Latfield2d : Abort Process Requested"<<endl;
 		
 	}
@@ -839,6 +844,9 @@ void PlanFFT<compType>::initialize(Field<double>*  rfield,Field<compType>*   kfi
 template<class compType>
 void PlanFFT<compType>::execute(int fft_type)
 {
+    temp_  = tempMemory.temp1();
+	temp1_ = tempMemory.temp2();
+    
 	
     //#ifdef SINGLE
 	if(type_ == R2C)

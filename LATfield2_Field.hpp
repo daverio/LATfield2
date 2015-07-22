@@ -32,12 +32,13 @@ void defaultFieldLoad(fstream& file, FieldType* siteData, int components);
 
 /*! \class Field  
  
- \brief The Field class describe a field on a given lattice.
+ \brief The Field class represent a field on a given lattice.
  
  
- It store the description of the field i.e. the datatype and the number of components. It also store the pointer to the field array in the memory.  
+ It stores the description of the field i.e. the datatype, the number of components, and the pointer to the field array in the memory.  
  
- As the datatype is versatil, field of structure or class can be used. But in that case, the I/O need to be modified. Indeed the I/O support only native datatype and 1d array of them.
+ 
+ The datatype is under user control; a field of structur or class can be also used (to be able to use the update halo method, the = operator must be defined or overloaded). However, the I/O support only native datatype and 1d array of them.
  
  A field can be a single element, a vector of element or a 2d matrix of elements. In the case of a matrix it is possible to define the symmetry of the matrix:
  
@@ -45,7 +46,7 @@ void defaultFieldLoad(fstream& file, FieldType* siteData, int components);
  
     LATfield2d::symmetric    : symmetric matrix (Tij = Tji)
  
-        
+    Antisymmetric field are not yet implemented.
  
  */
 //FIELD CLASS DEFINITION==================================
@@ -58,20 +59,22 @@ class Field
 		Field();
         
         /*!
-         Constructor of a "vector" field with initialization
-         \sa initialize(Lattice& lattice, int components = 1);
-         \param lattice    : lattice on witch the field is defined  
-         \param components : number of components. Default is 1.
+         Constructor of a "vector" field with initialization and allocation.
+         \sa initialize(Lattice& lattice, int components = 1)
+         \sa alloc()
+         \param lattice    : lattice on which the field is defined  
+         \param components : number of components. The default is 1.
          */ 
 		Field(Lattice& lattice, int components = 1);
         
         /*!
-         Constructor of a "matrix" field with initialization
-         \sa initialize(Lattice& lattice, int components = 1);
-         \param lattice    : lattice on witch the field is defined  
+         Constructor of a "matrix" field with initialization and allocation.
+         \sa initialize(Lattice& lattice, int rows, int cols, int symmetry=unsymmetric)
+         \sa alloc()
+         \param lattice    : lattice on which the field is defined  
          \param matrixRows : matrix number of row . 
          \param matrixCols : matrix number of colomn. 
-         \param symmetry   : symmetry of the matrix, default is unsymmetric. LATfield2d::symmetric can be pass to specify the symmetry. 
+         \param symmetry   : symmetry of the matrix, default is unsymmetric. LATfield2d::symmetric can be passed to specify the symmetry, reducing memory usage. 
          */ 
 		Field(Lattice& lattice, int matrixRows, int matrixCols, int symmetry=unsymmetric);
 		
@@ -80,17 +83,15 @@ class Field
 		
 		//INITIALIZATION-TYPE FUNCTIONS
         /*!
-         Initialization of a "vector" field 
-         \sa initialize(Lattice& lattice, int components = 1);
-         \param lattice    : lattice on witch the field is defined  
+         Initialization of a "vector" field. Without allocation.
+         \param lattice    : lattice on which the field is defined  
          \param components : number of components. Default is 1.
          */ 
 		void initialize(Lattice& lattice, int components = 1);
         
         /*!
-         Initialization of a "matrix" field. 
-         \sa initialize(Lattice& lattice, int components = 1);
-         \param lattice    : lattice on witch the field is defined  
+         Initialization of a "matrix" field. Without allocation.
+         \param lattice    : lattice on which the field is defined  
          \param matrixRows : matrix number of row . 
          \param matrixCols : matrix number of colomn. 
          \param symmetry   : symmetry of the matrix, default is unsymmetric. LATfield2d::symmetric  can be pass to specify the symmetry. 
@@ -98,15 +99,15 @@ class Field
 		void initialize(Lattice& lattice, int rows, int cols, int symmetry=unsymmetric);
 		
         /*!
-         Memory allocation. Allocate the data_ array o f this field. It allocated "components_*lattice_->sitesLocalGross()*sizeof(FieldType)" bytes.
+         Memory allocation. Allocate the data_ array of this field. It allocated "components_*lattice_->sitesLocalGross()*sizeof(FieldType)" bytes. This method use malloc() to allocate the memory, in case the pointer is not allocated it will return a error message but not exiting the executable.
          */ 
-        
 		void alloc();
-        /*!
-         Memory allocation. Allocate the data_ array of this field. It allocated "size" bytes if "size" > "components_*lattice_->sitesLocalGross()*sizeof(FieldType)", if not it call this->alloc() .
-         */ 
         
-		void alloc(long size);
+        /*!
+         Memory allocation. Allocate the data_ array of this field. It allocated "size" bytes if "size" > "components_*lattice_->sitesLocalGross()*sizeof(FieldType)", if not it call this->alloc(). This method use malloc() to allocate the memory, in case the pointer is not allocated it will return a error message but not exiting the executable.
+         */ 
+		
+        void alloc(long size);
         /*!
          Free the data_ array.
          */
@@ -116,37 +117,58 @@ class Field
         
         
         /*!
-         Return the value of the field stored in data_[index]. This operator should not be used by users, but only by implementers.
+         Returns the value of the field stored in data_[index]. User should used operator()(const Site& site) to refer and access to the value of the field.
+         
+         \param index: displacment on the data_ array.
          */
 		FieldType& operator()(long index);
         
         /*!
-         Return the value of the field stored in data_[component + index*components_]. This operator should not be used by users, but only by implementers.
+         Returns the value of the field stored in data_[component + index*components_]. User should used operator()(const Site& site, int component) to refer and access to the value of the field.
+         
+         \param index    : number of site to skip.
+         \param component: index of the desired component.  
          */
 		FieldType& operator()(long index, int component);
         
         /*!
-         Return the value of the "component" field's components stored in data_[j*rows_ + i + index*components_]. 
-         In the symmetric case, it returns data_[abs(i-j) + min(i,j)*(rows_+0.5-0.5*min(i,j)) + index*components_]. This operator should not be used by users, but only by implementers.
+         Returns the value of the field stored in data_[j*rows_ + i + index*components_]. In the symmetric case, it returns data_[abs(i-j) + min(i,j)*(rows_+0.5-0.5*min(i,j)) + index*components_]. User should used operator()(const Site& site, int i, int j) to refer and access to the value of the field.
+            
+         \param index : number of site to skip.
+         \param i     : index of the row
+         \param j     : index of the column
          */
 		FieldType& operator()(long index, int i, int j);
 		
         
         /*!
-         Return the value of the field at the position pointed by the Site object (data_[site.index()]). This command must be used only for field with one component! 
-         \sa To have more detailled description see the Site class documentation.
+         Returns the value of the field at the position pointed by the Site object (data_[site.index()]). Can be used only for field with one component! 
+         
+         \param site: a site instance which points to the desired lattice site.
+         
+         \sa To have more description see the Site class documentation.
          */
 		FieldType& operator()(const Site& site);
         
         /*!
-         Return the value of the "component" field's components at the position pointed by the Site object (data_[component + site.index()*components_]).
-         \sa To have more detailled description see the Site class documentation.
+         Returns the value of a (vector) field's component at the position pointed by the Site object (data_[component + site.index()*components_]).
+         
+         
+         \param site: a site instance which points to the desired lattice site.
+         \param component: index of the desired component. 
+         
+         \sa To have more description see the Site class documentation.
          */
 		FieldType& operator()(const Site& site, int component);
         
         /*!
-         Return the value of the (i,j) matrix component of the field at the position pointed by the Site object (data_[j*rows_ + i + site.index*components_]). In the symmetric case, it returns data_[abs(i-j) + min(i,j)*(rows_+0.5-0.5*min(i,j)) + site.index()*components_].
-         \sa To have more detailled description see the Site class documentation.
+         Returns the value of the (i,j) matrix component of the field at the position pointed by the Site object (data_[j*rows_ + i + site.index*components_]). In the symmetric case, it returns data_[abs(i-j) + min(i,j)*(rows_+0.5-0.5*min(i,j)) + site.index()*components_].
+         
+         \param site: a site instance which points to the desired lattice site.
+         \param i     : index of the row
+         \param j     : index of the column
+         
+         \sa To have more description see the Site class documentation.
          */
 		FieldType& operator()(const Site& site, int i, int j);
 
@@ -187,90 +209,119 @@ class Field
 		//BOUNDARY UPDATE
         
         /*!
-         Method to update the halo sites (gohst cells).
+         Update the halo sites (ghost cells) of the field. This method us the operator = to assign values, thefor be sure that this operator is defined or correctly overloaded when using field of class or struct.
          */
 		void updateHalo();
 		
 		//FILE I/O FUNCTIONS
         
         /*!
-         Method to write a field in Binary. This method use serial I/O so can be very slow. Should never be used during production, but can be usefull during development.
+         Method to write a field in binary. This method use serial I/O so can be very slow. Should never be used during production, but can be usefull during development.
+         
+         \param filename: path to the file, from the executable folder.
          */
 	    void write(const string filename);
 	    
         /*!
-         Method to read a field in Binary which have been writen by the void write(const string filename) method.
+         Method to read a field in binary which have been writen by the void write(const string filename) method.
+         
+         \param filename: path to the file, from the executable folder.
          */
         void read(const string filename);
         
         /*!
-         Method to write a field in Binary. This method use serial I/O so can be very slow, but is faster than void write(const string filename). Should never be used! but can be usefull on some architectur, where HDF5 is not installed and/or MPI parallel I/O crash the filesystem. There is no method to read back such a file. The file structur is dependent of the local geometry. This function dumb serially (in the paralle.lat_world_rank order) the data stored in each MPI process.
+         Method to write a field in Binary. This method uses serial I/O so can be very slow, but is faster than void save(const string filename). Should never be used! but it can be usefull on some architectures, where HDF5 is not installed and/or crashes the filesystem. There is no method to read back such a file. The file structure is dependent of the local geometry. This function dumps serially (in the paralle.lat_world_rank order) the data stored in each MPI process.
+         
+         \param filename: path to the file, from the executable folder.
          */
         void fastwrite(const string filename);
         
         /*!
-         Method to write a field in ASCII. This method use serial I/O so can be very slow. Should never be used during production, but can be usefull during development.
+         Method to write a field in ASCII. This method use serial I/O so can be very slow. Should never be used during production, but can be useful during development.
+         
+         \param filename      : path to the file, from the executable folder.
+         \param FormatFunction: format used for the writting procedure.
          */
 	    void save(const string filename, 
 		      void (*FormatFunction)(fstream&,FieldType*,int) = defaultFieldSave<FieldType>);
         
         /*!
-         Method to read a field in ASCII which have been writen by the void write(const string filename) method.
+         Method to read a field in ASCII which have been written by the void write(const string filename) method.
+         
+         \param filename      : path to the file, from the executable folder.
+         \param FormatFunction: format used for the writting procedure.
          */
 	    void load(const string filename, 
 		      void (*FormatFunction)(fstream&,FieldType*,int) = defaultFieldLoad<FieldType>);
         
         /*!
-         Method to write a field in ASCII. This method use serial I/O so can be very slow, but is faster than void write(const string filename). Should never be used! but can be usefull on some architectur, where HDF5 is not installed and/or MPI parallel I/O crash the filesystem. There is no method to read back such a file. The file structur is dependent of the local geometry. This function dumb serially (in the paralle.lat_world_rank order) the data stored in each MPI process.
+         Method to write a field in ASCII. This method use serial I/O so can be very slow, but is faster than void write(const string filename). Should never be used! but it can be usefull on some architectures, where HDF5 is not installed and/or crashes the filesystem. There is no method to read back such a file. The file structur is dependent of the local geometry. This function dumps serially (in the paralle.lat_world_rank order) the data stored in each MPI process.
          */
         void fastsave(const string filename, 
                       void (*FormatFunction)(fstream&,FieldType*,int) = defaultFieldSave<FieldType>);
         /*!
-         Method to write a field with HDF5. This method use serial HDF5 by default. If someone want to use parallel HDF5 the flag -DH5_HAVE_PARALLEL must be used at compilation.
+         Method to write a field with HDF5. To be able to use this method the flag HDF5 need to be set at compilation (-DHDF5). This method use serial HDF5 by default. For parallel HDF5 the flag -DH5_HAVE_PARALLEL must be used at compilation.
+         
+         This methods will write 1 dataset (named "/field") which contain all components of the field. If one want to use a dataset per components (named "/comp0" to "/compN") the flag -DH5_HAVE_PIXIE need to be set at compilation.
+         
+         \param filename : path to the file, from the executable folder.
          */
 	    void saveHDF5(string filename);
         
 	    /*!
-         Method to load a field with HDF5. To be able to use this method the flag HDF5 need to be set at compilation (-DHDF5). This method use serial HDF5 by default. If someone want to use parallel HDF5 the flag -DH5_HAVE_PARALLEL must be used at compilation.
+         Method to load a field with HDF5. To be able to use this method the flag HDF5 need to be set at compilation (-DHDF5). This method use serial HDF5 by default. For parallel HDF5 the flag -DH5_HAVE_PARALLEL must be set at compilation.
+         
+         This methods will expect 1 dataset named field which contain all component of the field. If one want to use a dataset per components (named comp0 to compN) the flag -DH5_HAVE_PIXIE need to be set at compilation.
+         
+         \param filename : path to the file, from the executable folder.
          */
         void loadHDF5(string filename);
         
         /*!
-         A way to save coarse grained fields. To be able to use this method the flag HDF5 need to be set at compilation (-DHDF5). Must be use carefully, meaning you should understand the code of this function if you want to use it!!!!
-         Work only for 3D lattice!!! developed only for LAH.
+         A way to save coarse grained version of the fields. To be able to use this method the flag HDF5 need to be set at compilation (-DHDF5). Work only for 3D lattice!!!
+         
+         This methods will write 1 dataset (named "/field") which contain all component of the field. If one want to use a dataset per components (named "/comp0" to "/compN") the flag -DH5_HAVE_PIXIE need to be set at compilation.
+         
+         \param filename : path to the file, from the executable folder.
+         \param ration   : ration of the coarse graining. Must be an integer divider of the size of each dimension of this->lattice()
          */
         void saveHDF5_coarseGrain3D(string filename,int ratio);
 	    
         /*!
-         Save a slice in the X direction. To be able to use this method the flag HDF5 need to be set at compilation (-DHDF5). Must be use carefully, meaning you should understand the code of this function if you want to use it!!!!
-         Work only for 3D lattice!!! developed only for LAH.
+         Save a slice perpendicular to the first coordinate, at xcoord. To be able to use this method the flag HDF5 need to be set at compilation (-DHDF5).
+         
+          This methods will write 1 dataset (named "/field") which contain all component of the field. If one want to use a dataset per components (named "/comp0" to "/compN") the flag -DH5_HAVE_PIXIE need to be set at compilation.
+        
+         \param filename : path to the file, from the executable folder.
+         \param xcoord   : coordinate of the slice on the first dimension of the lattice.
+         \param thickness: thickness of the slice, the default is 1.
          */
         void saveSliceHDF5(string filename, int xcoord, int thickness = 1);
 		
 		//MISCELLANEOUS
         /*!
-         Return a pointer to the lattice on which the field relise.
+         Returns a pointer to the lattice on which the field is defined.
          */
 		Lattice& lattice();
         /*!
-         Return the number of components of the field.
+         Returns the number of components of the field at each sites.
          */
 		int   components();
         /*!
-         Return the number of rows of the component matrix.
+         Returns the number of rows of the component matrix at each sites.
          */
 		int   rows();
         /*!
-         Return the number of columns of the component matrix.
+         Returns the number of columns of the component matrix at each sites.
          */
 		int   cols();
         /*!
-         return the symmetry of the component matrix
+         returns the symmetry of the component matrix at each sites.
          */
 		int   symmetry();
         
         /*!
-         Return the pointer to the data array of the field.
+         Returns the pointer to the data_ array of the field.
          */
 		FieldType*& data();
 		
@@ -518,12 +569,22 @@ void Field<FieldType>::alloc()
     {
         data_ = (FieldType * )malloc(components_*lattice_->sitesLocalGross()*sizeof(FieldType) );
 		status_ = allocated;
+        if(data_==NULL)
+        {
+            cout<<"LATField2d::Field::alloc()  :process "<< parallel.rank() <<" cannot allocate the field data array."<<endl;
+            
+        }
     }
     else
     {
         this->dealloc();
         data_ = (FieldType * )malloc(components_*lattice_->sitesLocalGross()*sizeof(FieldType) );
         status_ = allocated;
+        if(data_==NULL)
+        {
+            cout<<"LATField2d::Field::alloc()  :process "<< parallel.rank() <<" cannot allocate the field data array."<<endl;
+            
+        }
     }
 }
 
@@ -536,6 +597,11 @@ void Field<FieldType>::alloc(long size)
         {
             data_ = (FieldType * )malloc(size); 
             status_ =  allocated;
+            if(data_==NULL)
+            {
+                cout<<"LATField2d::Field::alloc(long size)  :process "<< parallel.rank() <<" cannot allocate the field data array."<<endl;
+                
+            }
         }
         else
         {
@@ -549,6 +615,11 @@ void Field<FieldType>::alloc(long size)
             this->dealloc();
             data_ = (FieldType * )malloc(size); 
             status_ = allocated;
+            if(data_==NULL)
+            {
+                cout<<"LATField2d::Field::alloc(long size)  :process "<< parallel.rank() <<" cannot allocate the field data array."<<endl;
+                
+            }
         }
     }
 }

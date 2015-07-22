@@ -40,7 +40,7 @@
 
 typedef int ioserver_file;
 
-//! A structure to describe a file for the IOserver
+//! A structure to describe a file for the I/O server (dedicated MPI processes for writing to disks)
 struct file_struct{
     //! path to the file
     string filename;
@@ -56,10 +56,9 @@ struct file_struct{
 
 /*! \class IOserver  
  
- \brief The IOserver class handle the I/O using MPI process reserved for I/O
+ \brief A class to handle the I/O using MPI process reserved for IO purpose on which the files are defined
  
- This server is in beta stage, but as such a functionnality is very usefull, it have been added to the stable part of LATfield2d. An example of the usage of this class is given in the LATfield2d example on github...
- !!! User should never instanciate an IOserver object. The IOserver objet (IO_Server) is instanciate within the library header!!!
+ This server is in beta stage, but as such a functionality is very useful, it has been added to the stable part of LATfield2. An example of the usage of this class is given in the IOserver example. User should never instanciate an IOserver object. The IOserver objet (IO_Server) is instanciate within the library header
  
  
  */
@@ -85,12 +84,14 @@ public:
     /*! \brief Client method (only called by compute nodes)
      
      Method which is called to stop the server.
+     
      */
     void stop();  //client
     
     /*! \brief Client method (only called by compute nodes)
      
      Method to open an Ostream. Meaning a stream from the compute to the server processes.
+     
      \return OSTREAM_SUCCESS if the stream is open.
      \return OSTREAM_FAIL  if the stream cannot be open.
      */
@@ -99,12 +100,14 @@ public:
     /*! \brief Client method (only called by compute nodes)
      
      Method to close the current Ostream. After the stream is closed, the server will start to write the files it have in memory.
+     
     */
     void closeOstream();
     
     /*! \brief Client method (only called by compute nodes)
      
      Method to create a new file, it return the fileID.
+     
      \param  filename: name of the file (including the path...)
      \return  fileID.
      */
@@ -113,6 +116,7 @@ public:
     /*! \brief Client method (only called by compute nodes)
      
      Method to close a new file: fileID.
+     
      \param ioserver_file fileID: file to close.
      */
     void closeFile(ioserver_file fileID);
@@ -121,6 +125,7 @@ public:
      
      Method to write to a file.
      !!! Beta, this method work only if fileID have been created and not closed!!!
+     
      \param  fileID: file where to write data.
      \param  buffer: pointer to the buffer to add to the file fileID.
      \param  size: size of "buffer", in byte. 
@@ -132,6 +137,7 @@ public:
     
     /*!
      Initialize the I/O server, this method is called by parallel.initialize(...). Should never be used!!!
+     
      */
     void initialize(int proc_size0,int proc_size1, int IOserver_size, int IO_node_size); //called by avery cores.... initialize global variable
     
