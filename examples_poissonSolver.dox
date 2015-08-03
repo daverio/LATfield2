@@ -1,6 +1,6 @@
 /*! \example poissonSolver
 
-A simple poisson solver which verify the result. The code will be documented in a close future, but even without documentation it is a useful example
+A simple poisson solver which verifies its result. The code will be documented in a close future, but even without documentation it is a useful example
 
 \include poissonSolver.cpp
  */

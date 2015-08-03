@@ -1,10 +1,9 @@
 #ifndef LATFIELD2_SITE_HPP
 #define LATFIELD2_SITE_HPP
 /*! \file LATfield2_Site.hpp
- \brief Site class definition
- 
- LATfield2_Site.hpp contain the class Site definition.
- 
+ \brief LATfield2_Site.hpp contains the Site, rKSite, and cKSite definition.
+ \author David Daveio, Neil Bevis
+  
  */ 
 
 
@@ -149,7 +148,7 @@ class Site
 		long index() const;
         
         /*!
-         Mehtod to set the current index of the site.
+         Method to set the current index of the site.
          \param new_index: the site index is set to new_index.
          */
 		void setIndex(long new_index);

@@ -8,10 +8,8 @@
 
 
 /*! \file LATfield2_parallel2d.hpp
- \brief LATfield2 paralization handler
-    
-    LATfield2_parallel2d.hpp contain the class Parallel2d definition.
- 
+ \brief LATfield2_parallel2d.hpp contains the class Parallel2d definition.
+ \author David Daverio
  */ 
 
 #include <cstdlib>

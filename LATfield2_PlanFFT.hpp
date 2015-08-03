@@ -3,10 +3,8 @@
 #define LATFIELD2_PLANFFT_HPP
 
 /*! \file LATfield2_PlanFFT.hpp
- \brief FFT wrapper
- 
- LATfield2_PlanFFT.hpp contain the class PlanFFT definition.
- 
+ \brief LATfield2_PlanFFT.hpp contains the class PlanFFT definition.
+ \author David Daverio
  */ 
 
 

@@ -1,14 +1,14 @@
 /*! \example IOserver
 
-A very simple example to exhibit the usage of the I/O server. It will write two very simple file in ASCII, in which each compute core will write a single line. Such usage are clearly unrealistic, as a usual I/O will perform it faster due to the extremely small amount of data per message.
+This is very simple example to show the usage of the I/O server. It writes two very simple files in ASCII, in which each compute core writes a single line. Such usage are clearly unrealistic, and speed gain are only found at much larger files.
 
-The server work as follow. It need to be started only on the I/O cores. Then the compute core will process their usual computation. Once some I/O have to be performed. The compute cores have to open an "ostream" to the I/O cores. The files can be created and opened. Only one file can be open simultaneously currently, and there is no method to reopen a file which have been closed. This feature will be added, in the next update of the server. Once all data have been transferred to the I/O cores, one can close the "ostream". This operation will launch the writing to disks procedure and the server will be in a busy state until all data have been written on disks.
+The server works as follow. It needs to be started only on the I/O cores. Then the compute core will process their usual computation. Once some I/O has to be performed, the compute cores have to open an "ostream" to the I/O cores, then files can be created. Only one file can be open simultaneously currently, and there is no method to reopen a file which have been closed. This feature will be added, in the next update of the server. Once all data have been transferred to the I/O cores, one can close the "ostream". This operation will launch the writing to disks procedure and the server will be in a busy state until all data has been written to disks.
 
 \include IOserver.cpp
 
 \section Compile_IOserver  Compile and Run
 
-Travel to the LATfield2/examples folder. Then you can compile this example with (using mpic++, verify which compiler you want to use):
+Go to the LATfield2/examples folder, and compile this example with e.g. mpic++:
 
 \verbatim
 mpic++ -o ioserver_exec IOserver.cpp -I../ -DEXTERNAL_IO
@@ -34,7 +34,7 @@ The initialization of the parallel object is performed as without the IO server,
 \until parallel
 
 
-Once the parallel object is initialized, the parallel object contain a list of compute and IO core. The method isIO() return true for IO process and false for compute ones. Basicaly, a IO process have to perform only one operation, launching the server. This is perform using the start() method.
+Once the parallel object is initialized, the parallel object contains a list of compute and IO cores. The method isIO() return true for IO process and false for compute ones. Basicaly, a IO process has to perform only one operation, launching the server. This is perform using the start() method.
 
 
 \until ;
@@ -47,19 +47,19 @@ Then the part of the code executed by the compute process need to be in the else
 if(!parallel.isIO()){…}.
 \endverbatim 
 
-In this simple example, each processes will write a simple sentence which contain his position in the processes grid.
+In this simple example, each process will write a simple sentence which contains its position in the process grid.
 
 \line else
 \until {
 \until \n
 
-In real application the construction of the data which need to be send should be done only when the file is open, and send to the server by several message (order 5 is the most efficient). This allow a much better usage of the IOserver.
+In real applications the construction of the data which need to be send should be done only when the file is open, and sent to the server by several message (order 5 is the most efficient). This allow a much better usage of the IOserver.
 
-First step to start a transfer from to the IOserver is to open an ostream to the server on the computes processes. The server have no method to wait until it is ready. And a ostream can be open only if the server is in the ready state. The server can be in busy state for to reason. First it has not finish to launch, and secondly the server is currently writing a file. This busy state will desapear from the next version of the server, but still need lot of development.
+The first step to start a transfer from to the IOserver is to open an ostream to the server on the compute processes. The server has no method to wait until ready. Ostream can be open only if the server is in the ready state. The server can be in busy state for two reasons. First, it has not finishin launching, and secondly the server is currently writing a file.
 
 \line openOstream
 
-Once a stream is open one can open a file. Currently it is possible to open 5 file within one ostream, but not simultaneously (next version of the server will be able to deal with multiple file simultaneously). Currently, there is no method to open an existing file. The only method which open a file is createFile, which will create a file or trunk it if existing.
+Once a stream is open one can open a file. Currently it is possible to open 5 file within one ostream, but not simultaneously (the next version of the server will be able to deal with multiple file simultaneously). Currently, there is no method to open an existing file. The only method which open a file is createFile, which will create a file or trunk it if existing.
 
 \line create
 
@@ -71,16 +71,18 @@ When all data have been send to the file, one can close the file. Which is very 
 
 \line close
 
-Once every data have been send to the file where it should be written, and to launch the transfer from the server to the disks, the ostream must be closed. At that moment the server will start to write data on disks and will turn his state as busy. Once the data are written on the disk a new ostream can be open.
+Once every data has been sent to the file where it should be written, the ostream must be closed, which launches the transfer from the server to the disks. At that moment the server will turn its state to busy. Once the data are written on the disk a new ostream can be open.
 
 \line Ostream
 
-One need to be aware that to correctly terminate MPI, the server have to shut down. Otherwise the process of the IOserver will never stop to listen the sync line to look for an instruction to open a ostream. And therefor the IO server cores will never reach the end of the executable…
+One need to be aware that to correctly terminate MPI, the server has to shut down. Otherwise the process of the IOserver will never stop to listen for an instruction to open a ostream. 
 
-The call to stop the server is performed by the compute process for obvious reason:
+The call to stop the server is performed by the compute process:
 
 \line stop
 
+\section issues_IOserver Known Issues
 
+There is one known issue which arises from the desire to maximise speed. The server can start to write a file before it has finished receiving all the messages from the compute nodes. However, it cannot start the writing procedure before all message have been sent by the compute nodes. It means that some messages can still be in the network memory during the writing procedure. This can end with some data which should be written in the file of snapshot n instead being written into the file of snapshot  n+1. We regard this as an acceptable risk for the rewards of increased efficiency of the server. It can be a problem for last snapshot, as there is not a subsequent write procedure. To avoid losing some data, one should open a file and call a write just before shutting down the server, without sending any message from the compute node. This issue is only present when the compute node executable is not very well balanced, and therefore should be very rare.
 
 */

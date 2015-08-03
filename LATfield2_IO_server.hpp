@@ -2,10 +2,8 @@
 #define LATFIELD2_IOSERVER_HPP
 
 /*! \file LATfield2_IO_server.hpp
- \brief I/O server handler
- 
- LATfield2_IO_server.hpp contain the class IOserver definition.
- 
+ \brief LATfield2_IO_server.hpp contains the class IOserver definition.
+ \author David Daverio
  */ 
 
 #include "mpi.h"

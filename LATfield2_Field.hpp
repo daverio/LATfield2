@@ -2,10 +2,8 @@
 #define LATFIELD2_FIELD_HPP
 
 /*! \file LATfield2_Field.hpp
- \brief Field class definition
- 
- LATfield2_Field.hpp contain the class Field definition.
- 
+ \brief LATfield2_Field.hpp contain the class Field definition.
+ \author David Daverio, Neil Bevis
  */ 
 
 
@@ -522,7 +520,7 @@ void Field<FieldType>::get_h5type()
 template <class FieldType>
 Field<FieldType>::~Field()
 {
-	if(status_ == allocated) this->dealloc();
+	if(status_ & allocated) this->dealloc();
 	
 }
 
@@ -565,63 +563,48 @@ void Field<FieldType>::initialize(Lattice& lattice, int rows, int cols, int symm
 template <class FieldType>
 void Field<FieldType>::alloc()
 {
-	if(status_ != allocated )
+	if((status_ & allocated) == 0)
     {
-        data_ = (FieldType * )malloc(components_*lattice_->sitesLocalGross()*sizeof(FieldType) );
-		status_ = allocated;
+        
+		data_= new FieldType[components_*lattice_->sitesLocalGross()]; 
+		status_ = status_ | allocated;
+
         if(data_==NULL)
         {
-            cout<<"LATField2d::Field::alloc()  :process "<< parallel.rank() <<" cannot allocate the field data array."<<endl;
+            cout<<"LATField2d::Field::alloc(long size)  :process "<< parallel.rank() <<" cannot allocate the field data array."<<endl;
             
         }
-    }
-    else
-    {
-        this->dealloc();
-        data_ = (FieldType * )malloc(components_*lattice_->sitesLocalGross()*sizeof(FieldType) );
-        status_ = allocated;
-        if(data_==NULL)
-        {
-            cout<<"LATField2d::Field::alloc()  :process "<< parallel.rank() <<" cannot allocate the field data array."<<endl;
-            
-        }
+
     }
 }
 
 template <class FieldType>
 void Field<FieldType>::alloc(long size)
 {
-	if(status_ != allocated)
+    long alloc_number;
+    
+    if(size < lattice_->sitesLocalGross()) alloc_number =  lattice_->sitesLocalGross();
+    else alloc_number= size;
+    
+	if((status_ & allocated) == 0)
     {
-		if(size > (components_*lattice_->sitesLocalGross()*sizeof(FieldType)) )
+		
+		data_= new FieldType[components_* size]; 
+		status_ = status_ | allocated;
+        
+        if(data_==NULL)
         {
-            data_ = (FieldType * )malloc(size); 
-            status_ =  allocated;
-            if(data_==NULL)
-            {
-                cout<<"LATField2d::Field::alloc(long size)  :process "<< parallel.rank() <<" cannot allocate the field data array."<<endl;
-                
-            }
-        }
-        else
-        {
-            this->alloc();
-        }
-    }       
-    else
-    {
-        if(size > (components_*lattice_->sitesLocalGross()*sizeof(FieldType)) )
-        {
-            this->dealloc();
-            data_ = (FieldType * )malloc(size); 
-            status_ = allocated;
-            if(data_==NULL)
-            {
-                cout<<"LATField2d::Field::alloc(long size)  :process "<< parallel.rank() <<" cannot allocate the field data array."<<endl;
-                
-            }
+            cout<<"LATField2d::Field::alloc(long size)  :process "<< parallel.rank() <<" cannot allocate the field data array."<<endl;
+            
         }
     }
+    else if(size > lattice_->sitesLocalGross())
+    {
+        this->dealloc();
+        this->alloc(size);
+    }
+    
+    
 }
 
 
@@ -629,12 +612,13 @@ void Field<FieldType>::alloc(long size)
 template <class FieldType>
 void Field<FieldType>::dealloc()
 {
-	if(status_ == allocated) 
+	if((status_ & allocated) > 0) 
     {
 		delete[] data_; 
-		status_= 1; 
+		status_= status_ ^ allocated; 
     }
 }
+
 
 //FIELD INDEXING===============
 

@@ -3,6 +3,10 @@
 #else
 #define  DATA_ORDER H5T_ORDER_LE
 #endif
+/*! \file LATfield2_save_hdf5.h
+ \brief LATfield2_save_hdf5.h contains the definition of the function used for hdf5 i/o.
+ \author David Daverio
+ */ 
 
 
 extern "C"{
