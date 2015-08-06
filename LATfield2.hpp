@@ -2,8 +2,8 @@
 #define LATFIELD2_HPP
 
 /*! \file LATfield2.hpp
- \brief Library header
- 
+ \brief LATfield2 header
+ \author David Daverio,Neil Bevis
  
  */ 
 
@@ -51,16 +51,16 @@ Parallel2d parallel;
 
 namespace LATfield2
 {
-    #include "int2string.hpp"
-	#include "Imag.hpp"
+        #include "int2string.hpp"
+        #include "Imag.hpp"
 	#include "LATfield2_Lattice.hpp"
 	#include "LATfield2_Site.hpp"
 	#include "LATfield2_Field.hpp"
-	#ifdef FFT3D
+#ifdef FFT3D
 	#include "LATfield2_PlanFFT.hpp"
-	#endif
+#endif
     
-    #include "particles/LATfield2_Particles.hpp"
+        #include "particles/LATfield2_Particles.hpp"
     
 }
 

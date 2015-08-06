@@ -3,8 +3,8 @@
 
 
 /*! \file LATfield2_SettingsFile.hpp
- \brief Settings file reader
- 
+ \brief LATfield2_SettingsFile.hpp contain the class SettingsFile definition.
+ \author N. Bevis
  */ 
 
 #include <iostream>
@@ -17,7 +17,7 @@
 
 /*! \class SettingsFile  
  \brief A utility class designed to make reading in runtime parameter values easier.
- \author N. Bevis
+ 
 
  If the command-line arguments are input via optional inputs on
  either the constructor or open member function, then these

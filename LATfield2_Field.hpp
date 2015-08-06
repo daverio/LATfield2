@@ -2,10 +2,8 @@
 #define LATFIELD2_FIELD_HPP
 
 /*! \file LATfield2_Field.hpp
- \brief Field class definition
- 
- LATfield2_Field.hpp contain the class Field definition.
- 
+ \brief LATfield2_Field.hpp contain the class Field definition.
+ \author David Daverio, Neil Bevis
  */ 
 
 

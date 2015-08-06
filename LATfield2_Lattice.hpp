@@ -3,10 +3,8 @@
 
 
 /*! \file LATfield2_Lattice.hpp
- \brief Lattice class definition
- 
- LATfield2_Lattice.hpp contain the class Lattice definition.
- 
+ \brief LATfield2_Lattice.hpp contains the class Lattice definition.
+ \author David Daverio, Neil Bevis
  */ 
 
 

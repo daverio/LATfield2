@@ -1,9 +1,8 @@
 #ifndef IMAG_HPP
 #define IMAG_HPP
 /*! \file Imag.hpp
-    \brief Real and Complex numbers
- 
-    A small definition of real and complex number with some operation. Both real and complex can be in single or double precision. Default is double, tu use single precision the flag -DSINGLE need to be use at compilation.
+    \brief Imag.hpp Contains the Imag class definition
+    \author Neil Bevis
  
  */ 
 

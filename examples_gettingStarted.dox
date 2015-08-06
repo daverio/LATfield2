@@ -1,19 +1,19 @@
 /*! \example gettingStarted
 
-A very simple example which aims to describe the main features of LATfield2. This example is composed by 5 blocks of code. First the parallel object is initialized, and this must be the first operation within a code which use LATfield2 as it initialize MPI. Secondly a Lattice object is declared. Thirdly Field objects are declared on the Lattice. Forth the some operation are performed on the fields, then finally the field are written on disk.
+A very simple example which aims to describe the main features of LATfield2. This example is composed by 5 blocks of code. First the parallel object is initialized, and this must be the first operation within a code which use LATfield2 as it initializes MPI. Secondly a Lattice object is declared. Thirdly Field objects are declared on the Lattice. Fourth the some operations are performed on the fields, then finally the field are written on disk.
 
 \include gettingStarted.cpp
 
 
 \section Compile_gettingStarted  Compile and Run
 
-Travel to the LATfield2/examples folder. Then you can compile this example with (using mpic++, verify which compiler you want to use):
+Go to the LATfield2/examples folder. and compile this example with e.g. mpic++:
 
 \verbatim
 mpic++ -o getStart gettingStarted.cpp -I../ -DHDF5 -lhdf5
 \endverbatim
 
-Wich will compile using HDF5 for the Field I/O. If you have not HDF5 installed then you should compile with:
+This will compile using HDF5 for the Field I/O. If you have not HDF5 installed then you should compile with:
 
 \verbatim
 mpic++ -o getStart gettingStarted.cpp -I../
@@ -37,7 +37,7 @@ Process ranks: 2,(0,1); Local lattice size: (25,29,16); First local point coordi
 Process ranks: 3,(1,1); Local lattice size: (25,29,16); First local point coordinate: (0,28,16).
 \endverbatim
 
-First line give the size of the 2 dimension of the parallel grid. Second line give the size of a Lattice. Then each process output its ranks and the description of the local part of the lattice (the part of the lattice which is stored on the given process).
+The first line gives the size of the 2 dimension of the parallel grid. The second line gives the size of a Lattice. Then each process output its ranks and the description of the local part of the lattice (the part of the lattice which is stored on the given process).
 
 
 
@@ -47,13 +47,13 @@ First line give the size of the 2 dimension of the parallel grid. Second line gi
 
 \subsection code_parallel_gettingStarted Parallel initialization
 
-The first operation to perform within any code which use LATfield2 is to initialize the parallel object by giving the size of the 2 dimensions of the parallel grid. This numbers depend on the number of process used to run, therefor it is advised to read this numbers from the executable arguments. Here this 2 integer are given using "-n XX -m YY":
+The first operation to perform within any code which use LATfield2 is to initialize the parallel object by giving the size of the 2 dimensions of the parallel grid. This numbers depend on the number of process used to run, therefor it is advised to read the numbers from the executable arguments. Here this 2 integer are given using "-n XX -m YY":
 
 \until parallel
 \until }
 \until }
 
-Then the parallel object is initialized passing the two integer n and m:
+Then the parallel object is initialized passing the two integers n and m:
 
 \line parallel
 \line
@@ -62,7 +62,7 @@ This will initialize the parallel grid by calling MPI_initialize and will also c
 
 After this, one can output the size of the parallel grid:
 \line COUT
-The command COUT is a definition of \verbatim if(parallel.isRoot())cout \endverbatim and therefor only the root process (the one with rank 0) will perform the output. 
+The command COUT is a definition of \verbatim if(parallel.isRoot())cout \endverbatim and therefore only the root process (the one with rank 0) will perform the output. 
 
 
 
@@ -71,19 +71,18 @@ The command COUT is a definition of \verbatim if(parallel.isRoot())cout \endverb
 \skip Lattice
 \until Lattice
 
-LATfield2 can work with lattice of N-dimension, with N larger or equal to 2. In this example we will declare a lattice with 3 dimension. 
+LATfield2 can work with lattice of N-dimensions, with N larger or equal to 2. In this example we will declare a lattice with 3 dimensions. 
 
 \until Lattice
 
 Note that the halo (number of ghost cells) is a single integer, as each dimension of the lattice have the same halo within LATfield2.
 Also note that if boxSize is an integer (instead of a pointer) this will initialize the lattice with each dimension with the same size.
 
-Let output the description of the Lattice:
 
-First lets output the size of the 3 dimension using COUT to avoid that every process output the same information.
+Next the code outputs the size of the 3 dimension using COUT.
 \line COUT
 
-Then lets output on a single line the local description of the lattice. So first lets output the MPI ranks of each process, first the world rank then the 2d ranks (the position with the parallel grid). Then lets output the size of the part of the lattice which is stored in this given process. And finally the offset to this local part in respect to the global lattice.
+Then the code outputs on a single line the local description of the lattice. First the MPI ranks of each process, first the world rank then the 2d ranks (the position with the parallel grid). Then the size of the local part of the lattice which is stored in this given process. Finally the offset to this local part in respect to the global lattice.
 
 \line cout
 \until Coordinate
@@ -94,11 +93,11 @@ Then lets output on a single line the local description of the lattice. So first
 \skip Declaration
 \until Declaration
 
-In this simple example we want to work with 3 fields, \f$ \phi,\rho \f$ and \f$ \nabla \phi \f$ who are named in the code phi, rho and gradphi. One can declare, initialize and allocate field using:
+In this simple example we want to work with 3 fields, \f$ \phi,\rho \f$ and \f$ \nabla \phi \f$ which are named in the code phi, rho and gradphi. One can declare, initialize and allocate field using:
 
 \until gradPhi
 
-In the case that declaration should be separately performed (as within a class declaration, or when several fields point to the same array and therefor should not be allocated), one can use the following 3 command:
+In the case that declaration should be separately performed (as within a class declaration, or when several fields point to the same array and therefore should not be allocated), one can use the following 3 command:
 
 \until alloc
 
@@ -108,7 +107,7 @@ In the case that declaration should be separately performed (as within a class d
 \skip Operation
 \until Operation
 
-First, we would like to initialize the value of \f$\phi\f$ to be a gaussian defined as \f$\phi=e^{-2(x-x_0)^2}\f$. To do so we have to declare a Site object on the lattice of \f$\phi\f$. This object will allow to work with coordinate.
+First, we would like to initialize the value of \f$\phi\f$ to be a gaussian defined as \f$\phi=e^{-2(\vec{x}-\vec{x}_0)^2}\f$. To do so we have to declare a Site object on the lattice of \f$\phi\f$. This object will allow to work with coordinate.
 
 \line Site
 
@@ -117,18 +116,18 @@ Then it is possible to loop over all site using the usual for loop:
 \skip x2
 \until }
 
-In that loop the exponential is built with \f$ x_0 = latticeSize/2 + 0.5 \f$ this mean that the gaussian is centered at the center of the lattice center cell. The coord method return the coordinate of the site object in lattice unite (integer).
+In that loop the exponential is built with \f$ x_0 = latticeSize/2 + 0.5 \f$ this mean that the gaussian is centered at the center of the lattice center cell. The coord method return the coordinate of the site object in lattice units.
 
-Then some spacial derivative are computed to build \f$gradPhi=\vec{\nabla}\phi\f$ and \f$\rho=\Delta\phi\f$. To do so, first thing to do is to update the ghost cells (halo) of \f$\phi\f$.
+Then some spacial derivative are computed to build \f$gradPhi=\vec{\nabla}\phi\f$ and \f$\rho=\Delta\phi\f$. The first thing to do is to update the ghost cells (halo) of \f$\phi\f$.
 
 \line updateHalo
 
-Then the derivation can be performed. Here for simplicity we have set dx to one. 
+Then the derivative can be performed.
 
 \skip for
 \until }
 
-This shows how to work with file with multiple components (gradPhi). And exhibit the usage of the Site object for displacement in the Lattice. The operator + and - are overloaded to provide an extremely easy way to travel on the lattice. Both operator will return the neighbor site in the direction specified after the operator. 
+This shows how to work with file with multiple components (gradPhi), and also exhibits the usage of the Site object for displacement in the Lattice. The operator + and - are overloaded to provide an extremely easy way to move on the lattice. Both operator will return the neighbor site in the direction specified after the operator. 
 
 \subsection code_fieldIO_gettingStarted Field I/O
 
