@@ -13,6 +13,7 @@
 #include <fstream>
 #include <string>
 #include <typeinfo>
+#include <list>
 
 
 #ifdef FFT3D
@@ -20,7 +21,19 @@
 #endif
 
 
+#ifdef HDF5
+#include "hdf5.h"
+#ifdef SINGLE
+#define REAL_TYPE H5T_NATIVE_FLOAT
+#else
+#define REAL_TYPE H5T_NATIVE_DOUBLE
+#endif
+
+#endif
+
 using namespace std;
+
+
 
 
 #ifdef EXTERNAL_IO
@@ -32,11 +45,13 @@ IOserver IO_Server;
 Parallel2d parallel;
 
 
-//IOserver Io_Server;
 #include "LATfield2_SettingsFile.hpp"
+
+
 
 namespace LATfield2
 {
+    #include "int2string.hpp"
 	#include "Imag.hpp"
 	#include "LATfield2_Lattice.hpp"
 	#include "LATfield2_Site.hpp"
@@ -44,7 +59,13 @@ namespace LATfield2
 	#ifdef FFT3D
 	#include "LATfield2_PlanFFT.hpp"
 	#endif
+    
+    #include "particles/LATfield2_Particles.hpp"
+    
 }
+
+
+//#include "particles/LATfield2_Particles.hpp"
 
 #endif
 

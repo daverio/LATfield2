@@ -186,6 +186,11 @@ class Lattice
          */
 		bool is_arch_saved();
         
+        int getRank(int* coord) ; //return the world rank of the process who get the lattices site "coord"
+        int getRankDim0(int coord) ;
+        int getRankDim1(int coord) ;
+        
+        
 	private:
 		int        status_;
 		static int initialized;
@@ -199,7 +204,9 @@ class Lattice
 		
 		//Local variables===============
 		int* sizeLocal_;       //ok//Number of local lattice sites in each direction
-		long  sitesLocal_;      //ok//Number of local sites in lattice
+		int* sizeLocalAllProcDim0_;
+        int* sizeLocalAllProcDim1_;
+        long  sitesLocal_;      //ok//Number of local sites in lattice
 		long  sitesLocalGross_; //ok//Number of local sites in lattice plus halo
 		long* jump_;            //ok//Jumps needed to move up one in each direction
 		
@@ -258,6 +265,8 @@ Lattice::~Lattice()
 		delete[] size_;
 		delete[] sizeLocal_;
 		delete[] jump_;
+        delete[] sizeLocalAllProcDim0_;
+        delete[] sizeLocalAllProcDim1_;
     }
 }
 //INITIALIZE=========================
@@ -278,6 +287,8 @@ void Lattice::initialize(int dim, const int* size, int halo)
 		delete[] size_;
 		delete[] sizeLocal_;
 		delete[] jump_;
+        delete[] sizeLocalAllProcDim0_;
+        delete[] sizeLocalAllProcDim1_;
     }
 	//Store input lattice properties
 	dim_ =dim;
@@ -292,8 +303,21 @@ void Lattice::initialize(int dim, const int* size, int halo)
 	sizeLocal_[dim_-1]-=int(ceil((parallel.grid_size()[0]-parallel.grid_rank()[0]-1)*size_[dim_-1]/float(parallel.grid_size()[0]) ));
 	sizeLocal_[dim_-2]=int(ceil( (parallel.grid_size()[1]-parallel.grid_rank()[1])*size_[dim_-2]/float(parallel.grid_size()[1]) ));
 	sizeLocal_[dim_-2]-=int(ceil((parallel.grid_size()[1]-parallel.grid_rank()[1]-1)*size_[dim_-2]/float(parallel.grid_size()[1]) ));
-	
 	for(i=0;i<dim_-2;i++) sizeLocal_[i]=size_[i];
+    
+    sizeLocalAllProcDim0_ = new int[parallel.grid_size()[0]];
+	sizeLocalAllProcDim1_ = new int[parallel.grid_size()[1]];
+    
+	for(i=0;i<parallel.grid_size()[0];i++)
+    {
+	    sizeLocalAllProcDim0_[i] = int(ceil( (parallel.grid_size()[0]-i)*size_[dim_-1]/float(parallel.grid_size()[0]) ));
+	    sizeLocalAllProcDim0_[i] -= int(ceil((parallel.grid_size()[0]-i-1)*size_[dim_-1]/float(parallel.grid_size()[0]) ));	
+    }
+	for(i=0;i<parallel.grid_size()[1];i++)
+    {
+	    sizeLocalAllProcDim1_[i] = int(ceil( (parallel.grid_size()[1]-i)*size_[dim_-2]/float(parallel.grid_size()[1]) ));
+	    sizeLocalAllProcDim1_[i] -= int(ceil((parallel.grid_size()[1]-i-1)*size_[dim_-2]/float(parallel.grid_size()[1]) ));	
+    }
 	
 	//Calculate index jumps
 	jump_=new long[dim_];
@@ -529,6 +553,64 @@ void Lattice::save_arch(const string filename)
 	if(parallel.rank()==0)cout<<"Architecture saved in : "<<filename<<endl;
 	
 }
+
+int Lattice::getRank(int* coord)
+{
+    int n,m;
+    int temp;
+    bool flag;
+    
+    temp=0;
+    flag = true;
+    for(n=0;flag;n++)
+    {
+        temp+= sizeLocalAllProcDim0_[n];
+        if(temp>coord[dim_-1])flag=false;
+    }
+    n-=1;
+    temp=0;
+    flag = true;
+    for(m=0;flag;m++)
+    {
+        temp+= sizeLocalAllProcDim1_[m];
+        if(temp>coord[dim_-2])flag=false;
+    }
+    m-=1;
+    
+    
+    return parallel.grid2world(n,m);
+    
+}
+int Lattice::getRankDim0(int coord)
+{
+    int n;
+    int temp;
+    bool flag;
+    
+    temp=0;
+    flag = true;
+    for(n=0;flag;n++)
+    {
+        temp+= sizeLocalAllProcDim0_[n];
+        if(temp>coord)flag=false;
+    }
+    return n-1;
+}
+int Lattice::getRankDim1(int coord)
+{
+    int m;
+    int temp;
+    bool flag;
+    temp=0;
+    flag = true;
+    for(m=0;flag;m++)
+    {
+        temp+= sizeLocalAllProcDim1_[m];
+        if(temp>coord)flag=false;
+    }
+    return  m-1;
+}
+
 
 //MISCELLANEOUS======================
 

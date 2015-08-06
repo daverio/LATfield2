@@ -409,6 +409,10 @@ class Parallel2d{
      */
     MPI_Comm lat_world_comm(){return lat_world_comm_;}
     /*!
+     \return lat_world_group_  MPI_Group, the group which contains all compute processes.
+     */
+    MPI_Group lat_world_group(){return lat_world_group_;}
+    /*!
      \return dim0_comm_  MPI_Comm array, array of directional communicator (dim 0, compute processes)
      */
 	MPI_Comm *dim0_comm() {return dim0_comm_;}
@@ -424,6 +428,13 @@ class Parallel2d{
      \return dim1_comm_  MPI_Group array, array of directional group (dim 1, compute processes)
      */
 	MPI_Group *dim1_group() {return dim1_group_;}
+    
+    /*!
+     \return int, the rank in lat_world_comm_ for a given process in grid.
+     \param n : rank in dim0_comm_
+     \param m : rank in dim1_comm_
+     */
+    int grid2world(int n,int m) {return n + grid_size_[0]*m;}
 	
 #ifdef EXTERNAL_IO
     /*!
@@ -859,7 +870,7 @@ template<class Type> void Parallel2d::max_dim0(Type* array, int len)
     if( grid_rank_[0] == 0  )
     {
         int i, j;
-        for(i=0; i<size(); i++)
+        for(i=0; i<grid_size_[0]; i++)
         {
             if( i!=0 ) for(j=0; j<len; j++)
             { 
@@ -890,7 +901,7 @@ template<class Type> void Parallel2d::max_dim1(Type* array, int len)
     if( grid_rank_[1] == 0  )
     {
         int i, j;
-        for(i=0; i<size(); i++)
+        for(i=0; i<grid_size_[1]; i++)
         {
             if( i!=0 ) for(j=0; j<len; j++)
             { 
@@ -949,11 +960,11 @@ template<class Type> void Parallel2d::min_dim0(Type* array, int len)
     MPI_Gather( array, len*sizeof(Type), MPI_BYTE, 
                gather, len*sizeof(Type), MPI_BYTE, 0,dim0_comm_[grid_rank_[1]]);
     
-    //Find max on root
+    //Find min on root
     if( grid_rank_[0] == 0  )
     {
         int i, j;
-        for(i=0; i<size(); i++)
+        for(i=0; i<grid_size_[0]; i++)
         {
             if( i!=0 ) for(j=0; j<len; j++)
             { 
@@ -980,11 +991,11 @@ template<class Type> void Parallel2d::min_dim1(Type* array, int len)
     MPI_Gather( array, len*sizeof(Type), MPI_BYTE, 
                gather, len*sizeof(Type), MPI_BYTE, 0,dim1_comm_[grid_rank_[0]]);
     
-    //Find max on root
+    //Find min on root
     if( grid_rank_[1] == 0  )
     {
         int i, j;
-        for(i=0; i<size(); i++)
+        for(i=0; i<grid_size_[1]; i++)
         {
             if( i!=0 ) for(j=0; j<len; j++)
             { 

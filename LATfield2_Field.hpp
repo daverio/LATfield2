@@ -503,6 +503,11 @@ void Field<FieldType>::get_h5type()
         H5Tinsert (type_id, "imaginary", sizeof(Real),H5T_NATIVE_DOUBLE);
 #endif
     }
+    else if (type_name[nt+1]=='p' && type_name[nt+2]=='a' && type_name[nt+3]=='r' && type_name[nt+4]=='t' &&
+             type_name[nt+5]=='L' && type_name[nt+6]=='i' && type_name[nt+7]=='s' && type_name[nt+8]=='t')
+    {
+        COUT<< "initializing particle field... unable to call Field.saveHDF5"<<endl;
+    }
 	else 
 	{
 		COUT<<"LATField2d::Field::save_hdf5  :  Cannot recognize type of field: " << type_name <<endl;
@@ -511,6 +516,10 @@ void Field<FieldType>::get_h5type()
 		COUT<<"LATField2d::Field::save_hdf5  :  unsigned long, long long, unsigned long long, float, double, long double, Imag ." <<endl;
 		COUT<<"LATField2d::Field::save_hdf5  :  1 dimensional array of those type are also accepted" <<endl;
 		COUT<<"LATField2d::Field::save_hdf5  :  ---------------------------------------------------------------------------------" <<endl;
+        /*for(int i = 0;i<9 ;i++)
+        {
+            COUT<<type_name[nt+i]<<endl;
+        }*/
 	}
     
       
@@ -522,7 +531,7 @@ void Field<FieldType>::get_h5type()
 template <class FieldType>
 Field<FieldType>::~Field()
 {
-	if(status_ == allocated) this->dealloc();
+	if(status_ & allocated) this->dealloc();
 	
 }
 
@@ -565,63 +574,48 @@ void Field<FieldType>::initialize(Lattice& lattice, int rows, int cols, int symm
 template <class FieldType>
 void Field<FieldType>::alloc()
 {
-	if(status_ != allocated )
+	if((status_ & allocated) == 0)
     {
-        data_ = (FieldType * )malloc(components_*lattice_->sitesLocalGross()*sizeof(FieldType) );
-		status_ = allocated;
+        
+		data_= new FieldType[components_*lattice_->sitesLocalGross()]; 
+		status_ = status_ | allocated;
+
         if(data_==NULL)
         {
-            cout<<"LATField2d::Field::alloc()  :process "<< parallel.rank() <<" cannot allocate the field data array."<<endl;
+            cout<<"LATField2d::Field::alloc(long size)  :process "<< parallel.rank() <<" cannot allocate the field data array."<<endl;
             
         }
-    }
-    else
-    {
-        this->dealloc();
-        data_ = (FieldType * )malloc(components_*lattice_->sitesLocalGross()*sizeof(FieldType) );
-        status_ = allocated;
-        if(data_==NULL)
-        {
-            cout<<"LATField2d::Field::alloc()  :process "<< parallel.rank() <<" cannot allocate the field data array."<<endl;
-            
-        }
+
     }
 }
 
 template <class FieldType>
 void Field<FieldType>::alloc(long size)
 {
-	if(status_ != allocated)
+    long alloc_number;
+    
+    if(size < lattice_->sitesLocalGross()) alloc_number =  lattice_->sitesLocalGross();
+    else alloc_number= size;
+    
+	if((status_ & allocated) == 0)
     {
-		if(size > (components_*lattice_->sitesLocalGross()*sizeof(FieldType)) )
+		
+		data_= new FieldType[components_* size]; 
+		status_ = status_ | allocated;
+        
+        if(data_==NULL)
         {
-            data_ = (FieldType * )malloc(size); 
-            status_ =  allocated;
-            if(data_==NULL)
-            {
-                cout<<"LATField2d::Field::alloc(long size)  :process "<< parallel.rank() <<" cannot allocate the field data array."<<endl;
-                
-            }
-        }
-        else
-        {
-            this->alloc();
-        }
-    }       
-    else
-    {
-        if(size > (components_*lattice_->sitesLocalGross()*sizeof(FieldType)) )
-        {
-            this->dealloc();
-            data_ = (FieldType * )malloc(size); 
-            status_ = allocated;
-            if(data_==NULL)
-            {
-                cout<<"LATField2d::Field::alloc(long size)  :process "<< parallel.rank() <<" cannot allocate the field data array."<<endl;
-                
-            }
+            cout<<"LATField2d::Field::alloc(long size)  :process "<< parallel.rank() <<" cannot allocate the field data array."<<endl;
+            
         }
     }
+    else if(size > lattice_->sitesLocalGross())
+    {
+        this->dealloc();
+        this->alloc(size);
+    }
+    
+    
 }
 
 
@@ -629,12 +623,13 @@ void Field<FieldType>::alloc(long size)
 template <class FieldType>
 void Field<FieldType>::dealloc()
 {
-	if(status_ == allocated) 
+	if((status_ & allocated) > 0) 
     {
 		delete[] data_; 
-		status_= 1; 
+		status_= status_ ^ allocated; 
     }
 }
+
 
 //FIELD INDEXING===============
 

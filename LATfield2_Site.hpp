@@ -182,6 +182,9 @@ class Site
                  False: if the local part of the lattice does not have this coordinate.
          */
 		bool setCoord(int x, int y, int z);
+        
+        bool setCoordLocal(int *r);
+        
         /*!
          \return Returns the pointer to the lattice on which the site is defined.
          */
@@ -194,7 +197,7 @@ class Site
 
 //CONSTRUCTORS===================
 
-Site::Site() {;}
+Site::Site() {index_=0; lattice_ = NULL;}
 Site::Site(Lattice& lattice) { initialize(lattice); }
 Site::Site(Lattice& lattice, long index) { initialize(lattice, index); }
 
@@ -327,7 +330,19 @@ bool Site::setCoord(int x, int y=0, int z=0)
 	r[2]=z;
 	return this->setCoord(r);
 	delete[] r;
-}    
+}
+bool Site::setCoordLocal(int *r)
+{
+    this->first();
+    long jump=0;
+    for(int i=0; i<lattice_->dim(); i++)
+    {
+        jump+=r[i]*lattice_->jump(i);
+    } 
+    
+    this->indexAdvance(jump);
+    return true;
+}
 Lattice& Site::lattice() { return *lattice_ ; }
 
 
