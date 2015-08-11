@@ -372,7 +372,9 @@ void SettingsFile::write(const std::string parameter_name, const TemplateClass &
 		}
 		
 		//creat line array and this_param array
-		string lines[line_number];
+        string * lines;
+        lines = new string[line_number];
+        
 		bool this_param[line_number];
 		file_.seekg(0);
 		file_.close();
