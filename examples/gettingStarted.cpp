@@ -6,7 +6,7 @@
 
 
 #include "LATfield2.hpp"
-using namespace std;
+using namespace LATfield2;
 
 
 int main(int argc, char **argv)
@@ -33,7 +33,7 @@ int main(int argc, char **argv)
     COUT << "Parallel grid size: ("<<parallel.grid_size()[0]<<","<<parallel.grid_size()[1]<<"). "<<endl;
     //-----------------------   end   ------------------------
     
-    /*
+    
     //------------   Declaration of a Lattice   --------------
     int dim = 3;
     int latSize[3] = {25,57,32};
@@ -46,7 +46,7 @@ int main(int argc, char **argv)
     cout << "Coordinate of the first local point: (0,"<< lat.coordSkip()[1] <<","<< lat.coordSkip()[0] <<")."<<endl;
     //-----------------------   end   ------------------------
     
-    /*
+    
     //-----------   Declaration of the Fields   --------------
     Field<Real> rho(lat);
     Field<Real> gradPhi(lat,3);
@@ -96,7 +96,7 @@ int main(int argc, char **argv)
     phi.write(str_filename);
 #endif
     
-    */
+    
     //--------------------------------------------------------
 }
    
