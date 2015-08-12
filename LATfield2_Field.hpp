@@ -501,8 +501,8 @@ void Field<FieldType>::get_h5type()
         H5Tinsert (type_id, "imaginary", sizeof(Real),H5T_NATIVE_DOUBLE);
 #endif
     }
-    else if (type_name[nt+1]=='p' && type_name[nt+2]=='a' && type_name[nt+3]=='r' && type_name[nt+4]=='t' &&
-             type_name[nt+5]=='L' && type_name[nt+6]=='i' && type_name[nt+7]=='s' && type_name[nt+8]=='t')
+    else if (type_name[nt+12]=='p' && type_name[nt+13]=='a' && type_name[nt+14]=='r' && type_name[nt+15]=='t' &&
+             type_name[nt+16]=='L' && type_name[nt+17]=='i' && type_name[nt+18]=='s' && type_name[nt+19]=='t')
     {
         COUT<< "initializing particle field... unable to call Field.saveHDF5"<<endl;
     }

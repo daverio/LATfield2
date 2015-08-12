@@ -17,7 +17,9 @@ void move_particles_gevolution(double dtau,
                                Field<Real> ** fields,
                                Site * sites,
                                int nfield,
-                               double * params){
+                               double * params,
+                               double * outputs,
+                               int noutputs){
 
     
     if(nfield == 1)

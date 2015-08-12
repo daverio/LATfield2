@@ -17,7 +17,10 @@ Real updateVel_gevolution(double dtau,
                           Field<Real> ** fields,
                           Site * sites,
                           int nfield,
-                          double * params){
+                          double * params,
+                          double * outputs,
+                          int noutputs)
+{
 
 
 #define phi (fields[0])

@@ -59,7 +59,7 @@ int main(int argc, char **argv)
     
     part_simple_info particles_global_info;
     particles_global_info.mass=0.21;
-    //particles_global_info.type_name="part_simple";
+    particles_global_info.type_name="part_simple";
     particles_global_info.relativistic=true;
     part_simple_dataType particles_dataType;
     
@@ -122,25 +122,9 @@ int main(int argc, char **argv)
     listField_updateVel[0] = &phi;
     listField_updateVel[1] = &B;
     
-    /*
-    int ns=8;
-    Site ** sites;
-    sites = new Site*[ns];
-    for(int i=0;i<ns;i++)
-    {
-        sites[i] = new Site(listField_move[0]->lattice());
-        //(*sites[i]).initialize(listField_move[0]->lattice());
-    }
     
-    for(int i=0;i<ns;i++)
-    {
-        (* sites[i]).first();
-        (* sites[i]).next();
-        (* sites[i]).test();
-    }
-    */
     
-    /*
+    
     double H_conformal=1;
     int flag_init=1;
     Real rescaleB = 1;
@@ -150,15 +134,26 @@ int main(int argc, char **argv)
     updateVel_gevolution_params[1]=rescaleB;
     updateVel_gevolution_params[2]=flag_init;
     
+    double output[6];
+    int output_type[6];
     
-    for(int i=0;i<5;i++)
+    
+    output_type[0]=MIN;
+    output_type[1]=SUM;
+    output_type[2]=MAX;
+    output_type[3]=MAX_LOCAL;
+    output_type[4]=MIN_LOCAL;
+    output_type[5]=SUM_LOCAL;
+    
+    
+    for(int i=0;i<1;i++)
     {
-        cout<<i<<endl;
+        //cout<<i<<endl;
         parts.coutPart(0);
-        parts.updateVel(&updateVel_gevolution,1,listField_updateVel,2,updateVel_gevolution_params);
-        parts.moveParticles(&move_particles_gevolution,1,listField_move,0,&rescaleB);
+        parts.updateVel(&updateVel_gevolution,1,listField_updateVel,2,updateVel_gevolution_params,output,output_type,6);
+        parts.moveParticles(&move_particles_gevolution,1,listField_move,0,&rescaleB,output,output_type,6);
     }
-    */ 
+    
     
     
     

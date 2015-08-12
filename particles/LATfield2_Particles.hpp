@@ -23,6 +23,14 @@ CREATE_MEMBER_DETECTOR_MAXI(mass)
 #define INDIVIDUAL_MASS 1
 #define NO_MASS         2
 
+
+#define SUM             1
+#define MIN             2
+#define MAX             4
+#define SUM_LOCAL       8
+#define MIN_LOCAL      16
+#define MAX_LOCAL      32
+
 using namespace LATfield2;
 
 template <typename part, typename part_info, typename part_dataType>
@@ -63,18 +71,24 @@ public:
     
     
     
-    Real updateVel(Real (*updateVel_funct)(double,double,part*,double *,part_info,Field<Real> **,Site *,int,double*),
+    Real updateVel(Real (*updateVel_funct)(double,double,part*,double *,part_info,Field<Real> **,Site *,int,double*,double*,int),
                    double dtau,
                    Field<Real> ** fields,
                    int nfields,
-                   double * params=NULL);
+                   double * params=NULL,
+                   double * output=NULL,
+                   int * reduce_type=NULL,
+                   int noutput=0);
                    //Field<Real> * phi, Field<Real> * Bi, double rescaleB, double H_conformal, double dtau, int flag_init);
     
-    void moveParticles( void (*move_funct)(double,double,part*,double *,part_info,Field<Real> **,Site *,int,double*),
+    void moveParticles( void (*move_funct)(double,double,part*,double *,part_info,Field<Real> **,Site *,int,double*,double*,int),
                        double dtau,
                        Field<Real> ** fields=NULL,
                        int nfields=0,
-                       double * params=NULL);
+                       double * params=NULL,
+                       double * output=NULL,
+                       int * reduce_type=NULL,
+                       int noutput=0);
 
   void saveHDF5(string filename_base, int fileNumber);
   void loadHDF5(string filename_base, int fileNumber);
@@ -277,11 +291,14 @@ bool Particles<part,part_info,part_dataType>::addParticle_global(part newPart)
 }
 
 template <typename part, typename part_info, typename part_dataType>
-Real Particles<part,part_info,part_dataType>::updateVel(Real (*updateVel_funct)(double,double,part*,double *,part_info,Field<Real> **,Site *,int,double*),
+Real Particles<part,part_info,part_dataType>::updateVel(Real (*updateVel_funct)(double,double,part*,double *,part_info,Field<Real> **,Site *,int,double*,double*,int),
                double dtau,
                Field<Real> ** fields,
                int nfields,
-               double * params)
+               double * params,
+               double * output,
+               int * reduce_type,
+               int noutput)
 {
     if(nfields<1)
     {
@@ -301,7 +318,32 @@ Real Particles<part,part_info,part_dataType>::updateVel(Real (*updateVel_funct)(
     Real maxvel = 0.;
     Real v2;
     
+    //cout<<"arg"<<endl;
 
+    
+    double * output_temp;
+    output_temp =new double[noutput];
+    
+    if(noutput>0)for(int i=0;i<noutput;i++)
+    {
+        //COUT<<reduce_type[i]<<endl;
+        if(reduce_type[i] & (SUM | SUM_LOCAL))
+        {
+            output[i]=0;
+            
+            //COUT<< "sum" <<endl;
+        }
+        else if(reduce_type[i] & (MIN | MIN_LOCAL))
+        {
+            output[i]=9223372036854775807;
+            //COUT<<"min"<<endl;
+        }
+        else if(reduce_type[i] & (MAX | MAX_LOCAL))
+        {
+            output[i]=-9223372036854775807;
+            //COUT<<"max"<<endl;
+        }
+    }
    
     for(int i=0;i<nfields;i++) sites[i].first();
     for(xPart.first() ; xPart.test(); xPart.next())
@@ -322,26 +364,71 @@ Real Particles<part,part_info,part_dataType>::updateVel(Real (*updateVel_funct)(
                            fields,
                            sites,
                            nfields,
-                           params);
+                           params,
+                           output_temp,
+                           noutput);
                  
                 if(v2>maxvel)maxvel=v2;
+                
+                if(noutput>0)for(int i=0;i<noutput;i++)
+                {
+                    //COUT<<reduce_type[i]<<endl;
+                    if(reduce_type[i] & (SUM | SUM_LOCAL))
+                    {
+                        output[i]+=output_temp[i];
+                    }
+                    else if(reduce_type[i] & (MIN | MIN_LOCAL))
+                    {
+                        if(output[i]>output_temp[i])output[i]=output_temp[i];
+                    }
+                    else if(reduce_type[i] & (MAX | MAX_LOCAL))
+                    {
+                        if(output[i]<output_temp[i])output[i]=output_temp[i];
+                    }
+                }
+
+                
                 
             }
         }
         for(int i=0;i<nfields;i++) sites[i].next();
     }
-    return sqrt(maxvel);
+
+    if(noutput>0)for(int i=0;i<noutput;i++)
+    {
+        //COUT<<reduce_type[i]<<endl;
+        if(reduce_type[i] & SUM)
+        {
+            parallel.sum(output[i]);
+        }
+        else if(reduce_type[i] & MIN)
+        {
+            parallel.min(output[i]);
+        }
+        else if(reduce_type[i] & MAX)
+        {
+            parallel.max(output[i]);
+        }
+    }
+
+    delete[] output_temp;
     
+    
+    return sqrt(maxvel);
+
 
 }
 
 
 template <typename part, typename part_info, typename part_dataType>
-void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(double,double,part*,double *,part_info,Field<Real> **,Site *,int,double*),
+void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(double,double,part*,double *,part_info,Field<Real> **,Site *,int,double*,double*,int),
                                                             double dtau,
                                                             Field<Real> ** fields,
                                                             int nfields,
-                                                            double * params)
+                                                            double * params,
+                                                            double * output,
+                                                            int * reduce_type,
+                                                            int noutput)
 {
 #ifdef DEBUG_MOVE
     cout<<parallel.rank()<<"; move start"<<endl;
@@ -382,6 +469,7 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
         
     std::list<part>  part_moveProc[8];
     
+    
     if(nfields!=0)
     {
         sites = new LATfield2::Site[nfields];
@@ -391,6 +479,33 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
             sites[i].first();
         }
     }
+    
+    
+    double * output_temp;
+    output_temp =new double[noutput];
+    
+    if(noutput>0)for(int i=0;i<noutput;i++)
+    {
+        //COUT<<reduce_type[i]<<endl;
+        if(reduce_type[i] & (SUM | SUM_LOCAL))
+        {
+            output[i]=0;
+            
+            //COUT<< "sum" <<endl;
+        }
+        else if(reduce_type[i] & (MIN | MIN_LOCAL))
+        {
+            output[i]=9223372036854775807;
+            //COUT<<"min"<<endl;
+        }
+        else if(reduce_type[i] & (MAX | MAX_LOCAL))
+        {
+            output[i]=-9223372036854775807;
+            //COUT<<"max"<<endl;
+        }
+    }
+
+    
     
     for(x.first();x.test();x.next())
     {
@@ -426,7 +541,28 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                            fields,
                            sites,
                            nfields,
-                           params);
+                           params,
+                           output_temp,
+                           noutput);
+                
+                
+                if(noutput>0)for(int i=0;i<noutput;i++)
+                {
+                    //COUT<<reduce_type[i]<<endl;
+                    if(reduce_type[i] & (SUM | SUM_LOCAL))
+                    {
+                        output[i]+=output_temp[i];
+                    }
+                    else if(reduce_type[i] & (MIN | MIN_LOCAL))
+                    {
+                        if(output[i]>output_temp[i])output[i]=output_temp[i];
+                    }
+                    else if(reduce_type[i] & (MAX | MAX_LOCAL))
+                    {
+                        if(output[i]<output_temp[i])output[i]=output_temp[i];
+                    }
+                }
+
             
                 
                 int partRanks[2];
@@ -534,6 +670,25 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
         
     }
     for(x.first();x.test();x.next())if((field_part_)(x).size!=0)(field_part_)(x).parts.splice((field_part_)(x).parts.end(), (field_part_)(x).partsTemp );
+    
+    if(noutput>0)for(int i=0;i<noutput;i++)
+    {
+        //COUT<<reduce_type[i]<<endl;
+        if(reduce_type[i] & SUM)
+        {
+            parallel.sum(output[i]);
+        }
+        else if(reduce_type[i] & MIN)
+        {
+            parallel.min(output[i]);
+        }
+        else if(reduce_type[i] & MAX)
+        {
+            parallel.max(output[i]);
+        }
+    }
+    
+    delete[] output_temp;
     
 
     //remove the number of part...
