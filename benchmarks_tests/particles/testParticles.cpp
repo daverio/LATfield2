@@ -32,12 +32,12 @@ int main(int argc, char **argv)
     parallel.initialize(n,m);
 	
 	int dim=3;
-    int halo=1;
+    int halo=2;
     int khalo=2;
-	int npts[3]={64,128,64};    
+	int npts[3]={64 ,64,64};
     int numparts=16;
 
-    Real boxSize[3]={1.,2.,1.};
+    Real boxSize[3]={1.,1.,1.};
 
     Real  latresolution;
     latresolution = get_lattice_resolution(npts,boxSize);
@@ -145,7 +145,7 @@ int main(int argc, char **argv)
     output_type[4]=MIN_LOCAL;
     output_type[5]=SUM_LOCAL;
     
-    
+    /*
     for(int i=0;i<1;i++)
     {
         //cout<<i<<endl;
@@ -153,9 +153,9 @@ int main(int argc, char **argv)
         parts.updateVel(&updateVel_gevolution,1,listField_updateVel,2,updateVel_gevolution_params,output,output_type,6);
         parts.moveParticles(&move_particles_gevolution,1,listField_move,0,&rescaleB,output,output_type,6);
     }
+    */
     
-    
-    
+    /*
     
     
     has_maxi_mass<part_simple> hmm_part;
@@ -174,6 +174,20 @@ int main(int argc, char **argv)
     scalarProjectionCIC_comm(&phi);
     
     vectorProjectionCICNGP_project(&parts,&B);
-    //vectorProjectionCIC_comm(&phi);
+    vectorProjectionCICNGP_comm(&B);
+    
+    B.saveHDF5("test.h5");
+     */
+    
+    projection_init(&phi);
+    scalarProjectionCIC_project(&parts,&phi);
+    scalarProjectionCIC_comm(&phi);
+    
+    projection_init(&B);
+    vectorProjectionCICNGP_project(&parts,&B);
+    vectorProjectionCICNGP_comm(&B);
+    
+    B.saveHDF5("test.h5");
+    
 }
 

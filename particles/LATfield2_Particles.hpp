@@ -1403,7 +1403,7 @@ void Particles<part,part_info,part_dataType>::saveHDF5(string filename_base, int
     
     
   if(fileNumber==1)  filename = filename_base +".h5";
-  else filename = filename_base + "_" + LATfield2::int2string(whichFile,999)+".h5";
+  else filename = filename_base + "_" + int2string(whichFile,999)+".h5";
 
 
   save_hdf5_particles(filename,
@@ -1452,8 +1452,8 @@ void Particles<part,part_info,part_dataType>::loadHDF5(string filename_base, int
         }
         else
         {
-            for(int i=0;i<fileNumber;i++)get_fileDsc_global(filename_base + "_" + LATfield2::int2string(i,999)+".h5",fd[i]);
-            get_partInfo(filename_base + "_" + LATfield2::int2string(0,999)+".h5",part_info_file,part_datatype_);
+            for(int i=0;i<fileNumber;i++)get_fileDsc_global(filename_base + "_" + int2string(i,999)+".h5",fd[i]);
+            get_partInfo(filename_base + "_" + int2string(0,999)+".h5",part_info_file,part_datatype_);
         }
     
     
@@ -1510,7 +1510,7 @@ void Particles<part,part_info,part_dataType>::loadHDF5(string filename_base, int
         
         if(fileNumber ==1)get_fileDsc_local(filename_base + ".h5",numParts_file,
                                             localBoxOffset_file,localBoxSize_file);
-        else get_fileDsc_local(filename_base + "_" + LATfield2::int2string((*it),999)+".h5",
+        else get_fileDsc_local(filename_base + "_" + int2string((*it),999)+".h5",
                                numParts_file,localBoxOffset_file,localBoxSize_file);
             
         
@@ -1534,7 +1534,7 @@ void Particles<part,part_info,part_dataType>::loadHDF5(string filename_base, int
                 
                 if(fileNumber ==1)get_part_sublist(filename_base + ".h5",
                                                    partList_offset,partList_size,partList,part_datatype_);
-                else get_part_sublist(filename_base + "_" + LATfield2::int2string((*it),999)+".h5",
+                else get_part_sublist(filename_base + "_" + int2string((*it),999)+".h5",
                                       partList_offset,partList_size,partList,part_datatype_);
                 
                 

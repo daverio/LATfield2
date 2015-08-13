@@ -419,6 +419,7 @@ void vectorProjectionCICNGP_project(Particles<part,part_info,part_dataType> * pa
 
 void vectorProjectionCICNGP_comm(Field<Real> * vel)
 {
+    
     if(vel->lattice().halo() == 0)
     {
         cout<< "LATfield2::scalarProjectionCIC_proj: the field has to have at least a halo of 1" <<endl;
@@ -456,6 +457,8 @@ void vectorProjectionCICNGP_comm(Field<Real> * vel)
     
     int comp=3;
     
+    
+    iref =sizeLocalGross[0] - halo ;
     for(int k=distHaloOne;k<sizeLocalOne[2]+distHaloOne;k++)
     {
         for(int j=distHaloOne;j<sizeLocalOne[1]+distHaloOne;j++)
@@ -464,7 +467,7 @@ void vectorProjectionCICNGP_comm(Field<Real> * vel)
         }
     }
     
-    
+   
     //send halo in direction Y
     bufferSizeY =  (long)(sizeLocalOne[2]-1)*sizeLocal[0] * comp;
     bufferSizeZ = sizeLocal[0] * sizeLocal[1] * comp;
@@ -508,6 +511,9 @@ void vectorProjectionCICNGP_comm(Field<Real> * vel)
     //send halo in direction Z
     
     //pack data
+    
+    //cout<<"okok"<<endl;
+    
     iref=sizeLocalGross[2]-halo;
     for(int j=0;j<(sizeLocalOne[1]-2);j++)
     {
@@ -532,7 +538,7 @@ void vectorProjectionCICNGP_comm(Field<Real> * vel)
     
     free(bufferRec);
     free(bufferSend);
-    
+   
     
 }
 
@@ -1100,7 +1106,7 @@ void VecVecProjectionCICNGP_comm(Field<Real> * Tij)
     
     int comp=6;
     
-    
+    iref = sizeLocalGross[0]-halo;
     for(int k=distHaloOne;k<sizeLocalOne[2]+distHaloOne;k++)
     {
         for(int j=distHaloOne;j<sizeLocalOne[1]+distHaloOne;j++)
