@@ -1,4 +1,4 @@
-#ifndef LATFIELD2_PROJECIONS_HPP
+#ifndef LATFIELD2_PROJECTIONS_HPP
 #define LATFIELD2_PROJECTIONS_HPP
 /*! \file projections.hpp
  \breif bablbalbal
@@ -417,7 +417,6 @@ void vectorProjectionCICNGP_project(Particles<part,part_info,part_dataType> * pa
 
 
 
-template<typename part, typename part_info, typename part_dataType>
 void vectorProjectionCICNGP_comm(Field<Real> * vel)
 {
     if(vel->lattice().halo() == 0)
@@ -754,7 +753,7 @@ void vectorProjectionCIC_project(Particles<part,part_info,part_dataType> * parts
      
 }
 
-template<typename part, typename part_info, typename part_dataType>
+
 void vectorProjectionCIC_comm(Field<Real> * vel)
 {
     
@@ -1060,7 +1059,7 @@ void VecVecProjectionCICNGP_project(Particles<part,part_info,part_dataType> * pa
 
 }
 
-template<typename part, typename part_info, typename part_dataType>
+
 void VecVecProjectionCICNGP_comm(Field<Real> * Tij)
 {
     
@@ -1451,7 +1450,7 @@ void VecVecProjectionCIC_project(Particles<part,part_info,part_dataType> * parts
     }
 
 }
-template<typename part, typename part_info, typename part_dataType>
+
 void VecVecProjectionCIC_comm(Field<Real> * Tij)
 {
     

@@ -50,7 +50,7 @@ Real updateVel_gevolution(double dtau,
     gradPhi[1] += ref_dist[0] * ref_dist[2] * ((*phi)(xP+2+1+0) - (*phi)(xP+2+0));
     gradPhi[2] += ref_dist[0] * ref_dist[1] * ((*phi)(xP+2+1+0) - (*phi)(xP+1+0));
 
-    if(nfield=2 && Bi != NULL)
+    if(nfield==2 && Bi != NULL)
     {
         pgradB[0] = ((1.-ref_dist[2]) * ((*Bi)(xB+0,1) - (*Bi)(xB,1)) + ref_dist[2] * ((*Bi)(xB+2+0,1) - (*Bi)(xB+2,1))) * (*part).vel[1] / rescaleB;
         pgradB[0] += ((1.-ref_dist[1]) * ((*Bi)(xB+0,2) - (*Bi)(xB,2)) + ref_dist[1] * ((*Bi)(xB+1+0,2) - (*Bi)(xB+1,2))) * (*part).vel[2] / rescaleB;
@@ -101,6 +101,8 @@ Real updateVel_gevolution(double dtau,
             v2 += (*part).vel[i] * (*part).vel[i];
         }
     }
+    
+    return v2;
     
 #undef phi
 #undef xP

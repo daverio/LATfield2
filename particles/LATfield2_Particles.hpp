@@ -103,7 +103,7 @@ public:
     int mass_type(){return mass_type_;};
     size_t mass_offset(){return mass_offset_;}; 
 
-private:
+protected:
 
   part_info part_global_info_;
   part_dataType part_datatype_;
