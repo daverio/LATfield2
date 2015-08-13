@@ -27,7 +27,7 @@ int main(int argc, char **argv)
 				break;
 		}
 	}
-
+    
     parallel.initialize(n,m);
 	
     COUT << "Parallel grid size: ("<<parallel.grid_size()[0]<<","<<parallel.grid_size()[1]<<"). "<<endl;
@@ -36,7 +36,7 @@ int main(int argc, char **argv)
     
     //------------   Declaration of a Lattice   --------------
     int dim = 3;
-    int latSize[dim] = {25,57,32};
+    int latSize[3] = {25,57,32};
     int halo = 1;
     Lattice lat(dim,latSize,halo);
     
