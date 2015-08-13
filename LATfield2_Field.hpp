@@ -7,13 +7,7 @@
  */ 
 
 
-#ifdef HDF5
-#ifdef HDF5_PIXIE
-#include "LATfield2_save_hdf5_pixie.h"
-#else
-#include "LATfield2_save_hdf5.h"
-#endif
-#endif
+
 
 //Matrix-style component symmetry
 

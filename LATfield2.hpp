@@ -23,6 +23,10 @@
 using namespace std;
 
 
+
+
+
+
 #ifdef EXTERNAL_IO
 #include "LATfield2_IO_server.hpp"
 IOserver IO_Server;
@@ -34,6 +38,20 @@ Parallel2d parallel;
 
 //IOserver Io_Server;
 #include "LATfield2_SettingsFile.hpp"
+
+
+#ifdef HDF5
+#include "hdf5.h"
+#ifdef H5_HAVE_PIXIE
+#include "LATfield2_save_hdf5_pixie.h"
+#else
+#include "LATfield2_save_hdf5.h"
+#endif
+#endif
+
+
+
+
 
 namespace LATfield2
 {
