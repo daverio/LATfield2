@@ -92,7 +92,11 @@ public:
 
   void saveHDF5(string filename_base, int fileNumber);
   void loadHDF5(string filename_base, int fileNumber);
-
+    
+#ifdef EXTERNAL_IO
+    void saveHDF5_server_open(string filename_base);
+    void saveHDF5_server_write(string filename_base);
+#endif
     void coutPart(long ID);
     
     Lattice & lattice(){return lat_part_;};
@@ -122,6 +126,10 @@ protected:
 
   long numParticles_;
 
+#ifdef EXTERNAL_IO
+    ioserver_file io_file_;
+#endif
+    
 };
 
 template <typename part, typename part_info, typename part_dataType>
@@ -687,7 +695,6 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
             parallel.max(output[i]);
         }
     }
-    
     delete[] output_temp;
     
 
@@ -701,6 +708,7 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
    
     ////////////////////////////////////////////////////////////////
     //First send Y direction
+    
     
     
     //pack data
@@ -1561,5 +1569,44 @@ void Particles<part,part_info,part_dataType>::loadHDF5(string filename_base, int
     
 }
 
+#ifdef EXTERNAL_IO
+template <typename part, typename part_info, typename part_dataType>
+void Particles<part,part_info,part_dataType>::saveHDF5_server_open(string filename_base)
+{
+    io_file_ = IO_Server.openFile(filename_base.c_str() ,UNSTRUCTURED_H5_FILE, part_datatype_.part_memType, part_datatype_.part_fileType);
+}
+template <typename part, typename part_info, typename part_dataType>
+void Particles<part,part_info,part_dataType>::saveHDF5_server_write(string filename_base = "defaultfilename")
+{
+    if(!(io_file_.is_open))
+        io_file_ = IO_Server.openFile(filename_base.c_str() ,UNSTRUCTURED_H5_FILE, part_datatype_.part_memType, part_datatype_.part_fileType);
+    
+    part * partlist;
+    partlist = new part[numParticles_];
+    LATfield2::Site x(lat_part_);
+    typename std::list<part>::iterator it;
+    long index=0;
+    for(x.first();x.test();x.next())
+    {
+        if(field_part_(x).size!=0)
+        {
+            for(it=field_part_(x).parts.begin(); it != field_part_(x).parts.end();++it)
+            {
+                
+                for(int i=0;i<3;i++)
+                {
+                    partlist[index]=(*it);
+                }
+                index++;
+            }
+        }
+    }
+    
+    IO_Server.sendData(io_file_,(char*)partlist,numParticles_ * H5Tget_size(part_datatype_.part_memType));
+    IO_Server.closeFile(io_file_);
+    delete[] partlist;
+
+}
+#endif
 
 #endif

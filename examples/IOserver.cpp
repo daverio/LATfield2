@@ -59,8 +59,7 @@ int main(int argc, char **argv)
          Create line: I am the "rank_world" MPI proces. My rank is "rank" in the compute group. I have the position ("N","M") in the process grid. 
          */
         
-        string filename = "./testfile";
-        ioserver_file file;
+        
         
         string sentence;
         sentence = "I am the " + int2string(parallel.world_rank(),99999) + " MPI process. My rank is ";
@@ -73,15 +72,67 @@ int main(int argc, char **argv)
         for(int i=0;i<sentence.size();i++)sendbuffer[i]=sentence[i];
         sendbuffer[sentence.size()]='\n'; 
         
+        int nparts=100;
+        part_simple pcls[nparts];
+        part_simple_dataType pcls_types;
+        
+        for(int i = 0;i<nparts;i++)
+        {
+            pcls[i].ID=i;
+            pcls[i].pos[0]=1.1;
+            pcls[i].pos[1]=2.1;
+            pcls[i].pos[2]=3.1;
+            pcls[i].vel[0]=1.1;
+            pcls[i].vel[1]=2.2;
+            pcls[i].vel[2]=3.3;
+        }
+        
+        IO_Server.openOstream();
         
         
-        while(IO_Server.openOstream()==OSTREAM_FAIL)usleep(50);
+        Lattice lat(3,64,2);
+        Field<float> phi(lat,3);
         
-        file = IO_Server.createFile(filename);
-        IO_Server.writeBuffer(file,sendbuffer,sentence.size()+1);
-        IO_Server.closeFile(file);
+        ioserver_file ubin_file,ubin_file1,uh5_file,sh5_file;
+        
+        hid_t datatype = H5T_NATIVE_FLOAT;
+        
+        ubin_file = IO_Server.openFile("test_ubin",UNSTRUCTURED_BIN_FILE);
+        uh5_file = IO_Server.openFile("test_uh5",UNSTRUCTURED_H5_FILE,pcls_types.part_memType,pcls_types.part_fileType);
+        sh5_file = IO_Server.openFile("test_sh5",STRUCTURED_H5_FILE,datatype,datatype,&lat,3,1);
+        
+        //sleep(1);
+       
+        
+        size_t size[lat.dim()];
+        size_t offset[lat.dim()];
+        
+        
+        for(int i=0;i<lat.dim();i++)
+        {
+            offset[i]=0;
+            size[i] = lat.sizeLocal(i);
+        }
+        
+        IO_Server.sendData(ubin_file,sendbuffer,sentence.size()+1);
+        IO_Server.sendData(ubin_file,sendbuffer,sentence.size()+1);
+        
+        IO_Server.sendData(uh5_file,(char*)pcls,nparts*sizeof(part_simple));
+        
+        //IO_Server.sendData(sh5_file,(char*)phi.data(),size,offset);
+        
+        IO_Server.closeFile(ubin_file);
+        IO_Server.closeFile(uh5_file);
+        IO_Server.closeFile(sh5_file);
         
         IO_Server.closeOstream();
+        
+        //if(IO_Server.openOstream()== OSTREAM_FAIL) cout<< "arg"<<endl ;
+        
+        //while(IO_Server.openOstream()== OSTREAM_FAIL){}
+        
+        
+        //IO_Server.closeOstream();
         
         IO_Server.stop();
     }

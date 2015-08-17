@@ -405,25 +405,25 @@ int save_hdf5_particles(string filename,
       MPI_Barrier(comm);
       if(mpi_rank==p){
 
-	plist_id = H5Pcreate(H5P_FILE_ACCESS);
-	file_id = H5Fopen(filename.c_str(),H5F_ACC_RDWR,plist_id);
-	H5Pclose(plist_id);
+          plist_id = H5Pcreate(H5P_FILE_ACCESS);
+          file_id = H5Fopen(filename.c_str(),H5F_ACC_RDWR,plist_id);
+          H5Pclose(plist_id);
 	
-	dataset_id = H5Dopen(file_id, "/particles", H5P_DEFAULT);
-	filespace_id = H5Dget_space(dataset_id);
-	plist_id = H5Pcreate(H5P_DATASET_XFER);
-	memspace_id = H5Screate_simple(1,&localNumParts,NULL);
-
-	H5Sselect_hyperslab(memspace_id, H5S_SELECT_SET, &offset, NULL,&localNumParts, NULL);
-	H5Sselect_hyperslab(filespace_id, H5S_SELECT_SET, &offsetf, NULL,&localNumParts, NULL);
+          dataset_id = H5Dopen(file_id, "/particles", H5P_DEFAULT);
+          filespace_id = H5Dget_space(dataset_id);
 	
+          memspace_id = H5Screate_simple(1,&localNumParts,NULL);
 
-	H5Dwrite(dataset_id,partdatatype.part_memType, memspace_id, filespace_id, plist_id,partlist);
+          H5Sselect_hyperslab(memspace_id, H5S_SELECT_SET, &offset, NULL,&localNumParts, NULL);
+          H5Sselect_hyperslab(filespace_id, H5S_SELECT_SET, &offsetf, NULL,&localNumParts, NULL);
+	
+          plist_id = H5Pcreate(H5P_DATASET_XFER);
+          H5Dwrite(dataset_id,partdatatype.part_memType, memspace_id, filespace_id, plist_id,partlist);
 
-	H5Pclose(plist_id);
-	H5Sclose(memspace_id);
-	H5Sclose(filespace_id);
-	H5Dclose(dataset_id);
+          H5Pclose(plist_id);
+          H5Sclose(memspace_id);
+          H5Sclose(filespace_id);
+          H5Dclose(dataset_id);
           
           H5Fclose(file_id);
 

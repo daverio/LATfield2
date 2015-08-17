@@ -439,6 +439,8 @@ class Parallel2d{
      \return isIO_  true if the process is reserved to the IO server, false if the process is a compute process.
      */
     bool isIO(){return isIO_;}
+    MPI_Comm IOcomm(){return IO_comm_;}
+    MPI_Group IOgroup(){return IO_group_;}
 #endif
 	
 private:
@@ -448,6 +450,7 @@ private:
 	int grid_size_[2]; //Number of processes for dim 0 and dim 1
 	int lat_world_rank_; //Process ID
 	int grid_rank_[2]; // Process ID in the 2d grid
+
    	int root_;
     bool isRoot_;
 	bool last_proc_[2];
@@ -457,6 +460,12 @@ private:
 	
 	MPI_Comm world_comm_,lat_world_comm_, *dim0_comm_, *dim1_comm_;
 	MPI_Group world_group_,lat_world_group_, *dim0_group_,*dim1_group_ ;
+    
+    
+#ifdef EXTERNAL_IO
+    MPI_Comm IO_comm_;
+    MPI_Group IO_group_;
+#endif
     
 #ifdef EXTERNAL_IO
     bool isIO_;
@@ -532,10 +541,14 @@ void Parallel2d::initialize(int proc_size0, int proc_size1)
     rang[2]=1;
     
     MPI_Group_range_incl(world_group_,1,&rang,&lat_world_group_);
-    MPI_Comm_create(world_comm_,lat_world_group_ , &lat_world_comm_); 
+    MPI_Comm_create(world_comm_,lat_world_group_ , &lat_world_comm_);
     
-    //lat_world_comm_ = MPI_COMM_WORLD;
-    //MPI_Comm_group(lat_world_comm_,&lat_world_group_);
+    rang[0]=proc_size0*proc_size1;
+    rang[1]=proc_size0*proc_size1 + IO_total_size - 1;
+    rang[2]=1;
+    
+    MPI_Group_range_incl(world_group_,1,&rang,&IO_group_);
+    MPI_Comm_create(world_comm_,IO_group_ , &IO_comm_);
     
     
     MPI_Group_rank(lat_world_group_, &comm_rank);
@@ -831,7 +844,7 @@ template<class Type> void Parallel2d::max(Type* array, int len)
     Type* gather;
     if( rank() == root() ) gather = new Type[len*size()];
     MPI_Gather( array, len*sizeof(Type), MPI_BYTE, 
-               gather, len*sizeof(Type), MPI_BYTE, this->root(), world_comm_);
+               gather, len*sizeof(Type), MPI_BYTE, this->root(), lat_world_comm_);
     
     //Find max on root
     if( isRoot() )
@@ -847,7 +860,7 @@ template<class Type> void Parallel2d::max(Type* array, int len)
     }
     
     //Broadcast result
-    MPI_Bcast( array, len*sizeof(Type), MPI_BYTE, this->root(), world_comm_);
+    MPI_Bcast( array, len*sizeof(Type), MPI_BYTE, this->root(), lat_world_comm_);
     // Tidy up (bug found by MDP 12/4/06)
     if( rank() == root() ) delete[] gather;
 }
@@ -925,7 +938,7 @@ template<class Type> void Parallel2d::min(Type* array, int len)
     Type* gather;
     if( rank() == root() ) gather = new Type[len*size()];
     MPI_Gather( array, len*sizeof(Type), MPI_BYTE, 
-               gather, len*sizeof(Type), MPI_BYTE, this->root(), world_comm_);
+               gather, len*sizeof(Type), MPI_BYTE, this->root(), lat_world_comm_);
     
     //Find min on root
     if( isRoot() )
@@ -941,9 +954,11 @@ template<class Type> void Parallel2d::min(Type* array, int len)
     }
     
     //Broadcast result
-    MPI_Bcast( array, len*sizeof(Type), MPI_BYTE, this->root(), world_comm_);   
+    MPI_Bcast( array, len*sizeof(Type), MPI_BYTE, this->root(), lat_world_comm_);
     // Tidy up (bug found by MDP 12/4/06)
     if( rank() == root() ) delete[] gather;
+    
+    
 }
 
 template<class Type> void Parallel2d::min_dim0(Type& number)
