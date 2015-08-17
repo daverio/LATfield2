@@ -643,9 +643,8 @@ inline FieldType& Field<FieldType>::operator()(long index, int i, int j)
 	int component;
 	if(symmetry_==LATfield2::symmetric) 
     {
-		int min=i; 
-		if(i>j) min=j;
-		component = int( abs(i-j) + min*(rows_+0.5-0.5*min) ); //Will always be an int anyway
+		if (i>j) component = i + j * rows_ - (j * (1 + j)) / 2;
+		else component = j + i * rows_ - (i * (1 + i)) / 2;
     }
 	else { component = j*rows_ + i; }
 	return data_[index*components_ + component];
