@@ -90,7 +90,7 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
 	   
 	   
 #ifdef H5_HAVE_PARALLEL //Parallel version, H5_HAVE_PARALLEL definition is needed by hdf5 to run in parallel too !
-        MPI_Comm comm  = MPI_COMM_WORLD;
+        MPI_Comm comm  = parallel.lat_world_comm();
         MPI_Info info  = MPI_INFO_NULL;
     
         plist_id = H5Pcreate(H5P_FILE_ACCESS);
@@ -184,8 +184,8 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
 #else // serial version, without H5_HAVE_PARALLEL definition hdf5 will run in serial !
  
     int mpi_size,mpi_rank,p;
-    MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+    MPI_Comm_size(parallel.lat_world_comm(), &mpi_size);
+    MPI_Comm_rank(parallel.lat_world_comm(), &mpi_rank);
 
     //create the file
    
@@ -219,10 +219,10 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
         H5Sclose(filespace);
         H5Fclose(file_id);
     }
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(parallel.lat_world_comm());
     for(p=0;p < mpi_size;p++)
     {
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(parallel.lat_world_comm());
         if(mpi_rank==p)
         {
             plist_id = H5Pcreate(H5P_FILE_ACCESS);
@@ -280,7 +280,7 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
             H5Fclose(file_id);
             
         }
-        MPI_Barrier(MPI_COMM_WORLD);
+        MPI_Barrier(parallel.lat_world_comm());
         
         
         
@@ -340,7 +340,7 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
 #ifdef H5_HAVE_PARALLEL	//Parallel version, H5_HAVE_PARALLEL definition is needed by hdf5 to run in parallel too
 
         
-        MPI_Comm comm  = MPI_COMM_WORLD;
+        MPI_Comm comm  = parallel.lat_world_comm();
 		MPI_Info info  = MPI_INFO_NULL;
 		
 		
@@ -420,8 +420,8 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
 		
         
         int mpi_size,mpi_rank,p;
-		MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
-		MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+		MPI_Comm_size(parallel.lat_world_comm(), &mpi_size);
+		MPI_Comm_rank(parallel.lat_world_comm(), &mpi_rank);
 		
 		
 		for(p=0;p < mpi_size;p++)
@@ -496,7 +496,7 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
                     H5Fclose(file_id);
             
                 }
-                MPI_Barrier(MPI_COMM_WORLD);
+                MPI_Barrier(parallel.lat_world_comm());
 			
             }
         
