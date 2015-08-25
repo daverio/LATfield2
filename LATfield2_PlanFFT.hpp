@@ -908,7 +908,7 @@ void PlanFFT<compType>::execute(int fft_type)
                  }
                  }
                  }
-                 MPI_Barrier(MPI_COMM_WORLD);
+                 MPI_Barrier(parallel.lat_world_comm());
                  
                  }	*/		
 				
@@ -952,7 +952,7 @@ void PlanFFT<compType>::execute(int fft_type)
 				
                 
 				
-				MPI_Barrier(MPI_COMM_WORLD);
+				MPI_Barrier(parallel.lat_world_comm());
 				MPI_Alltoall(temp_, (2*rSizeLocal_[2]*rSizeLocal_[2]*r2cSizeLocal_), MPI_DATA_PREC, temp1_, (2*rSizeLocal_[2]*rSizeLocal_[2]*r2cSizeLocal_), MPI_DATA_PREC, parallel.dim0_comm()[parallel.grid_rank()[1]]);
 				MPI_Barrier(parallel.dim0_comm()[parallel.grid_rank()[1]]);
 				
@@ -978,7 +978,7 @@ void PlanFFT<compType>::execute(int fft_type)
                  }
                  }
                  }
-                 MPI_Barrier(MPI_COMM_WORLD);
+                 MPI_Barrier(parallel.lat_world_comm());
                  }*/
                 
                 
@@ -1030,7 +1030,7 @@ void PlanFFT<compType>::execute(int fft_type)
 			for(comp=0;comp<components_;comp++)
 			{
 				b_arrange_data_0(kData_, temp_,kSizeLocal_[0],kSizeLocal_[1] ,kSizeLocal_[2], kHalo_, components_, comp);
-				MPI_Barrier(MPI_COMM_WORLD);
+				MPI_Barrier(parallel.lat_world_comm());
 				
 				
 				
@@ -1182,7 +1182,7 @@ void PlanFFT<compType>::execute(int fft_type)
                             }
 					    }
 					}
-					MPI_Barrier(MPI_COMM_WORLD);
+					MPI_Barrier(parallel.lat_world_comm());
                     
 				}			
 				*/
@@ -1246,7 +1246,7 @@ void PlanFFT<compType>::execute(int fft_type)
                  }
                  }
                  }
-                 MPI_Barrier(MPI_COMM_WORLD);
+                 MPI_Barrier(parallel.lat_world_comm());
                  }
                  */
                 
