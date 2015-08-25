@@ -40,7 +40,6 @@ int main(int argc, char **argv)
                 break;
 		}
 	}
-	
 	parallel.initialize(n,m,io_size,io_groupe_size);
     
     /*!
@@ -93,37 +92,74 @@ int main(int argc, char **argv)
         Lattice lat(3,64,2);
         Field<float> phi(lat,3);
         
+        Site x(lat);
+        
+        for(x.first();x.test();x.next())
+        {
+            phi(x,0)=x.coord(0);
+            phi(x,1)=x.coord(1);
+            phi(x,2)=x.coord(2);
+            
+        }
+        
+        phi.saveHDF5_server_open("testPhi",10,10);
+        phi.saveHDF5_server_write(5);
+        
         ioserver_file ubin_file,ubin_file1,uh5_file,sh5_file;
         
         hid_t datatype = H5T_NATIVE_FLOAT;
         
         ubin_file = IO_Server.openFile("test_ubin",UNSTRUCTURED_BIN_FILE);
         uh5_file = IO_Server.openFile("test_uh5",UNSTRUCTURED_H5_FILE,pcls_types.part_memType,pcls_types.part_fileType);
-        sh5_file = IO_Server.openFile("test_sh5",STRUCTURED_H5_FILE,datatype,datatype,&lat,3,1);
+        //sh5_file = IO_Server.openFile("test_sh5",STRUCTURED_H5_FILE,datatype,datatype,&lat,3,1);
         
         //sleep(1);
        
         
-        size_t size[lat.dim()];
-        size_t offset[lat.dim()];
+        hsize_t size[lat.dim()];
+        hsize_t offset[lat.dim()];
         
         
         for(int i=0;i<lat.dim();i++)
         {
-            offset[i]=0;
             size[i] = lat.sizeLocal(i);
         }
+        offset[0]=0;
+        offset[1]=lat.coordSkip()[1];
+        offset[2]=lat.coordSkip()[0];
+        
+        //IO_Server.sendData(sh5_file,(char*)phi.data(),size,offset);
         
         IO_Server.sendData(ubin_file,sendbuffer,sentence.size()+1);
         IO_Server.sendData(ubin_file,sendbuffer,sentence.size()+1);
         
         IO_Server.sendData(uh5_file,(char*)pcls,nparts*sizeof(part_simple));
         
+        
+        float testAttr[4] = {31.3,2.3,4.4,5};
+        datatype =H5T_NATIVE_FLOAT;
+        string attr_name = "test";
+        IO_Server.sendATTR(uh5_file,attr_name,(char*)&testAttr,1,datatype);
+        attr_name = "test3";
+        IO_Server.sendATTR(uh5_file,attr_name,(char*)&testAttr,3,datatype);
         //IO_Server.sendData(sh5_file,(char*)phi.data(),size,offset);
+        
+        
+    
+        
+        hsize_t dset_dim = 3;
+        hsize_t dset_size[3] = {4,4,2};
+        float dset[dset_size[0]*dset_size[1]*dset_size[2]];
+        
+        for(int i=0;i<dset_size[0]*dset_size[1]*dset_size[2];i++)dset[i]=0.1+i;
+        
+        IO_Server.sendDataset(uh5_file,"blabla",(char *)dset, dset_dim, dset_size, H5T_NATIVE_FLOAT);
+        
+        
         
         IO_Server.closeFile(ubin_file);
         IO_Server.closeFile(uh5_file);
-        IO_Server.closeFile(sh5_file);
+        //IO_Server.closeFile(sh5_file);
         
         IO_Server.closeOstream();
         
