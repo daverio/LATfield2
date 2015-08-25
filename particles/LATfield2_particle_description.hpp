@@ -4,10 +4,11 @@
 /*type table
  
  datatype      memType         fileType
- 
- 
- 
- 
+ int            H5T_NATIVE_INT   INT_TYPE_FILE
+ long           H5T_NATIVE_LONG  INT_TYPE_FILE
+ float          H5T_NATIVE_FLOAT  FLOAT_TYPE_FILE
+ double         H5T_NATIVE_DOUBLE  DOUBLE_TYPE_FILE
+ bool           H5T_NATIVE_HBOOL  BOOL_TYPE_FILE
  */
 
 
@@ -27,9 +28,22 @@ ostream& operator<<(ostream& os, const part_simple& p)
 
 struct part_simple_info{
     double  mass;
-    bool relativistic;
-    char * type_name;
+    int relativistic;
+    int type_name_size;
+    char  type_name[64];
+    
 };
+
+
+template<typename pInfo>
+void set_parts_typename(pInfo *info, string type_name){
+    
+    info->type_name_size = type_name.size();
+    //info->type_name = new char[info->type_name_size];
+    strcpy(info->type_name,type_name.c_str());
+    
+}
+
 
 #ifdef HDF5
 struct part_simple_dataType{
@@ -41,7 +55,7 @@ struct part_simple_dataType{
   part_simple_dataType(){
 
     hid_t strtype = H5Tcopy (H5T_C_S1);
-    H5Tset_size (strtype, H5T_VARIABLE);
+    H5Tset_size (strtype, 64);
     
     
     part_memType = H5Tcreate(H5T_COMPOUND, sizeof (part_simple)); 
@@ -57,39 +71,25 @@ struct part_simple_dataType{
 
     part_info_memType = H5Tcreate(H5T_COMPOUND, sizeof (part_simple_info));
     H5Tinsert(part_info_memType, "mass", HOFFSET (part_simple_info, mass), H5T_NATIVE_DOUBLE);
-    H5Tinsert(part_info_memType, "relativistic", HOFFSET (part_simple_info, relativistic), H5T_NATIVE_HBOOL);
+    H5Tinsert(part_info_memType, "relativistic", HOFFSET (part_simple_info, relativistic), INT_TYPE_FILE);
+    H5Tinsert(part_info_memType, "type_name_size", HOFFSET (part_simple_info, type_name_size),INT_TYPE_FILE );
     H5Tinsert(part_info_memType, "type_name", HOFFSET (part_simple_info, type_name), strtype);
 
     
-#ifdef SINGLE
-    part_fileType = H5Tcreate (H5T_COMPOUND, 8 + (3*4) + (3*4) );
-    H5Tinsert(part_fileType, "ID"       ,0          ,H5T_STD_I64BE);
-    H5Tinsert(part_fileType, "positionX",8          ,H5T_IEEE_F32BE);
-    H5Tinsert(part_fileType, "positionY",8+4        ,H5T_IEEE_F32BE);
-    H5Tinsert(part_fileType, "positionZ",8+4+4      ,H5T_IEEE_F32BE);
-    H5Tinsert(part_fileType, "velocityX",8+4+4+4    ,H5T_IEEE_F32BE);
-    H5Tinsert(part_fileType, "velocityY",8+4+4+4+4  ,H5T_IEEE_F32BE);
-    H5Tinsert(part_fileType, "velocityZ",8+4+4+4+4+4,H5T_IEEE_F32BE);
+    part_fileType = H5Tcreate (H5T_COMPOUND, sizeof(long) + 6 * sizeof(Real) );
+    H5Tinsert(part_fileType, "ID"       ,0  ,H5T_STD_I64BE);
+    H5Tinsert(part_fileType, "positionX",sizeof(long)                    ,REAL_TYPE_FILE);
+    H5Tinsert(part_fileType, "positionY",sizeof(long) + 1 * sizeof(Real) ,REAL_TYPE_FILE);
+    H5Tinsert(part_fileType, "positionZ",sizeof(long) + 2 * sizeof(Real) ,REAL_TYPE_FILE);
+    H5Tinsert(part_fileType, "velocityX",sizeof(long) + 3 * sizeof(Real) ,REAL_TYPE_FILE);
+    H5Tinsert(part_fileType, "velocityY",sizeof(long) + 4 * sizeof(Real) ,REAL_TYPE_FILE);
+    H5Tinsert(part_fileType, "velocityZ",sizeof(long) + 5 * sizeof(Real) ,REAL_TYPE_FILE);
       
-    part_info_fileType = H5Tcreate(H5T_COMPOUND, 8 + sizeof(hvl_t)+1);
-    H5Tinsert(part_info_fileType, "mass", 0 ,H5T_IEEE_F64BE );
-    H5Tinsert(part_info_fileType, "relativistic",8, H5T_STD_I8BE);
-    H5Tinsert(part_info_fileType, "type_name",8+1, strtype);
-#else
-    part_fileType = H5Tcreate (H5T_COMPOUND, 8 + (3*8) + (3*8) );
-    H5Tinsert(part_fileType, "ID"       ,0          ,H5T_STD_I64BE);
-    H5Tinsert(part_fileType, "positionX",8          ,H5T_IEEE_F64BE);
-    H5Tinsert(part_fileType, "positionY",8+8        ,H5T_IEEE_F64BE);
-    H5Tinsert(part_fileType, "positionZ",8+8+8      ,H5T_IEEE_F64BE);
-    H5Tinsert(part_fileType, "velocityX",8+8+8+8    ,H5T_IEEE_F64BE);
-    H5Tinsert(part_fileType, "velocityY",8+8+8+8+8  ,H5T_IEEE_F64BE);
-    H5Tinsert(part_fileType, "velocityZ",8+8+8+8+8+8,H5T_IEEE_F64BE);
-    
-    part_info_fileType = H5Tcreate(H5T_COMPOUND, 8 + sizeof(hvl_t)+1);
-    H5Tinsert(part_info_fileType, "mass", 0 ,H5T_IEEE_F64BE );
-    H5Tinsert(part_info_fileType, "relativistic",8, H5T_STD_I8BE);
-    H5Tinsert(part_info_fileType, "type_name",8+1, strtype);
-#endif
+    part_info_fileType = H5Tcreate(H5T_COMPOUND, sizeof(double) +(2*sizeof(int))+ 64);
+    H5Tinsert(part_info_fileType, "mass", 0 ,DOUBLE_TYPE_FILE );
+    H5Tinsert(part_info_fileType, "relativistic",sizeof(double), INT_TYPE_FILE);
+    H5Tinsert(part_info_fileType, "type_name_size", sizeof(double)+sizeof(int),INT_TYPE_FILE );
+    H5Tinsert(part_info_fileType, "type_name",sizeof(double)+(2*sizeof(int)), strtype);
 
     H5Tclose (strtype);
   }

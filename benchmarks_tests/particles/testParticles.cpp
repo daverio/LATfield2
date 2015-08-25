@@ -66,7 +66,18 @@ int main(int argc, char **argv)
         
         part_simple_info particles_global_info;
         particles_global_info.mass=0.21;
-        particles_global_info.type_name="part_simple";
+        particles_global_info.relativistic=1;
+        //string part_type="part_simple";
+        
+        
+        //particles_global_info.type_name= new char[part_type.size()];
+        
+        //strcpy(particles_global_info.type_name,part_type.c_str());
+        //particles_global_info.type_name=   part_type;
+        
+        set_parts_typename(&particles_global_info,"part_simple");
+        
+        
         particles_global_info.relativistic=true;
         part_simple_dataType particles_dataType;
         
@@ -98,6 +109,26 @@ int main(int argc, char **argv)
         
         parts.saveHDF5("test",2);
         
+         
+         parts_verif.loadHDF5("testserver",2);
+         
+         Site xpart(parts.lattice());
+         
+         std::list<part_simple>::iterator it,it_verif;
+         
+        
+         for(xpart.first();xpart.test();xpart.next())
+         {
+             if(parts.field()(xpart).size!=0)
+             {
+                 for(it=parts.field()(xpart).parts.begin(), it_verif=parts_verif.field()(xpart).parts.begin();it != parts.field()(xpart).parts.end();++it,++it_verif)
+                 {
+                     if((*it).ID != (*it_verif).ID)cout<< "argarg: "<< (*it).ID << " : " << (*it_verif).ID<<endl;
+                 }
+             }
+         }
+    
+        
         IO_Server.openOstream();
         parts.saveHDF5_server_open("testserver");
         parts.saveHDF5_server_write();
@@ -111,26 +142,7 @@ int main(int argc, char **argv)
         //parts.saveHDF5_server_write();
         
         //IO_Server.closeOstream();
-        /*
-         
-         parts_verif.loadHDF5("test",3);
-         
-         Site x(parts.lat());
-         
-         std::list<part_simple>::iterator it,it_verif;
-         
-         
-         for(x.first();x.test();x.next())
-         {
-         if(parts.field_part()(x).size!=0)
-         {
-         for(it=parts.field_part()(x).parts.begin(), it_verif=parts_verif.field_part()(x).parts.begin();it != parts.field_part()(x).parts.end();++it,++it_verif)
-         {
-         if((*it).ID != (*it_verif).ID)cout<< "argarg: "<< (*it).ID << " : " << (*it_verif).ID<<endl;
-         }
-         }
-         }
-         */
+        
         
         
         Field<Real> * listField_move[1];

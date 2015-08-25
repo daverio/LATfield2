@@ -113,7 +113,7 @@ void get_part_sublist(string filename, long offset, long nparts, parts * parList
 	H5Pclose(plist_id);
     
     
-    dataset_id = H5Dopen(file_id, "/particles", H5P_DEFAULT);
+    dataset_id = H5Dopen(file_id, "/data", H5P_DEFAULT);
     filespace_id = H5Dget_space(dataset_id);
     H5Sselect_hyperslab(filespace_id, H5S_SELECT_SET, &offsetf, NULL,&localNumParts, NULL);
     
@@ -212,7 +212,7 @@ int save_hdf5_particles(string filename,
   filespace_id = H5Screate_simple(1,&globalNumParts,NULL);
   memspace_id  = H5Screate_simple(1,&localNumParts,NULL); 
  
-  dataset_id = H5Dcreate(file_id, "particles", partdatatype.part_fileType, filespace_id,H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
+  dataset_id = H5Dcreate(file_id, "data", partdatatype.part_fileType, filespace_id,H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
 
   H5Sselect_hyperslab(memspace_id, H5S_SELECT_SET, &offset, NULL,&localNumParts, NULL);
   H5Sselect_hyperslab(filespace_id, H5S_SELECT_SET, &offsetf, NULL,&localNumParts, NULL);
@@ -316,7 +316,7 @@ int save_hdf5_particles(string filename,
     H5Pclose(plist_id);
 
     filespace_id = H5Screate_simple(1,&globalNumParts,NULL);
-    dataset_id = H5Dcreate(file_id, "particles", partdatatype.part_fileType, filespace_id,H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
+    dataset_id = H5Dcreate(file_id, "data", partdatatype.part_fileType, filespace_id,H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
     H5Dclose(dataset_id);
     H5Sclose(filespace_id);
 
@@ -409,7 +409,7 @@ int save_hdf5_particles(string filename,
           file_id = H5Fopen(filename.c_str(),H5F_ACC_RDWR,plist_id);
           H5Pclose(plist_id);
 	
-          dataset_id = H5Dopen(file_id, "/particles", H5P_DEFAULT);
+          dataset_id = H5Dopen(file_id, "/data", H5P_DEFAULT);
           filespace_id = H5Dget_space(dataset_id);
 	
           memspace_id = H5Screate_simple(1,&localNumParts,NULL);

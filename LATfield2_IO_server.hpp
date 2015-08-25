@@ -30,11 +30,15 @@
 
 
 //tags 0 to 9999 reserved for files_ID
+
 #define FILE_OPEN_TAG      10000
 #define FILE_CLOSE_TAG     10001
 #define CLOSE_OSTREAM_TAG  10002
 #define GET_DATA_TAG       10003
-
+#define GET_ATTR_TAG       10004
+#define GET_DSET_TAG       10005
+#define OFFSET_ATTR_TAG    10050
+#define OFFSET_DSET_TAG    20050
 
 #define UNSTRUCTURED_BIN_FILE  0
 #define UNSTRUCTURED_H5_FILE   1
@@ -68,12 +72,29 @@ struct ioserver_file
     }
 };
 
-
+struct h5_attr
+{
+    string name;
+    hid_t dtype;
+    hsize_t size;
+    char * attr;
+};
+struct h5_dset
+{
+    string name;
+    hid_t dtype;
+    hsize_t dim;
+    hsize_t * size;
+    char * dset;
+};
 struct unstruct_message
 {
     char * data;
     long size;
+    int core;
 };
+bool operator<(struct unstruct_message m,struct unstruct_message m1){return (m.core<m1.core);}
+
 struct unstruct_bin_file
 {
     char * filename;
@@ -91,16 +112,17 @@ struct unstruct_h5_file : unstruct_bin_file
 {
     hid_t mem_dtype;
     hid_t file_dtype;
+    list<h5_attr> attr;
+    list<h5_dset> dset;
 };
 bool operator<(struct unstruct_h5_file f,struct unstruct_h5_file f1){return (f.ID<f1.ID);}
 
 struct struct_message
 {
     char * data;
-    size_t * size;
-    size_t * offset;
+    hsize_t * size;
+    hsize_t * offset;
 };
-
 struct struct_h5_file
 {
     char * filename;
@@ -118,6 +140,8 @@ struct struct_h5_file
     int components;
     int array_size;
     list<struct_message> msg;
+    list<h5_attr> attr;
+    list<h5_dset> dset;
 };
 bool operator<(struct struct_h5_file f,struct struct_h5_file f1){return (f.ID<f1.ID);}
 
@@ -143,9 +167,17 @@ public:
     
     void closeFile(ioserver_file file);
     void sendData(ioserver_file file, char * message,long size,int sendType);
-    void sendData(ioserver_file file, char * message,size_t * size, size_t * offset,int sendType);
+    void sendData(ioserver_file file, char * message,hsize_t * size, hsize_t * offset,int sendType);
+
     
+    void sendATTR(ioserver_file file,string attr_name,char * attr, int size,hid_t dtype);
+    void sendDataset(ioserver_file file,string dset_name, char * dset, hsize_t dim, hsize_t * size, hid_t dtype);
     
+    MPI_Comm compute_file_comm(){return compute_file_comm_;};
+    int compute_file_size(){return compute_file_size_;};
+    int compute_file_rank(){return compute_file_rank_;};
+    int io_node_number(){return io_node_number_;};
+    int my_node(){return my_node_;};
     
 private:
     
@@ -182,6 +214,7 @@ private:
     int my_node_;
     int io_node_rank_;
     int compute_file_size_;
+    int compute_file_rank_;
     int client_size_;
     
     int proc_size0_;
@@ -278,15 +311,8 @@ void IOserver::initialize(int proc_size0,int proc_size1,
     MPI_Group_range_incl(world_group,1,&rang,&io_world_group_);
     MPI_Comm_create(MPI_COMM_WORLD,io_world_group_ , &io_world_comm_);
     
-    
-    
     MPI_Group_rank(io_world_group_, &io_world_rank);
-    
     if(io_world_rank != MPI_UNDEFINED)isIO_=true;
-    
-    
-    
-    
     
     io_node_size_ = IO_node_size;
     io_node_number_ = IOserver_size / IO_node_size;
@@ -297,12 +323,7 @@ void IOserver::initialize(int proc_size0,int proc_size1,
         my_node_ =  io_world_rank / IO_node_size;
     else
         my_node_ = compute_rank / compute_file_size_;
-        
-        
-        
-    //cout<< compute_rank<< " , "<< io_world_rank<<" , "<< my_node_<<endl;
-    
-    
+
     rang[0]= (proc_size0*proc_size1) + (my_node_ * io_node_size_) ;
     rang[1]= (proc_size0*proc_size1) + ((my_node_+1) * io_node_size_) -1;
     rang[2]=1;
@@ -320,6 +341,9 @@ void IOserver::initialize(int proc_size0,int proc_size1,
     MPI_Comm_create(MPI_COMM_WORLD,compute_file_group_ , &compute_file_comm_);
     
     MPI_Group_rank(compute_file_group_, &rank);
+    if(rank!=MPI_UNDEFINED)compute_file_rank_=rank;
+    else compute_file_rank_ = -1;
+    
     if(rank==0)isClientFileRoot_ =true;
     else isClientFileRoot_=false;
 
@@ -484,22 +508,22 @@ ioserver_file IOserver::openFile(string file_name,
         
         file.sizeof_mem_dtype = H5Tget_size(mem_datatype);
         
-        send_size = (2*sizeof(int))+ filename_len + (2*sizeof(size_t)) + mem_datatype_size + file_datatype_size;
+        send_size = (2*sizeof(int))+ filename_len + (2*sizeof(hsize_t)) + mem_datatype_size + file_datatype_size;
         send = new char[send_size];
         
-        memcpy(send + ( (2*sizeof(int))+ filename_len ) ,(char*)&mem_datatype_size,sizeof(size_t));
-        memcpy(send + ( (2*sizeof(int))+ filename_len ) + sizeof(size_t) ,(char*)&file_datatype_size,sizeof(size_t));
+        memcpy(send + ( (2*sizeof(int))+ filename_len ) ,(char*)&mem_datatype_size,sizeof(hsize_t));
+        memcpy(send + ( (2*sizeof(int))+ filename_len ) + sizeof(hsize_t) ,(char*)&file_datatype_size,sizeof(hsize_t));
         
         
         buf_datatype = new char[mem_datatype_size];
         H5Tencode(mem_datatype,buf_datatype,&mem_datatype_size);
-        memcpy(send+( (2*sizeof(int))+ filename_len + (2*sizeof(size_t)) ),buf_datatype,mem_datatype_size);
+        memcpy(send+( (2*sizeof(int))+ filename_len + (2*sizeof(hsize_t)) ),buf_datatype,mem_datatype_size);
         delete[] buf_datatype;
         
         
         buf_datatype = new char[file_datatype_size];
         H5Tencode(file_datatype,buf_datatype,&file_datatype_size);
-        memcpy(send+( (2*sizeof(int))+ filename_len + (2*sizeof(size_t)) + mem_datatype_size),buf_datatype,file_datatype_size);
+        memcpy(send+( (2*sizeof(int))+ filename_len + (2*sizeof(hsize_t)) + mem_datatype_size),buf_datatype,file_datatype_size);
         delete[] buf_datatype;
 
     }
@@ -526,31 +550,31 @@ ioserver_file IOserver::openFile(string file_name,
         
         file.sizeof_mem_dtype = H5Tget_size(mem_datatype);
         
-        send_size = (5*sizeof(int)) + filename_len + ((2+dim+1)*sizeof(size_t)) + mem_datatype_size + file_datatype_size ;
+        send_size = (5*sizeof(int)) + filename_len + ((2+dim+1)*sizeof(hsize_t)) + mem_datatype_size + file_datatype_size ;
         send = new char[send_size];
         
-        memcpy(send + ( (2*sizeof(int))+ filename_len ) ,(char*)&mem_datatype_size,sizeof(size_t));
-        memcpy(send + ( (2*sizeof(int))+ filename_len ) + sizeof(size_t) ,(char*)&file_datatype_size,sizeof(size_t));
+        memcpy(send + ( (2*sizeof(int))+ filename_len ) ,(char*)&mem_datatype_size,sizeof(hsize_t));
+        memcpy(send + ( (2*sizeof(int))+ filename_len ) + sizeof(hsize_t) ,(char*)&file_datatype_size,sizeof(hsize_t));
         
         
         buf_datatype = new char[mem_datatype_size];
         H5Tencode(mem_datatype,buf_datatype,&mem_datatype_size);
-        memcpy(send+( (2*sizeof(int))+ filename_len + (2*sizeof(size_t)) ),buf_datatype,mem_datatype_size);
+        memcpy(send+( (2*sizeof(int))+ filename_len + (2*sizeof(hsize_t)) ),buf_datatype,mem_datatype_size);
         delete[] buf_datatype;
         
         
         buf_datatype = new char[file_datatype_size];
         H5Tencode(file_datatype,buf_datatype,&file_datatype_size);
-        memcpy(send+( (2*sizeof(int))+ filename_len + (2*sizeof(size_t)) + mem_datatype_size),buf_datatype,file_datatype_size);
+        memcpy(send+( (2*sizeof(int))+ filename_len + (2*sizeof(hsize_t)) + mem_datatype_size),buf_datatype,file_datatype_size);
         delete[] buf_datatype;
         
-        memcpy(send+( (2*sizeof(int))+ filename_len + (2*sizeof(size_t)) + mem_datatype_size + file_datatype_size  ),(char*)&dim,sizeof(int));
-        memcpy(send+( (3*sizeof(int))+ filename_len + (2*sizeof(size_t)) + mem_datatype_size + file_datatype_size  ),(char*)size,dim*sizeof(hsize_t));
-        memcpy(send+( (3*sizeof(int))+ filename_len + ((2+dim)*sizeof(size_t)) + mem_datatype_size + file_datatype_size),(char*)&offset,sizeof(hsize_t));
+        memcpy(send+( (2*sizeof(int))+ filename_len + (2*sizeof(hsize_t)) + mem_datatype_size + file_datatype_size  ),(char*)&dim,sizeof(int));
+        memcpy(send+( (3*sizeof(int))+ filename_len + (2*sizeof(hsize_t)) + mem_datatype_size + file_datatype_size  ),(char*)size,dim*sizeof(hsize_t));
+        memcpy(send+( (3*sizeof(int))+ filename_len + ((2+dim)*sizeof(hsize_t)) + mem_datatype_size + file_datatype_size),(char*)&offset,sizeof(hsize_t));
         itemp =components;
-        memcpy(send+( (3*sizeof(int))+ filename_len + ((2+dim+1)*sizeof(size_t)) + mem_datatype_size + file_datatype_size  ),(char*)&itemp,sizeof(int));
+        memcpy(send+( (3*sizeof(int))+ filename_len + ((2+dim+1)*sizeof(hsize_t)) + mem_datatype_size + file_datatype_size  ),(char*)&itemp,sizeof(int));
         itemp =array_size;
-        memcpy(send+( (4*sizeof(int))+ filename_len + ((2+dim+1)*sizeof(size_t)) + mem_datatype_size + file_datatype_size  ),(char*)&itemp,sizeof(int));
+        memcpy(send+( (4*sizeof(int))+ filename_len + ((2+dim+1)*sizeof(hsize_t)) + mem_datatype_size + file_datatype_size  ),(char*)&itemp,sizeof(int));
         
         file.dim = dim;
         file.components = components;
@@ -629,7 +653,7 @@ void IOserver::sendData(ioserver_file file, char * message,long size,int sendTyp
     else if(sendType == BUFFERED_SEND)MPI_Bsend(message,size,MPI::CHAR,client_size_,file.ID,client_comm_);
     
 }
-void IOserver::sendData(ioserver_file file, char * message,size_t * size, size_t * offset,int sendType = DEFAULT_SEND)
+void IOserver::sendData(ioserver_file file, char * message,hsize_t * size, hsize_t * offset,int sendType = DEFAULT_SEND)
 {
     if(file.type!=STRUCTURED_H5_FILE)
     {
@@ -654,6 +678,106 @@ void IOserver::sendData(ioserver_file file, char * message,size_t * size, size_t
     
     if(sendType == DEFAULT_SEND)MPI_Send(message,sendinfo[1],MPI::CHAR,client_size_,file.ID,client_comm_);
     else if(sendType == BUFFERED_SEND)MPI_Bsend(message,sendinfo[1],MPI::CHAR,client_size_,file.ID,client_comm_);
+}
+
+void IOserver::sendATTR(ioserver_file file,string attr_name, char * attr, int size,hid_t dtype)
+{
+    if(file.type != UNSTRUCTURED_H5_FILE && file.type!=STRUCTURED_H5_FILE)
+    {
+        cout<<"IOserver::sendATTR: trying to add attribute to a non hdf5 file..."<<endl;
+        cout<<"IOserver::sendATTR: returning without adding the attribute"<<endl;
+        return;
+    }
+    if(isClientFileRoot_)
+    {
+        //cout<<"adding attribute"<<endl;
+        char * send;
+        char * buf_datatype;
+        size_t buf_datatype_size;
+        int ID = file.ID;
+        int attr_size = size;
+        int send_size;
+        int attr_name_size = attr_name.size();
+        
+        buf_datatype =NULL;
+        H5Tencode(dtype,buf_datatype,&buf_datatype_size);
+        //cout<<buf_datatype_size<<endl;
+        buf_datatype = new char[buf_datatype_size];
+        H5Tencode(dtype,buf_datatype,&buf_datatype_size);
+        
+        send_size = buf_datatype_size + sizeof(size_t) + (3*sizeof(int)) + attr_name_size + (attr_size*H5Tget_size(dtype));
+        send = new char[send_size];
+        
+        //cout<<buf_datatype_size<<endl;
+        memcpy(send,(char*)&ID,sizeof(int));
+        memcpy(send + sizeof(int),(char*)&buf_datatype_size,sizeof(size_t));
+        memcpy(send + sizeof(int) + sizeof(size_t),buf_datatype,buf_datatype_size);
+        memcpy(send + sizeof(int) + sizeof(size_t)+ buf_datatype_size ,(char*)&attr_size,sizeof(int));
+        memcpy(send + (2*sizeof(int)) + sizeof(size_t)+ buf_datatype_size ,(char*)&attr_name_size,sizeof(int));
+        strcpy(send + (3*sizeof(int)) + sizeof(size_t)+ buf_datatype_size,attr_name.c_str());
+        memcpy(send + (3*sizeof(int)) + sizeof(size_t)+ buf_datatype_size + attr_name_size,attr,attr_size * H5Tget_size(dtype));
+        
+        MPI_Bsend(send,send_size,MPI::CHAR,client_size_,GET_ATTR_TAG,client_comm_);
+        
+        delete[] buf_datatype;
+        delete[] send;
+         //cout<<"sended attribute"<<endl;
+    }
+}
+void IOserver::sendDataset(ioserver_file file,string dset_name, char * dset, hsize_t dim, hsize_t * size, hid_t dtype)
+{
+    if(file.type != UNSTRUCTURED_H5_FILE && file.type!=STRUCTURED_H5_FILE)
+    {
+        cout<<"IOserver::sendATTR: trying to add attribute to a non hdf5 file..."<<endl;
+        cout<<"IOserver::sendATTR: returning without adding the attribute"<<endl;
+        return;
+        }
+        if(isClientFileRoot_)
+        {
+            char * send;
+            char * buf_datatype;
+            size_t buf_datatype_size;
+            int ID = file.ID;
+            int dtype_size;
+            int send_size;
+            int dset_size;
+            int dset_name_size = dset_name.size();
+            
+            hsize_t dimT = dim;
+            hsize_t sizeT[dim];
+            for(int i = 0 ; i<dim;i++)sizeT[i]=size[i];
+            
+            dset_size = 1;
+            for(int i=0;i<dim;i++)dset_size*=size[i];
+            dtype_size = H5Tget_size(dtype);
+            dset_size *= dtype_size;
+            
+            buf_datatype =NULL;
+            H5Tencode(dtype,buf_datatype,&buf_datatype_size);
+            buf_datatype = new char[buf_datatype_size];
+            H5Tencode(dtype,buf_datatype,&buf_datatype_size);
+            
+            send_size= (3*sizeof(int)) + sizeof(size_t) + buf_datatype_size + ((1+dim)*sizeof(hsize_t)) + dset_name_size + dset_size;
+            
+            send = new char[send_size];
+ 
+            memcpy(send,(char*)&ID,sizeof(int));
+            memcpy(send + sizeof(int),(char*)&buf_datatype_size,sizeof(size_t));
+            memcpy(send + sizeof(int) + sizeof(size_t),buf_datatype,buf_datatype_size);
+            memcpy(send + sizeof(int) + sizeof(size_t) + buf_datatype_size,(char*)&dimT,sizeof(hsize_t));
+            memcpy(send + sizeof(int) + sizeof(size_t) + buf_datatype_size + sizeof(hsize_t),(char*)&sizeT,dim * sizeof(hsize_t));
+            memcpy(send + sizeof(int) + sizeof(size_t) + buf_datatype_size + ((1+dim)*sizeof(hsize_t)),(char*)&dset_size,sizeof(int));
+            memcpy(send + (2*sizeof(int)) + sizeof(size_t) + buf_datatype_size + ((1+dim)*sizeof(hsize_t)),(char*)&dset_name_size,sizeof(int));
+            strcpy(send + (3*sizeof(int)) + sizeof(size_t) + buf_datatype_size + ((1+dim)*sizeof(hsize_t)),dset_name.c_str());
+            memcpy(send + (3*sizeof(int)) + sizeof(size_t) + buf_datatype_size + ((1+dim)*sizeof(hsize_t)) + dset_name_size ,dset,dset_size);
+            
+            MPI_Bsend(send,send_size,MPI::CHAR,client_size_,GET_DSET_TAG,client_comm_);
+            //MPI_Bsend(dset,dset_size,MPI::CHAR,client_size_,file.ID + OFFSET_DSET_TAG,client_comm_);
+            
+            delete[] buf_datatype;
+            delete[] send;
+            
+        }
 }
 
 void IOserver::start()
@@ -719,6 +843,7 @@ void IOserver::ostream()
     wp_data_ = data_;
     
     bool allfiles_closed=true;
+    bool flag_continue= false;
     
     list<unstruct_bin_file>::iterator it_usb;
     list<unstruct_h5_file>::iterator it_ush;
@@ -726,6 +851,9 @@ void IOserver::ostream()
     
     while(ostream_flag)
     {
+        flag_continue = false;
+        
+        
         MPI_Iprobe(0,FILE_OPEN_TAG,client_comm_,&message_flag,&status);
         if(message_flag)
         {
@@ -799,21 +927,21 @@ void IOserver::ostream()
 
                 
                 hid_t mem_datatype_id,file_datatype_id;
-                size_t mem_size,file_size;
+                hsize_t mem_size,file_size;
                 
-                memcpy((char*)&mem_size,getdata+( (2*sizeof(int))+ filename_len ),sizeof(size_t));
-                memcpy((char*)&file_size,getdata+( (2*sizeof(int))+ filename_len  + sizeof(size_t) ),sizeof(size_t));
+                memcpy((char*)&mem_size,getdata+( (2*sizeof(int))+ filename_len ),sizeof(hsize_t));
+                memcpy((char*)&file_size,getdata+( (2*sizeof(int))+ filename_len  + sizeof(hsize_t) ),sizeof(hsize_t));
                 
                 char * buf_datatype;
                 buf_datatype = new char[mem_size];
-                memcpy((char*)buf_datatype,getdata+( (2*sizeof(int))+ filename_len  + (2*sizeof(size_t)) ),mem_size);
+                memcpy((char*)buf_datatype,getdata+( (2*sizeof(int))+ filename_len  + (2*sizeof(hsize_t)) ),mem_size);
                 mem_datatype_id =  H5Tdecode(buf_datatype);
                 delete[] buf_datatype;
                 
                 file.sizeof_mem_dtype = H5Tget_size(mem_datatype_id);
                 
                 buf_datatype = new char[file_size];
-                memcpy((char*)buf_datatype,getdata+( (2*sizeof(int))+ filename_len  + (2*sizeof(size_t)) + mem_size),file_size);
+                memcpy((char*)buf_datatype,getdata+( (2*sizeof(int))+ filename_len  + (2*sizeof(hsize_t)) + mem_size),file_size);
                 file_datatype_id =  H5Tdecode(buf_datatype);
                 delete[] buf_datatype;
                 
@@ -846,21 +974,21 @@ void IOserver::ostream()
                 for(int i=0;i<client_size_;i++)file.isClosed_client[i]=0;
                 
                 hid_t mem_datatype_id,file_datatype_id;
-                size_t mem_size,file_size;
+                hsize_t mem_size,file_size;
                 
-                memcpy((char*)&mem_size,getdata+( (2*sizeof(int))+ filename_len ),sizeof(size_t));
-                memcpy((char*)&file_size,getdata+( (2*sizeof(int))+ filename_len  + sizeof(size_t) ),sizeof(size_t));
+                memcpy((char*)&mem_size,getdata+( (2*sizeof(int))+ filename_len ),sizeof(hsize_t));
+                memcpy((char*)&file_size,getdata+( (2*sizeof(int))+ filename_len  + sizeof(hsize_t) ),sizeof(hsize_t));
                 
                 char * buf_datatype;
                 buf_datatype = new char[mem_size];
-                memcpy((char*)buf_datatype,getdata+( (2*sizeof(int))+ filename_len  + (2*sizeof(size_t)) ),mem_size);
+                memcpy((char*)buf_datatype,getdata+( (2*sizeof(int))+ filename_len  + (2*sizeof(hsize_t)) ),mem_size);
                 mem_datatype_id =  H5Tdecode(buf_datatype);
                 delete[] buf_datatype;
                 
                 file.sizeof_mem_dtype = H5Tget_size(mem_datatype_id);
                 
                 buf_datatype = new char[file_size];
-                memcpy((char*)buf_datatype,getdata+( (2*sizeof(int))+ filename_len  + (2*sizeof(size_t)) + mem_size),file_size);
+                memcpy((char*)buf_datatype,getdata+( (2*sizeof(int))+ filename_len  + (2*sizeof(hsize_t)) + mem_size),file_size);
                 file_datatype_id =  H5Tdecode(buf_datatype);
                 delete[] buf_datatype;
                 
@@ -868,17 +996,17 @@ void IOserver::ostream()
                 file.file_dtype = file_datatype_id;
                 
                 int itemp;
-                memcpy((char*)&itemp,getdata+( (2*sizeof(int))+ filename_len + (2*sizeof(size_t)) + mem_size + file_size  ),sizeof(int));
+                memcpy((char*)&itemp,getdata+( (2*sizeof(int))+ filename_len + (2*sizeof(hsize_t)) + mem_size + file_size  ),sizeof(int));
                 file.dim = itemp;
                 file.size = new hsize_t[itemp];
                 hsize_t stemp[itemp];
-                memcpy((char*)stemp, getdata + ( (3*sizeof(int))+ filename_len + (2*sizeof(size_t)) + mem_size + file_size ),file.dim * sizeof(hsize_t));
+                memcpy((char*)stemp, getdata + ( (3*sizeof(int))+ filename_len + (2*sizeof(hsize_t)) + mem_size + file_size ),file.dim * sizeof(hsize_t));
                 for(int i = 0;i<file.dim;i++)file.size[i]=stemp[i];
-                memcpy((char*)stemp, getdata +( (3*sizeof(int))+ filename_len + ((2+file.dim)*sizeof(size_t)) + mem_size + file_size ),sizeof(hsize_t));
+                memcpy((char*)stemp, getdata +( (3*sizeof(int))+ filename_len + ((2+file.dim)*sizeof(hsize_t)) + mem_size + file_size ),sizeof(hsize_t));
                 file.offset = stemp[0];
-                memcpy((char*)&itemp,getdata+( (3*sizeof(int))+ filename_len + ((2+file.dim+1)*sizeof(size_t)) + mem_size + file_size),sizeof(int));
+                memcpy((char*)&itemp,getdata+( (3*sizeof(int))+ filename_len + ((2+file.dim+1)*sizeof(hsize_t)) + mem_size + file_size),sizeof(int));
                 file.components = itemp;
-                memcpy((char*)&itemp,getdata+( (4*sizeof(int))+ filename_len + ((2+file.dim+1)*sizeof(size_t)) + mem_size + file_size   ),sizeof(int));
+                memcpy((char*)&itemp,getdata+( (4*sizeof(int))+ filename_len + ((2+file.dim+1)*sizeof(hsize_t)) + mem_size + file_size   ),sizeof(int));
                 file.array_size = itemp;
                 
                 file.msg.clear();
@@ -1013,10 +1141,10 @@ void IOserver::ostream()
             if(info[2]==UNSTRUCTURED_BIN_FILE)
             {
                 unstruct_message message;
+                message.core = source;
                 message.data = wp_data_;
                 MPI_Recv(message.data,info[1],MPI::CHAR,source,info[0],client_comm_,&status);
                 wp_data_ += info[1];
-                
                 for(it_usb=usb_files_.begin(); it_usb != usb_files_.end(); ++it_usb)
                 {
                     if( (*it_usb).ID==info[0] )
@@ -1032,6 +1160,7 @@ void IOserver::ostream()
             else if(info[2]==UNSTRUCTURED_H5_FILE)
             {
                 unstruct_message message;
+                message.core = source;
                 message.data = wp_data_;
                 MPI_Recv(message.data,info[1],MPI::CHAR,source,info[0],client_comm_,&status);
                 wp_data_ += info[1];
@@ -1061,8 +1190,8 @@ void IOserver::ostream()
                     if( (*it_sh).ID==info[0] )
                     {
                         //cout<<"adding data to file: "<< info[0]<<endl;
-                        message.size = new size_t[(*it_sh).dim];
-                        message.offset = new size_t[(*it_sh).dim];
+                        message.size = new hsize_t[(*it_sh).dim];
+                        message.offset = new hsize_t[(*it_sh).dim];
                         for(int i = 0;i <(*it_sh).dim;i++)
                         {
                             message.size[i] = info[3 + i];
@@ -1078,9 +1207,165 @@ void IOserver::ostream()
             
             
             }
-            
-            continue;
+            flag_continue = true;
         }
+        
+        
+        if(io_node_rank_==0)
+        {
+            MPI_Iprobe(MPI_ANY_SOURCE,GET_ATTR_TAG,client_comm_,&message_flag,&status);
+            if(message_flag)
+            {
+                
+                h5_attr attr;
+                int infosize;
+                int source;
+                MPI_Get_count(&status,MPI::CHAR,&infosize);
+                source = status.MPI_SOURCE;
+                char info[infosize];
+                size_t buf_dtype_size;
+                int file_id;
+                hid_t dtype_id;
+                int attr_size;
+                int attr_name_size;
+                list<unstruct_h5_file>::iterator it_ush;
+                list<struct_h5_file>::iterator it_sh;
+                bool notfinded = true;
+                
+                MPI_Recv(info,infosize,MPI::CHAR,source,GET_ATTR_TAG,client_comm_,&status);
+                
+                memcpy((char*)&file_id,info,sizeof(int));
+                
+                memcpy((char*)&buf_dtype_size,info + sizeof(int) ,sizeof(size_t));
+                char * buf_datatype = new char[buf_dtype_size];
+                memcpy(buf_datatype,info + sizeof(int) + sizeof(size_t) ,buf_dtype_size);
+                dtype_id =  H5Tdecode(buf_datatype);
+                delete[] buf_datatype;
+                
+                memcpy((char*)&attr_size,info + sizeof(int) + sizeof(size_t)+ buf_dtype_size ,sizeof(int));
+                memcpy((char*)&attr_name_size,info + (2*sizeof(int)) + sizeof(size_t)+ buf_dtype_size ,sizeof(int));
+                char * attr_name = new char[attr_name_size];
+                memcpy(attr_name,info + (3*sizeof(int)) + sizeof(size_t)+ buf_dtype_size ,attr_name_size);
+
+                attr.name.assign(attr_name,attr_name_size);
+                attr.dtype = dtype_id;
+                attr.size = attr_size;
+                attr.attr = new char[attr_size*H5Tget_size(dtype_id)];
+                memcpy(attr.attr,info + (3*sizeof(int)) + sizeof(size_t)+ buf_dtype_size + attr_name_size ,attr_size*H5Tget_size(dtype_id));
+                
+                
+                if(ush_files_.size()!=0)
+                {
+                    for(it_ush=ush_files_.begin(); it_ush != ush_files_.end(); ++it_ush)
+                    {
+                        if((*it_ush).ID == file_id)
+                        {
+                            (*it_ush).attr.push_back(attr);
+                            notfinded = false;
+                        }
+                    }
+                }
+                
+                if(sh_files_.size()!=0)
+                {
+                    for(it_sh=sh_files_.begin(); it_sh != sh_files_.end(); ++it_sh)
+                    {
+                        if((*it_sh).ID == file_id)
+                        {
+                            (*it_sh).attr.push_back(attr);
+                            notfinded = false;
+                        }
+                    }
+                }
+                
+                if(notfinded)cout<<"argargarga"<<endl;
+                
+                delete[] attr_name;
+                
+                
+                flag_continue = true;
+            }
+            MPI_Iprobe(MPI_ANY_SOURCE,GET_DSET_TAG,client_comm_,&message_flag,&status);
+            if(message_flag)
+            {
+                h5_dset dset;
+                
+                int infosize;
+                int source;
+                MPI_Get_count(&status,MPI::CHAR,&infosize);
+                source = status.MPI_SOURCE;
+                char info[infosize];
+                size_t buf_dtype_size;
+                int file_id;
+                hid_t dtype_id;
+                hsize_t dim;
+                int dset_size;
+                int dset_name_size;
+                list<unstruct_h5_file>::iterator it_ush;
+                list<struct_h5_file>::iterator it_sh;
+                bool notfinded = true;
+
+                
+                MPI_Recv(info,infosize,MPI::CHAR,source,GET_DSET_TAG,client_comm_,&status);
+                
+                
+                memcpy((char*)&file_id,info,sizeof(int));
+                
+                memcpy((char*)&buf_dtype_size,info + sizeof(int) ,sizeof(size_t));
+                char * buf_datatype = new char[buf_dtype_size];
+                memcpy(buf_datatype,info + sizeof(int) + sizeof(size_t) ,buf_dtype_size);
+                dtype_id =  H5Tdecode(buf_datatype);
+                delete[] buf_datatype;
+                memcpy((char*)&dim,info + sizeof(int) + sizeof(size_t) + buf_dtype_size,sizeof(hsize_t));
+                
+                dset.dtype = dtype_id;
+                dset.dim=dim;
+                dset.size = new hsize_t[dim];
+                memcpy((char*)dset.size,info + sizeof(int) + sizeof(size_t) + buf_dtype_size + sizeof(hsize_t),dim * sizeof(hsize_t));
+                memcpy((char*)&dset_size,info + sizeof(int) + sizeof(size_t) + buf_dtype_size + ((1+dim)*sizeof(hsize_t)),sizeof(int));
+                memcpy((char*)&dset_name_size,info + (2*sizeof(int)) + sizeof(size_t) + buf_dtype_size + ((1+dim)*sizeof(hsize_t)),sizeof(int));
+                char * dset_name = new char[dset_name_size];
+                memcpy(dset_name,info + (3*sizeof(int)) + sizeof(size_t) + buf_dtype_size + ((1+dim)*sizeof(hsize_t)) ,dset_name_size);
+                dset.name.assign(dset_name,dset_name_size);
+                dset.dset = new char[dset_size];
+                memcpy(dset.dset,info + (3*sizeof(int)) + sizeof(size_t) + buf_dtype_size + ((1+dim)*sizeof(hsize_t)) + dset_name_size ,dset_size);
+                
+                
+                if(ush_files_.size()!=0)
+                {
+                    for(it_ush=ush_files_.begin(); it_ush != ush_files_.end(); ++it_ush)
+                    {
+                        if((*it_ush).ID == file_id)
+                        {
+                            (*it_ush).dset.push_back(dset);
+                            notfinded = false;
+                        }
+                    }
+                }
+                
+                if(sh_files_.size()!=0)
+                {
+                    for(it_sh=sh_files_.begin(); it_sh != sh_files_.end(); ++it_sh)
+                    {
+                        if((*it_sh).ID == file_id)
+                        {
+                            (*it_sh).dset.push_back(dset);
+                            notfinded = false;
+                        }
+                    }
+                }
+                
+                if(notfinded)cout<<"argargarga"<<endl;
+                
+                delete[] dset_name;
+                
+                flag_continue = true;
+            }
+        }
+        
+        
+        if(flag_continue)continue;
+        
         
         //look if the ostream can be closed
         
@@ -1107,8 +1392,11 @@ void IOserver::write_files()
     list<unstruct_bin_file>::iterator it_usb;
     list<unstruct_h5_file>::iterator it_ush;
     list<struct_h5_file>::iterator it_sh;
+    list<h5_attr>::iterator it_attr;
+    list<h5_dset>::iterator it_dset;
     
     list<unstruct_message>::iterator it_um;
+    list<struct_message>::iterator it_sm;
     
     if(usb_files_.size()!=0)
     {
@@ -1136,6 +1424,7 @@ void IOserver::write_files()
             if((*it_usb).totalSize!=0)
             {
                 MPI_File_open(io_node_comm_,(*it_usb).filename,MPI_MODE_WRONLY | MPI_MODE_CREATE,MPI_INFO_NULL,&ofile);
+                (*it_usb).msg.sort();
                 long msg_offset=0;
                 for(it_um=(*it_usb).msg.begin();it_um != (*it_usb).msg.end();++it_um)
                 {
@@ -1180,7 +1469,7 @@ void IOserver::write_files()
              {
                  //write the file!!
                  
-                 hid_t plist_id,plist_id_file,file_id,filespace_id,memspace_id,dataset_id;
+                 hid_t plist_id,plist_id_file,file_id,filespace_id,memspace_id,dataset_id,attribute_id,dataspace_id;
                  hsize_t fsize = fileSize;
                  hsize_t msize,offsetf,offset;
                  
@@ -1194,6 +1483,7 @@ void IOserver::write_files()
                  H5Dclose(dataset_id);
                  H5Sclose(filespace_id);
                  
+                 (*it_ush).msg.sort();
                  offsetf=file_offset;
                  offset=0;
                  for(it_um=(*it_ush).msg.begin();it_um != (*it_ush).msg.end();++it_um)
@@ -1213,6 +1503,35 @@ void IOserver::write_files()
                      
                      offsetf+=msize;
                  }
+                 if(io_node_rank_==0)
+                 {
+                     if((*it_ush).attr.size() != 0)
+                     {
+                         for(it_attr = (*it_ush).attr.begin();it_attr != (*it_ush).attr.end();++it_attr)
+                         {
+                             if((*it_attr).size == 1)dataspace_id = H5Screate(H5S_SCALAR);
+                             else dataspace_id = H5Screate_simple(1,&((*it_attr).size),NULL);
+                             attribute_id = H5Acreate (file_id,(*it_attr).name.c_str() ,(*it_attr).dtype , dataspace_id,H5P_DEFAULT, H5P_DEFAULT);
+                             H5Awrite(attribute_id,(*it_attr).dtype  ,(*it_attr).attr );
+                             H5Aclose(attribute_id);
+                             H5Sclose(dataspace_id);
+                        }
+                     }
+                     if((*it_ush).dset.size() != 0)
+                     {
+                         for(it_dset = (*it_ush).dset.begin();it_dset != (*it_ush).dset.end();++it_dset)
+                         {
+                             hsize_t sizeReverse[(*it_dset).dim];
+                             for(int i=0;i<(*it_dset).dim;i++)sizeReverse[i]=(*it_dset).size[(*it_dset).dim-1-i];
+                             dataspace_id = H5Screate_simple((*it_dset).dim,sizeReverse,NULL);
+                             dataset_id = H5Dcreate(file_id, (*it_dset).name, (*it_dset).dtype, dataspace_id,H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+                             H5Dwrite(dataset_id, (*it_dset).dtype, H5S_ALL, H5S_ALL, H5P_DEFAULT,(*it_dset).dset);
+                             H5Dclose(dataset_id);
+                             H5Sclose(dataspace_id);
+                         }
+                     }
+                 }
+                 
                  H5Fclose(file_id);
 #else
                  if(io_node_rank_==0)
@@ -1224,6 +1543,44 @@ void IOserver::write_files()
                      dataset_id = H5Dcreate(file_id, "data",(*it_ush).file_dtype , filespace_id,H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
                      H5Dclose(dataset_id);
                      H5Sclose(filespace_id);
+                     
+                     
+                     if((*it_ush).attr.size() != 0)
+                     {
+                         for(it_attr = (*it_ush).attr.begin();it_attr != (*it_ush).attr.end();++it_attr)
+                         {
+                             if((*it_attr).size == 1)dataspace_id = H5Screate(H5S_SCALAR);
+                             else dataspace_id = H5Screate_simple(1,&((*it_attr).size),NULL);
+                             attribute_id = H5Acreate (file_id,(*it_attr).name.c_str() ,(*it_attr).dtype , dataspace_id,H5P_DEFAULT, H5P_DEFAULT);
+                             H5Awrite(attribute_id,(*it_attr).dtype  ,(*it_attr).attr );
+                             H5Aclose(attribute_id);
+                             H5Sclose(dataspace_id);
+                         }
+                     }
+                     
+                     if((*it_ush).dset.size() != 0)
+                     {
+                         for(it_dset = (*it_ush).dset.begin();it_dset != (*it_ush).dset.end();++it_dset)
+                         {
+                             hsize_t sizeReverse[(*it_dset).dim];
+                             for(int i=0;i<(*it_dset).dim;i++)sizeReverse[i]=(*it_dset).size[(*it_dset).dim-1-i];
+                             dataspace_id = H5Screate_simple((*it_dset).dim,sizeReverse,NULL);
+                             dataset_id = H5Dcreate(file_id, (*it_dset).name.c_str(), (*it_dset).dtype, dataspace_id,H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+                             H5Dwrite(dataset_id, (*it_dset).dtype, H5S_ALL, H5S_ALL, H5P_DEFAULT,(*it_dset).dset);
+                             H5Dclose(dataset_id);
+                             H5Sclose(dataspace_id);
+                         }
+                     }
+                     
+                     /*
+                      dataspace_id = H5Screate_simple(2,numPartsSize,NULL);
+                      dataset_id = H5Dcreate(file_id, "localBoxOffset", REAL_TYPE, dataspace_id,H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+                      H5Dwrite(dataset_id, REAL_TYPE, H5S_ALL, H5S_ALL, H5P_DEFAULT,localBoxOffset);
+                      H5Dclose(dataset_id);
+                      H5Sclose(dataspace_id);
+                      */
+
+                     
                      H5Fclose(file_id);
                  }
                  MPI_Barrier(io_node_comm_);
@@ -1235,6 +1592,7 @@ void IOserver::write_files()
                          plist_id = H5Pcreate(H5P_FILE_ACCESS);
                          file_id = H5Fopen((*it_ush).filename,H5F_ACC_RDWR,plist_id);
                          H5Pclose(plist_id);
+                         (*it_ush).msg.sort();
                          offsetf=file_offset;
                          offset=0;
                          for(it_um=(*it_ush).msg.begin();it_um != (*it_ush).msg.end();++it_um)
@@ -1264,6 +1622,186 @@ void IOserver::write_files()
         
     }
     
+    if(sh_files_.size()!=0)
+    {
+        sh_files_.sort();
+        for(it_sh=sh_files_.begin(); it_sh != sh_files_.end(); ++it_sh)
+        {
+            hid_t plist_id,file_id,filespace,dataset_id,dataspace_id,attribute_id,dset_id,memspace;
+            hid_t mem_dtype_id,file_dtype_id,dtbase_id;
+            hsize_t * components;
+            herr_t status;
+            
+            
+            cout<<(*it_sh).components<<"  "<<(*it_sh).array_size<<endl;
+            ///////////////////////////////
+            // creat mem datatype
+            ///////////////////////////////
+            if((*it_sh).components == 1 && (*it_sh).array_size ==1)
+            {
+                mem_dtype_id = H5Tcopy((*it_sh).mem_dtype);
+                status = H5Tset_order(mem_dtype_id, DATA_ORDER);
+                components = new hsize_t[1]; //to be sure is allocated when freed
+            }
+            if((*it_sh).components == 1 && (*it_sh).array_size !=1)
+            {
+                components = new hsize_t[1];
+                components[0] = (*it_sh).array_size;
+                dtbase_id = H5Tcopy((*it_sh).mem_dtype);
+                status = H5Tset_order(dtbase_id, DATA_ORDER);
+                mem_dtype_id = H5Tarray_create(dtbase_id,1,components);
+            }
+            if((*it_sh).components != 1 && (*it_sh).array_size ==1)
+            {
+                components = new hsize_t[1];
+                components[0] = (*it_sh).components;
+                dtbase_id = H5Tcopy((*it_sh).mem_dtype);
+                status = H5Tset_order(dtbase_id, DATA_ORDER);
+                mem_dtype_id = H5Tarray_create(dtbase_id,1,components);
+            }
+            if((*it_sh).components != 1 && (*it_sh).array_size !=1)
+            {
+                components = new hsize_t[2];
+                components[0] = (*it_sh).array_size;
+                components[1] = (*it_sh).components;
+                dtbase_id = H5Tcopy((*it_sh).mem_dtype);
+                status = H5Tset_order(dtbase_id, DATA_ORDER);
+                mem_dtype_id = H5Tarray_create(dtbase_id,2,components);
+            }
+            ///////////////////////////////
+            ///////////////////////////////
+
+            ///////////////////////////////
+            // creat mem datatype
+            ///////////////////////////////
+            if((*it_sh).components == 1 && (*it_sh).array_size ==1)
+            {
+                file_dtype_id = H5Tcopy((*it_sh).file_dtype);
+                status = H5Tset_order(mem_dtype_id, DATA_ORDER);
+                components = new hsize_t[1]; //to be sure is allocated when freed
+            }
+            if((*it_sh).components == 1 && (*it_sh).array_size !=1)
+            {
+                components = new hsize_t[1];
+                components[0] = (*it_sh).array_size;
+                dtbase_id = H5Tcopy((*it_sh).file_dtype);
+                status = H5Tset_order(dtbase_id, DATA_ORDER);
+                file_dtype_id = H5Tarray_create(dtbase_id,1,components);
+            }
+            if((*it_sh).components != 1 && (*it_sh).array_size ==1)
+            {
+                components = new hsize_t[1];
+                components[0] = (*it_sh).components;
+                dtbase_id = H5Tcopy((*it_sh).file_dtype);
+                status = H5Tset_order(dtbase_id, DATA_ORDER);
+                file_dtype_id = H5Tarray_create(dtbase_id,1,components);
+            }
+            if((*it_sh).components != 1 && (*it_sh).array_size !=1)
+            {
+                components = new hsize_t[2];
+                components[0] = (*it_sh).array_size;
+                components[1] = (*it_sh).components;
+                dtbase_id = H5Tcopy((*it_sh).file_dtype);
+                status = H5Tset_order(dtbase_id, DATA_ORDER);
+                file_dtype_id = H5Tarray_create(dtbase_id,2,components);
+            }
+            ///////////////////////////////
+            ///////////////////////////////
+            H5Tclose(dtbase_id);
+            
+            
+#ifdef H5_HAVE_PARALLEL
+#else
+            if(io_node_rank_==0)
+            {
+                hsize_t size[(*it_sh).dim];
+                for(int i=0;i<(*it_sh).dim;i++)size[i] = (*it_sh).size[(*it_sh).dim-1-i];
+                
+                plist_id = H5Pcreate(H5P_FILE_ACCESS);
+                
+                file_id = H5Fcreate((*it_sh).filename, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+                filespace = H5Screate_simple((*it_sh).dim,size,NULL);
+                dataset_id = H5Dcreate(file_id, "data",file_dtype_id , filespace,H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+                
+                H5Pclose(plist_id);
+                H5Sclose(filespace);
+                H5Dclose(dataset_id);
+                
+                
+                if((*it_sh).attr.size() != 0)
+                {
+                    for(it_attr = (*it_sh).attr.begin();it_attr != (*it_sh).attr.end();++it_attr)
+                    {
+                        if((*it_attr).size == 1)dataspace_id = H5Screate(H5S_SCALAR);
+                        else dataspace_id = H5Screate_simple(1,&((*it_attr).size),NULL);
+                        attribute_id = H5Acreate (file_id,(*it_attr).name.c_str() ,(*it_attr).dtype , dataspace_id,H5P_DEFAULT, H5P_DEFAULT);
+                        H5Awrite(attribute_id,(*it_attr).dtype  ,(*it_attr).attr );
+                        H5Aclose(attribute_id);
+                        H5Sclose(dataspace_id);
+                    }
+                }
+                
+                if((*it_sh).dset.size() != 0)
+                {
+                    for(it_dset = (*it_sh).dset.begin();it_dset != (*it_sh).dset.end();++it_dset)
+                    {
+                        hsize_t sizeReverse[(*it_dset).dim];
+                        for(int i=0;i<(*it_dset).dim;i++)sizeReverse[i]=(*it_dset).size[(*it_dset).dim-1-i];
+                        dataspace_id = H5Screate_simple((*it_dset).dim,sizeReverse,NULL);
+                        dataset_id = H5Dcreate(file_id, (*it_dset).name.c_str(), (*it_dset).dtype, dataspace_id,H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+                        H5Dwrite(dataset_id, (*it_dset).dtype, H5S_ALL, H5S_ALL, H5P_DEFAULT,(*it_dset).dset);
+                        H5Dclose(dataset_id);
+                        H5Sclose(dataspace_id);
+                    }
+                }
+                H5Fclose(file_id);
+
+            }
+            
+            MPI_Barrier(io_node_comm_);
+            for(int p=0;p<io_node_size_;p++)
+            {
+                MPI_Barrier(io_node_comm_);
+                if(io_node_rank_==p)
+                {
+                    
+                    plist_id = H5Pcreate(H5P_FILE_ACCESS);
+                    file_id = H5Fopen((*it_sh).filename,H5F_ACC_RDWR,plist_id);
+                    H5Pclose(plist_id);
+                    
+                    for(it_sm=(*it_sh).msg.begin();it_sm != (*it_sh).msg.end();++it_sm)
+                    {
+                        //offset,offsetf,local_size
+                        hsize_t offsetf[(*it_sh).dim];
+                        hsize_t local_size[(*it_sh).dim];
+                        for(int i =0;i<(*it_sh).dim;i++)
+                        {
+                            offsetf[i]=(*it_sm).offset[(*it_sh).dim-1-i];
+                            local_size[i]=(*it_sm).size[(*it_sh).dim-1-i];
+                        }
+                        offsetf[1] -= (*it_sh).offset;
+                        //cout<< offsetf[1] << endl;
+  
+                        dset_id = H5Dopen(file_id, "/data", H5P_DEFAULT);
+                        filespace = H5Dget_space(dset_id);
+                        plist_id = H5Pcreate(H5P_DATASET_XFER);
+                        memspace = H5Screate_simple((*it_sh).dim,local_size,NULL);
+                        H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offsetf, NULL,local_size, NULL);
+                        H5Dwrite(dset_id, file_dtype_id, memspace, filespace, plist_id, (*it_sm).data);
+                        H5Pclose(plist_id);
+                        H5Sclose(filespace);
+                        H5Dclose(dset_id);
+                        
+                    }
+                    H5Fclose(file_id);
+                }
+            }
+    
+#endif
+            H5Tclose(mem_dtype_id);
+            H5Tclose(file_dtype_id);
+        }
+    }
     
     
 }

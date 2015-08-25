@@ -23,8 +23,20 @@ ostream& operator<<(ostream& os, const particles_name& p)
 }
 
 struct particles_name_info{
+    
     char * type_name;
+    int type_name_size;
 };
+
+
+template<typename pInfo>
+void set_parts_typename(pInfo *info, string type_name){
+    
+    info->type_name_size = type_name.size();
+    info->type_name = new char[info->type_name_size];
+    strcpy(info->type_name,type_name.c_str());
+    
+}
 
 #ifdef HDF5
 struct particles_name_dataType{
@@ -65,7 +77,7 @@ struct particles_name_dataType{
     H5Tinsert(part_fileType, "velocityZ",8+4+4+4+4+4,H5T_IEEE_F32BE);
       
     part_info_fileType = H5Tcreate(H5T_COMPOUND, sizeof(hvl_t));
-    H5Tinsert(part_info_fileType, "type_name",8+1, strtype);
+    H5Tinsert(part_info_fileType, "type_name",0, strtype);
 #else
     part_fileType = H5Tcreate (H5T_COMPOUND, 8 + (3*8) + (3*8) );
     H5Tinsert(part_fileType, "ID"       ,0          ,H5T_STD_I64BE);

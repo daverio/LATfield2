@@ -1313,42 +1313,40 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
 template <typename part, typename part_info, typename part_dataType>
 void Particles<part,part_info,part_dataType>::saveHDF5(string filename_base, int fileNumber)
 {
-  if(parallel.grid_size()[0] % fileNumber != 0)
+    if(parallel.grid_size()[1] % fileNumber != 0)
     {
-      COUT<<"fileNumber need to be a devider of parallel.grid_size()[0], aborting..."<<endl;
-      exit(111);
+        COUT<<"fileNumber need to be a devider of parallel.grid_size()[0], aborting..."<<endl;
+        exit(111);
     }
-  string filename;
+    string filename;
     
     
     
-  int numProcPerFile = parallel.size()/fileNumber;
-  int numProcPerFileDim0 = parallel.grid_size()[0]/fileNumber;
-  int whichFile  = parallel.grid_rank()[0] * fileNumber / parallel.grid_size()[0];
-  //int rankInFile;
-  long numParts[numProcPerFile];
-  int ranksList[numProcPerFile]; 
-  MPI_Comm fileComm;
-  MPI_Group fileGroup;
-  part * partlist;
-  partlist = new part[numParticles_];
-  long index;
+    int numProcPerFile = parallel.size()/fileNumber;
+    int numProcPerFileDim1 = parallel.grid_size()[1]/fileNumber;
+    int whichFile  = parallel.grid_rank()[1] * fileNumber / parallel.grid_size()[1];
+    //int rankInFile;
+    long numParts[numProcPerFile];
+    int ranksList[numProcPerFile];
+    MPI_Comm fileComm;
+    MPI_Group fileGroup;
+    part * partlist;
+    partlist = new part[numParticles_];
+    long index;
 
-  LATfield2::Site x(lat_part_);
-  typename std::list<part>::iterator it;
-       
-  for(int m=0;m<parallel.grid_size()[1];m++)
-    {
-      for(int n = 0;n<numProcPerFileDim0;n++)
-        {
-	  ranksList[m+(n*parallel.grid_size()[1])]= parallel.grid2world(n + whichFile * numProcPerFileDim0,m);
-        }
-    }
+    LATfield2::Site x(lat_part_);
+    typename std::list<part>::iterator it;
+    int rang[3];
     
-  MPI_Group_incl(parallel.lat_world_group(),numProcPerFile,ranksList,&fileGroup);
-  MPI_Comm_create(parallel.lat_world_comm(),fileGroup, &fileComm);
-  //MPI_Group_rank(fileGroup, &rankInFile);
     
+    rang[0]= whichFile * numProcPerFile ;
+    rang[1]= ((whichFile+1) * numProcPerFile) -1;
+    rang[2]=1;
+    MPI_Group_range_incl(parallel.lat_world_group(),1,&rang,&fileGroup);
+    MPI_Comm_create(parallel.lat_world_comm(),fileGroup , &fileComm);
+    
+    
+
   /*  
   numParts[rankInFile] = numParticles_;
   for(int i=0;i<numProcPerFile;i++)
@@ -1393,15 +1391,17 @@ void Particles<part,part_info,part_dataType>::saveHDF5(string filename_base, int
     
     Real fileBoxSize[fileNumber];
     for(int i=0;i<fileNumber;i++)fileBoxSize[i]=0;
-    fileBoxSize[whichFile]=fd.localBoxSize[2];
-    parallel.sum_dim0(fileBoxSize,fileNumber);
+    fileBoxSize[whichFile]=fd.localBoxSize[1];
+    parallel.sum_dim1(fileBoxSize,fileNumber);
     
     //cout<<fileBoxSize[whichFile] <<"  ///"<<endl;
     
     Real fileBoxOffset[fileNumber];
-    for(int i=0;i<fileNumber;i++)fileBoxOffset[i]=boxSize_[2]+1.;
-    fileBoxOffset[whichFile]=fd.localBoxOffset[2];
-    parallel.min_dim0(fileBoxOffset,fileNumber);
+    for(int i=0;i<fileNumber;i++)fileBoxOffset[i]=boxSize_[1]+1.;
+    fileBoxOffset[whichFile]=fd.localBoxOffset[1];
+    parallel.min_dim1(fileBoxOffset,fileNumber);
+    
+    
     
     //for(int i=0;i<fileNumber;i++)cout<<fileBoxOffset[i]<<" ... "<<endl;
     
@@ -1413,14 +1413,12 @@ void Particles<part,part_info,part_dataType>::saveHDF5(string filename_base, int
   if(fileNumber==1)  filename = filename_base +".h5";
   else filename = filename_base + "_" + int2string(whichFile,999)+".h5";
 
-
   save_hdf5_particles(filename,
 		      partlist,
 		      part_global_info_,
 		      part_datatype_,
 		      fd,
 		      fileComm);
-
 
 
   MPI_Comm_free(&fileComm);
@@ -1503,8 +1501,8 @@ void Particles<part,part_info,part_dataType>::loadHDF5(string filename_base, int
         //cout<<"offset: "<<fd[i].fileBoxOffset<<endl;
         //cout<<"box: "<<fd[i].fileBoxSize<<endl;
         
-        if( !(localBoxOffset[2] >= fd[i].fileBoxOffset+fd[i].fileBoxSize) &&
-           !(fd[i].fileBoxOffset >= localBoxOffset[2] + localBoxSize[2]) ) file_list.push_back(i);
+        if( !(localBoxOffset[1] >= fd[i].fileBoxOffset+fd[i].fileBoxSize) &&
+           !(fd[i].fileBoxOffset >= localBoxOffset[1] + localBoxSize[1]) ) file_list.push_back(i);
         
     }
     
@@ -1522,7 +1520,7 @@ void Particles<part,part_info,part_dataType>::loadHDF5(string filename_base, int
                                numParts_file,localBoxOffset_file,localBoxSize_file);
             
         
-        //look if need to reed to block, if yes read it and add particles...
+        //look if need to reed a block, if yes read it and add particles...
         for(int i=0;i<fd[(*it)].numProcPerFile;i++)
         {
             if( !(localBoxOffset[2] >= localBoxOffset_file[3*i+2] + localBoxSize_file[3*i+2]) &&
@@ -1530,7 +1528,7 @@ void Particles<part,part_info,part_dataType>::loadHDF5(string filename_base, int
                !(localBoxOffset[1] >= localBoxOffset_file[3*i+1] + localBoxSize_file[3*i+1]) &&
                !(localBoxOffset_file[3*i+1] >= localBoxOffset[1] + localBoxSize[1])  ){
                 
-                cout<< parallel.grid_rank()[0]<<";"<< parallel.grid_rank()[1] <<"ok:" <<*it<<" , "<< i <<endl;   
+                //cout<< parallel.grid_rank()[0]<<";"<< parallel.grid_rank()[1] <<"ok:" <<*it<<" , "<< i <<endl;
                 
                 //load the particles list...
                 partList_size = numParts_file[i];
@@ -1538,7 +1536,7 @@ void Particles<part,part_info,part_dataType>::loadHDF5(string filename_base, int
                 for(int l=0;l<i;l++)partList_offset += numParts_file[l];
                 partList = new part[partList_size];
                 
-                cout<< "list size: "<<partList_size <<endl;
+                //cout<< "list size: "<<partList_size <<endl;
                 
                 if(fileNumber ==1)get_part_sublist(filename_base + ".h5",
                                                    partList_offset,partList_size,partList,part_datatype_);
@@ -1561,7 +1559,7 @@ void Particles<part,part_info,part_dataType>::loadHDF5(string filename_base, int
         delete[] numParts_file;
         delete[] localBoxOffset_file;
         delete[] localBoxSize_file;
-        cout<< parallel.grid_rank()[0]<<";"<< parallel.grid_rank()[1] <<" ,  nparts: "<< numParticles_ << endl;
+        //cout<< parallel.grid_rank()[0]<<";"<< parallel.grid_rank()[1] <<" ,  nparts: "<< numParticles_ << endl;
         
         
     }
@@ -1601,11 +1599,86 @@ void Particles<part,part_info,part_dataType>::saveHDF5_server_write(string filen
             }
         }
     }
-    
     IO_Server.sendData(io_file_,(char*)partlist,numParticles_ * H5Tget_size(part_datatype_.part_memType));
-    IO_Server.closeFile(io_file_);
     delete[] partlist;
+    
+    hsize_t dim;
+    hsize_t size[3];
+    int file_number = IO_Server.io_node_number();
+    int numProcPerFile = parallel.size()/file_number;
+    int world_size = parallel.size();
+    int grid_size[2];
+    grid_size[0]=parallel.grid_size()[0];
+    grid_size[1]=parallel.grid_size()[1];
+    int whichFile = IO_Server.my_node();
+    Real localBoxSize[3];
+    int latSize[3];
+    for(int i=0;i<3;i++){
+        localBoxSize[i] = lat_resolution_ * (Real)(lat_part_.sizeLocal(i));
+        latSize[i]=lat_part_.size(i);
+    }
+    
+    Real localBoxOffset[3];
+    localBoxOffset[0] = 0;
+    localBoxOffset[1] = lat_resolution_ * (Real)(lat_part_.coordSkip()[1]);
+    localBoxOffset[2] = lat_resolution_ * (Real)(lat_part_.coordSkip()[0]);
+    
+    
+    Real fbs[file_number];
+    for(int i=0;i<file_number;i++)fbs[i]=0;
+    fbs[whichFile]=localBoxSize[1];
+    parallel.sum_dim1(fbs,file_number);
+    
+    
+    Real fbo[file_number];
+    for(int i=0;i<file_number;i++)fbo[i]=boxSize_[1]+1.;
+    fbo[whichFile]=localBoxOffset[1];
+    parallel.min_dim1(fbo,file_number);
+    
+    
+    long numPartsAll[numProcPerFile];
+    Real localBoxOffsetAll[numProcPerFile*3];
+    Real localBoxSizeAll[numProcPerFile*3];
+    int mpi_rank = IO_Server.compute_file_rank();
+    
+    
+    numPartsAll[mpi_rank] = numParticles_;
+    for(int i=0;i<3;i++)
+    {
+        localBoxOffsetAll[3*mpi_rank+i]=localBoxOffset[i];
+        localBoxSizeAll[3*mpi_rank+i]=localBoxSize[i];
+    }
 
+    for(int i=0;i<numProcPerFile;i++)
+    {
+        MPI_Bcast(&numPartsAll[i],1,MPI_LONG,i,IO_Server.compute_file_comm());
+        MPI_Bcast(&localBoxOffsetAll[i*3],3,MPI_RealC,i,IO_Server.compute_file_comm());
+        MPI_Bcast(&localBoxSizeAll[i*3],3,MPI_RealC,i,IO_Server.compute_file_comm());
+    }
+
+    dim =1;
+    size[0]=1;
+    IO_Server.sendDataset(io_file_,"part_info",(char*)&part_global_info_,dim,size,part_datatype_.part_info_memType);
+    IO_Server.sendATTR(io_file_,"fileNumber",(char*)&file_number,1,H5T_NATIVE_INT);
+    IO_Server.sendATTR(io_file_,"numProcPerFile",(char*)&numProcPerFile,1,H5T_NATIVE_INT);
+    IO_Server.sendATTR(io_file_,"world_size",(char*)&world_size,1,H5T_NATIVE_INT);
+    IO_Server.sendATTR(io_file_,"grid_size",(char*)&grid_size,2,H5T_NATIVE_INT);
+    IO_Server.sendATTR(io_file_,"boxSize",(char*)&boxSize_,3,REAL_TYPE);
+    IO_Server.sendATTR(io_file_,"fileBoxSize",(char*)&fbs[whichFile],1,REAL_TYPE);
+    IO_Server.sendATTR(io_file_,"fileBoxOffset",(char*)&fbo[whichFile],1,REAL_TYPE);
+    IO_Server.sendATTR(io_file_,"latSize",(char*)latSize,3,H5T_NATIVE_INT);
+    dim = 1;
+    size[0] = numProcPerFile;
+    IO_Server.sendDataset(io_file_,"numParts",(char*)numPartsAll,dim,size,H5T_NATIVE_LONG);
+    size[0] = 3;
+    size[1] = numProcPerFile;
+    dim = 2;
+    IO_Server.sendDataset(io_file_,"localBoxOffset",(char*)localBoxOffsetAll,dim,size,REAL_TYPE);
+    IO_Server.sendDataset(io_file_,"localBoxSize",(char*)localBoxSizeAll,dim,size,REAL_TYPE);
+    
+    
+    IO_Server.closeFile(io_file_);
+    
 }
 #endif
 

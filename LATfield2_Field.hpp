@@ -294,6 +294,15 @@ class Field
         /*!
          Returns a pointer to the lattice on which the field is defined.
          */
+        
+        
+        
+#ifdef EXTERNAL_IO
+        void saveHDF5_server_open(string filename_base,int offset=-1,int thickness=-1);
+        void saveHDF5_server_write(int number_of_message = 4, string filename_base = "defaultfilename",int offset=-1,int thickness=-1);
+#endif
+        
+        
 		Lattice& lattice();
         /*!
          Returns the number of components of the field at each sites.
@@ -344,7 +353,11 @@ class Field
         hid_t type_id;
         int array_size;
 #endif
-        
+#ifdef EXTERNAL_IO
+        ioserver_file io_file_;
+        int iof_offset_;
+        int iof_thickness_;
+#endif
         
 	};
 
@@ -1589,6 +1602,161 @@ void  Field<FieldType>::saveHDF5_coarseGrain3D(string filename,int ratio)
     COUT<<"aborting.... "<<endl;
 #endif
 }
+
+
+#ifdef EXTERNAL_IO
+template <class FieldType>
+void Field<FieldType>:: saveHDF5_server_open(string filename_base,int offset,int thickness)
+{
+    Lattice lat;
+    int size[lattice_->dim()];
+    for(int i=0;i<lattice_->dim();i++)size[i]=lattice_->size(i);
+    iof_offset_ = offset;
+    if(iof_offset_!=-1 && thickness == -1)   iof_thickness_ = 1;
+    else iof_thickness_ = thickness;
+    if(lattice_->dim()==2)iof_thickness_=-1;
+    if(iof_thickness_!=-1)size[0]=iof_thickness_;
+    lat.initialize(lattice_->dim(),size,lattice_->halo());
+    io_file_ = IO_Server.openFile(filename_base.c_str(),STRUCTURED_H5_FILE,type_id,type_id,&lat,components_,array_size);
+}
+template <class FieldType>
+void Field<FieldType>:: saveHDF5_server_write(int number_of_message, string filename_base, int offset,int thickness)
+{
+    
+    if(!(io_file_.is_open))this->saveHDF5_server_open(filename_base,offset,thickness);
+
+    
+    
+    if(!(io_file_.is_open)){COUT<<"Field<FieldType>::saveHDF5_server_write cannot open file: "<<filename_base<<endl;return;}
+    
+    
+    int nom;
+    int npt_nom;
+    hsize_t size[lattice_->dim()];
+    hsize_t offsetM[lattice_->dim()];
+    int coord[lattice_->dim()];
+    Site x(*lattice_);
+    FieldType * buffer;
+    long bufSize;
+    
+    
+    if(lattice_->sizeLocal(lattice_->dim()-1) % number_of_message   == 0)
+    {
+        nom = number_of_message;
+    }
+    else
+    {
+        //cout<<"need to compute nom"<<endl;
+        
+        int nom_min,nom_max,nom_temp;
+        
+        
+        
+        bool flag=true;
+        nom_temp = number_of_message;
+        while(flag)
+        {
+            nom_temp -= 1;
+            if(lattice_->sizeLocal(lattice_->dim()-1) % nom_temp == 0)
+            {
+                nom_min=nom_temp;
+                flag=false;
+            }
+        }
+        
+        flag=true;
+        nom_temp = number_of_message;
+        while(flag)
+        {
+            if(nom_temp > lattice_->sizeLocal(lattice_->dim()-1))
+            {
+                nom_max=-1;
+                flag=false;
+            }
+            nom_temp += 1;
+            if(lattice_->sizeLocal(lattice_->dim()-1) % nom_temp == 0)
+            {
+                nom_max=nom_temp;
+                flag=false;
+            }
+        }
+        //cout<< lattice_->sizeLocal(lattice_->dim()-1) <<" , "<<  nom_min<<" , "<<nom_max<<endl;
+    
+        
+        if(abs(number_of_message - nom_max) <=  abs(number_of_message - nom_min))nom = nom_max;
+        else nom =nom_min;
+        
+        //cout<< lattice_->sizeLocal(lattice_->dim()-1) <<" , "<<  nom_min<<" , "<<nom_max<<" , "<< nom<<endl
+    }
+    npt_nom = lattice_->sizeLocal(lattice_->dim()-1) / nom;
+    
+    
+    for(int i=0;i<lattice_->dim();i++)coord[i]=0;
+    
+    coord[lattice_->dim()-1]=lattice_->coordSkip()[0];
+    coord[lattice_->dim()-2]=lattice_->coordSkip()[1];
+    
+    for(int i=0;i<lattice_->dim();i++)
+    {
+        offsetM[i]=coord[i];
+        size[i] = lattice_->sizeLocal(i);
+    }
+    size[lattice_->dim()-1]=npt_nom;
+    
+    if(iof_thickness_ != -1)
+    {
+        size[0] = iof_thickness_;
+        coord[0] = iof_offset_;
+    }
+    
+    if(iof_thickness_ != -1 || lattice_->halo()!=0)
+    {
+        bufSize = 1;
+        for(int i=0;i<lattice_->dim();i++)bufSize *= size[i];
+        buffer = new FieldType[bufSize*components_];
+    }
+    
+    for(int i=0;i<nom;i++)
+    {
+        if(!x.setCoord(coord))cout<<"internal error: ioserver send field out of local space..."<<endl;
+        
+        if(lattice_->halo()==0 && iof_thickness_ == -1)
+        {
+            //copy directly from data_
+            IO_Server.sendData(io_file_,(char*)(data_ + x.index()*components_),size,offsetM);
+        
+        }
+        else
+        {
+            //have to make a buffer to send;
+            
+            if(iof_thickness_ == -1)
+            {
+                for(int i=0;i<bufSize;x.next(),i++)
+                {
+                    for(int c=0;c<components_;c++)buffer[i*components_ + c] = data_[x.index()*components_ + c];
+                }
+            }
+            else
+            {
+                for(int i=0;i<bufSize;x.nextInSlice(iof_offset_,iof_thickness_),i++)
+                {
+                    for(int c=0;c<components_;c++)buffer[i*components_ + c] = data_[x.index()*components_ + c];
+                }
+            }
+            IO_Server.sendData(io_file_,(char*)buffer,size,offsetM);
+            
+        }
+    
+        coord[lattice_->dim()-1] += npt_nom;
+        offsetM[lattice_->dim()-1] += npt_nom;
+    }
+    
+    
+    IO_Server.closeFile(io_file_);
+}
+#endif
+
 
 
 //MISCELLANEOUS=================

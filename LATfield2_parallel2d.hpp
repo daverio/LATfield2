@@ -819,18 +819,10 @@ template<class Type> void Parallel2d::sum_dim1(Type* array, int len)
 		}
 	}
 	
-	//Broadcast result
-	
-	for(i=0;i<grid_size()[0];i++)
-	{
-		MPI_Group_rank(dim1_group_[i], &comm_rank);
-		if(comm_rank!=MPI_UNDEFINED)MPI_Bcast( array, len*sizeof(Type), MPI_BYTE, 0, dim1_comm_[i]);
-	}
     
     MPI_Bcast( array, len*sizeof(Type), MPI_BYTE, 0, dim1_comm_[grid_rank_[0]]);
 	
-	// Tidy up (bug found by MDP 12/4/06)
-	if( grid_rank()[0] == 0 ) delete[] gather;
+	if( grid_rank()[1] == 0 ) delete[] gather;
 }
 
 template<class Type> void Parallel2d::max(Type& number)

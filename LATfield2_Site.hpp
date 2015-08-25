@@ -87,6 +87,8 @@ class Site
          \sa test()
          */
 		void next();
+        
+        void nextInSlice(int offset,int thickness);
 		
 		//HALO OPERATIONS==============
         
@@ -240,6 +242,25 @@ void Site::next()
 		}
 		index_ = lattice_->siteLast() + 1;
 	}
+}
+
+void Site::nextInSlice(int offset,int thickness)
+{
+    index_++;
+    //If coordLocal(0) != sizeLocal(0) then next site reached
+    if( coordLocal(0) != offset+thickness ) { return; }
+    else
+    {
+        index_ -= thickness;
+        for(int i=1; i<lattice_->dim(); i++)
+        {
+            index_ += lattice_->jump(i);
+            //If coordLocal(i) !=sizeLocal(0) then next site reached
+            if( coordLocal(i) != lattice_->sizeLocal(i) ) { return; }
+            index_ -= lattice_->sizeLocal(i) * lattice_->jump(i);
+        }
+        index_ = lattice_->siteLast() + 1;
+    }
 }
 
 //HALO OPERATIONS====================

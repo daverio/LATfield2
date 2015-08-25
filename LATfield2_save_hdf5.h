@@ -1,8 +1,4 @@
-#ifdef BIG_ENDIAN_ORDER
-#define DATA_ORDER H5T_ORDER_BE
-#else
-#define  DATA_ORDER H5T_ORDER_LE
-#endif
+
 /*! \file LATfield2_save_hdf5.h
  \brief LATfield2_save_hdf5.h contains the definition of the function used for hdf5 i/o.
  \author David Daverio
@@ -140,7 +136,7 @@ extern "C"{
 	   H5Pclose(plist_id);
 	   H5Fclose(file_id);
 	   
-//	   delete[] components;
+	   delete[] components;
 //	   delete[] filename;	   
 	   
 	   free(filename);
@@ -221,7 +217,7 @@ extern "C"{
 	   }
 	   
 	   
-//	   delete[] components;
+	   delete[] components;
 //	   delete[] filename;
 
 //	   free(filename);
