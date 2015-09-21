@@ -1617,7 +1617,7 @@ void Field<FieldType>:: saveHDF5_server_open(string filename_base,int offset,int
     if(lattice_->dim()==2)iof_thickness_=-1;
     if(iof_thickness_!=-1)size[0]=iof_thickness_;
     lat.initialize(lattice_->dim(),size,lattice_->halo());
-    io_file_ = IO_Server.openFile(filename_base.c_str(),STRUCTURED_H5_FILE,type_id,type_id,&lat,components_,array_size);
+    io_file_ = ioserver.openFile(filename_base.c_str(),STRUCTURED_H5_FILE,type_id,type_id,&lat,components_,array_size);
 }
 template <class FieldType>
 void Field<FieldType>:: saveHDF5_server_write(int number_of_message, string filename_base, int offset,int thickness)
@@ -1723,7 +1723,7 @@ void Field<FieldType>:: saveHDF5_server_write(int number_of_message, string file
         if(lattice_->halo()==0 && iof_thickness_ == -1)
         {
             //copy directly from data_
-            IO_Server.sendData(io_file_,(char*)(data_ + x.index()*components_),size,offsetM);
+            ioserver.sendData(io_file_,(char*)(data_ + x.index()*components_),size,offsetM);
         
         }
         else
@@ -1744,7 +1744,7 @@ void Field<FieldType>:: saveHDF5_server_write(int number_of_message, string file
                     for(int c=0;c<components_;c++)buffer[i*components_ + c] = data_[x.index()*components_ + c];
                 }
             }
-            IO_Server.sendData(io_file_,(char*)buffer,size,offsetM);
+            ioserver.sendData(io_file_,(char*)buffer,size,offsetM);
             
         }
     
@@ -1753,7 +1753,7 @@ void Field<FieldType>:: saveHDF5_server_write(int number_of_message, string file
     }
     
     
-    IO_Server.closeFile(io_file_);
+    ioserver.closeFile(io_file_);
 }
 #endif
 

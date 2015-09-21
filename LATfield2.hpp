@@ -283,7 +283,7 @@ namespace LATfield2
 
 #ifdef EXTERNAL_IO
 #include "LATfield2_IO_server.hpp"
-IOserver IO_Server;
+IOserver ioserver;
 #endif
 
 #include "LATfield2_parallel2d.hpp"
