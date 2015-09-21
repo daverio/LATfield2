@@ -1571,13 +1571,13 @@ void Particles<part,part_info,part_dataType>::loadHDF5(string filename_base, int
 template <typename part, typename part_info, typename part_dataType>
 void Particles<part,part_info,part_dataType>::saveHDF5_server_open(string filename_base)
 {
-    io_file_ = IO_Server.openFile(filename_base.c_str() ,UNSTRUCTURED_H5_FILE, part_datatype_.part_memType, part_datatype_.part_fileType);
+    io_file_ = ioserver.openFile(filename_base.c_str() ,UNSTRUCTURED_H5_FILE, part_datatype_.part_memType, part_datatype_.part_fileType);
 }
 template <typename part, typename part_info, typename part_dataType>
 void Particles<part,part_info,part_dataType>::saveHDF5_server_write(string filename_base = "defaultfilename")
 {
     if(!(io_file_.is_open))
-        io_file_ = IO_Server.openFile(filename_base.c_str() ,UNSTRUCTURED_H5_FILE, part_datatype_.part_memType, part_datatype_.part_fileType);
+        io_file_ = ioserver.openFile(filename_base.c_str() ,UNSTRUCTURED_H5_FILE, part_datatype_.part_memType, part_datatype_.part_fileType);
     
     part * partlist;
     partlist = new part[numParticles_];
@@ -1599,18 +1599,18 @@ void Particles<part,part_info,part_dataType>::saveHDF5_server_write(string filen
             }
         }
     }
-    IO_Server.sendData(io_file_,(char*)partlist,numParticles_ * H5Tget_size(part_datatype_.part_memType));
+    ioserver.sendData(io_file_,(char*)partlist,numParticles_ * H5Tget_size(part_datatype_.part_memType));
     delete[] partlist;
     
     hsize_t dim;
     hsize_t size[3];
-    int file_number = IO_Server.io_node_number();
+    int file_number = ioserver.io_node_number();
     int numProcPerFile = parallel.size()/file_number;
     int world_size = parallel.size();
     int grid_size[2];
     grid_size[0]=parallel.grid_size()[0];
     grid_size[1]=parallel.grid_size()[1];
-    int whichFile = IO_Server.my_node();
+    int whichFile = ioserver.my_node();
     Real localBoxSize[3];
     int latSize[3];
     for(int i=0;i<3;i++){
@@ -1639,7 +1639,7 @@ void Particles<part,part_info,part_dataType>::saveHDF5_server_write(string filen
     long numPartsAll[numProcPerFile];
     Real localBoxOffsetAll[numProcPerFile*3];
     Real localBoxSizeAll[numProcPerFile*3];
-    int mpi_rank = IO_Server.compute_file_rank();
+    int mpi_rank = ioserver.compute_file_rank();
     
     
     numPartsAll[mpi_rank] = numParticles_;
@@ -1651,33 +1651,33 @@ void Particles<part,part_info,part_dataType>::saveHDF5_server_write(string filen
 
     for(int i=0;i<numProcPerFile;i++)
     {
-        MPI_Bcast(&numPartsAll[i],1,MPI_LONG,i,IO_Server.compute_file_comm());
-        MPI_Bcast(&localBoxOffsetAll[i*3],3,MPI_RealC,i,IO_Server.compute_file_comm());
-        MPI_Bcast(&localBoxSizeAll[i*3],3,MPI_RealC,i,IO_Server.compute_file_comm());
+        MPI_Bcast(&numPartsAll[i],1,MPI_LONG,i,ioserver.compute_file_comm());
+        MPI_Bcast(&localBoxOffsetAll[i*3],3,MPI_RealC,i,ioserver.compute_file_comm());
+        MPI_Bcast(&localBoxSizeAll[i*3],3,MPI_RealC,i,ioserver.compute_file_comm());
     }
 
     dim =1;
     size[0]=1;
-    IO_Server.sendDataset(io_file_,"part_info",(char*)&part_global_info_,dim,size,part_datatype_.part_info_memType);
-    IO_Server.sendATTR(io_file_,"fileNumber",(char*)&file_number,1,H5T_NATIVE_INT);
-    IO_Server.sendATTR(io_file_,"numProcPerFile",(char*)&numProcPerFile,1,H5T_NATIVE_INT);
-    IO_Server.sendATTR(io_file_,"world_size",(char*)&world_size,1,H5T_NATIVE_INT);
-    IO_Server.sendATTR(io_file_,"grid_size",(char*)&grid_size,2,H5T_NATIVE_INT);
-    IO_Server.sendATTR(io_file_,"boxSize",(char*)&boxSize_,3,REAL_TYPE);
-    IO_Server.sendATTR(io_file_,"fileBoxSize",(char*)&fbs[whichFile],1,REAL_TYPE);
-    IO_Server.sendATTR(io_file_,"fileBoxOffset",(char*)&fbo[whichFile],1,REAL_TYPE);
-    IO_Server.sendATTR(io_file_,"latSize",(char*)latSize,3,H5T_NATIVE_INT);
+    ioserver.sendDataset(io_file_,"part_info",(char*)&part_global_info_,dim,size,part_datatype_.part_info_memType);
+    ioserver.sendATTR(io_file_,"fileNumber",(char*)&file_number,1,H5T_NATIVE_INT);
+    ioserver.sendATTR(io_file_,"numProcPerFile",(char*)&numProcPerFile,1,H5T_NATIVE_INT);
+    ioserver.sendATTR(io_file_,"world_size",(char*)&world_size,1,H5T_NATIVE_INT);
+    ioserver.sendATTR(io_file_,"grid_size",(char*)&grid_size,2,H5T_NATIVE_INT);
+    ioserver.sendATTR(io_file_,"boxSize",(char*)&boxSize_,3,REAL_TYPE);
+    ioserver.sendATTR(io_file_,"fileBoxSize",(char*)&fbs[whichFile],1,REAL_TYPE);
+    ioserver.sendATTR(io_file_,"fileBoxOffset",(char*)&fbo[whichFile],1,REAL_TYPE);
+    ioserver.sendATTR(io_file_,"latSize",(char*)latSize,3,H5T_NATIVE_INT);
     dim = 1;
     size[0] = numProcPerFile;
-    IO_Server.sendDataset(io_file_,"numParts",(char*)numPartsAll,dim,size,H5T_NATIVE_LONG);
+    ioserver.sendDataset(io_file_,"numParts",(char*)numPartsAll,dim,size,H5T_NATIVE_LONG);
     size[0] = 3;
     size[1] = numProcPerFile;
     dim = 2;
-    IO_Server.sendDataset(io_file_,"localBoxOffset",(char*)localBoxOffsetAll,dim,size,REAL_TYPE);
-    IO_Server.sendDataset(io_file_,"localBoxSize",(char*)localBoxSizeAll,dim,size,REAL_TYPE);
+    ioserver.sendDataset(io_file_,"localBoxOffset",(char*)localBoxOffsetAll,dim,size,REAL_TYPE);
+    ioserver.sendDataset(io_file_,"localBoxSize",(char*)localBoxSizeAll,dim,size,REAL_TYPE);
     
     
-    IO_Server.closeFile(io_file_);
+    ioserver.closeFile(io_file_);
     
 }
 #endif

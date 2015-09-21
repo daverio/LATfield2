@@ -37,6 +37,7 @@
 #define GET_DATA_TAG       10003
 #define GET_ATTR_TAG       10004
 #define GET_DSET_TAG       10005
+#define GET_HEADER_TAG     10006
 #define OFFSET_ATTR_TAG    10050
 #define OFFSET_DSET_TAG    20050
 
@@ -59,8 +60,8 @@ struct ioserver_file
     int type;
     int sizeof_mem_dtype; //used only by h5 files
     int dim; //used for h5 structured file
-    int components;
-    int array_size;
+    int components; //used for h5 structured file
+    int array_size; //used for h5 structured file
     ioserver_file(){
         ID=-1;
         type=-1;
@@ -169,6 +170,7 @@ public:
     void sendData(ioserver_file file, char * message,long size,int sendType);
     void sendData(ioserver_file file, char * message,hsize_t * size, hsize_t * offset,int sendType);
 
+    void sendHeader(ioserver_file file,char* header,int size);
     
     void sendATTR(ioserver_file file,string attr_name,char * attr, int size,hid_t dtype);
     void sendDataset(ioserver_file file,string dset_name, char * dset, hsize_t dim, hsize_t * size, hid_t dtype);
@@ -178,6 +180,7 @@ public:
     int compute_file_rank(){return compute_file_rank_;};
     int io_node_number(){return io_node_number_;};
     int my_node(){return my_node_;};
+    bool isClientFileRoot(){return isClientFileRoot_;};
     
 private:
     
@@ -807,7 +810,7 @@ void IOserver::start()
             state_ = SERVER_BUSY;
             if(isRoot_)MPI_Isend(&state_,1,MPI::INT,1,SERVER_STATE_TAG,sync_global_comm_,&send_statut_request);
             
-            cout<< "ostream open"<<endl;
+            //cout<< "ostream open"<<endl;
             
             this->ostream();
             
@@ -906,7 +909,7 @@ void IOserver::ostream()
                 filesNumber_ ++;
                 
                 string str(file.filename,file.fnSize);
-                cout<< "opening usb file : "<< str << ", id: "<< file.ID<<endl;
+                //cout<< "opening usb file : "<< str << ", id: "<< file.ID<<endl;
                 
                 
             }
@@ -955,7 +958,7 @@ void IOserver::ostream()
                 filesNumber_ ++;
                 
                 string str(file.filename,file.fnSize);
-                cout<< "opening ush file : "<< str << ", id: "<< file.ID<<endl;
+                //cout<< "opening ush file : "<< str << ", id: "<< file.ID<<endl;
                 
             }
             else if(fyleType == STRUCTURED_H5_FILE)
@@ -1015,7 +1018,7 @@ void IOserver::ostream()
                 filesNumber_ ++;
                 
                 string str(file.filename,file.fnSize);
-                cout<< "opening sh file : "<< str << ", id: "<< file.ID<<endl;
+                //cout<< "opening sh file : "<< str << ", id: "<< file.ID<<endl;
 
             }
             else
@@ -1378,7 +1381,7 @@ void IOserver::ostream()
         if(ostream_close_flag==client_size_ && allfiles_closed)
         {
             ostream_flag=false;
-            cout<< "close ostream"<<endl;
+            //cout<< "close ostream"<<endl;
             
         }
     

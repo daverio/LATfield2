@@ -610,7 +610,7 @@ void Parallel2d::initialize(int proc_size0, int proc_size1)
    
     
     
-    IO_Server.initialize(proc_size0,proc_size1,IO_total_size,IO_node_size);
+    ioserver.initialize(proc_size0,proc_size1,IO_total_size,IO_node_size);
     
 #else
     

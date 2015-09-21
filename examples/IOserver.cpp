@@ -45,7 +45,7 @@ int main(int argc, char **argv)
     /*!
      Part of the code which will be executed by the IOserver process. In fact this cores should only start the server
      */
-    if(parallel.isIO()) IO_Server.start();
+    if(parallel.isIO()) ioserver.start();
     else
     {
         /*!
@@ -86,7 +86,7 @@ int main(int argc, char **argv)
             pcls[i].vel[2]=3.3;
         }
         
-        IO_Server.openOstream();
+        while(!ioserver.openOstream());
         
         
         Lattice lat(3,64,2);
@@ -109,9 +109,9 @@ int main(int argc, char **argv)
         
         hid_t datatype = H5T_NATIVE_FLOAT;
         
-        ubin_file = IO_Server.openFile("test_ubin",UNSTRUCTURED_BIN_FILE);
-        uh5_file = IO_Server.openFile("test_uh5",UNSTRUCTURED_H5_FILE,pcls_types.part_memType,pcls_types.part_fileType);
-        //sh5_file = IO_Server.openFile("test_sh5",STRUCTURED_H5_FILE,datatype,datatype,&lat,3,1);
+        ubin_file = ioserver.openFile("test_ubin",UNSTRUCTURED_BIN_FILE);
+        uh5_file = ioserver.openFile("test_uh5",UNSTRUCTURED_H5_FILE,pcls_types.part_memType,pcls_types.part_fileType);
+        //sh5_file = ioserver.openFile("test_sh5",STRUCTURED_H5_FILE,datatype,datatype,&lat,3,1);
         
         //sleep(1);
        
@@ -128,21 +128,21 @@ int main(int argc, char **argv)
         offset[1]=lat.coordSkip()[1];
         offset[2]=lat.coordSkip()[0];
         
-        //IO_Server.sendData(sh5_file,(char*)phi.data(),size,offset);
+        //ioserver.sendData(sh5_file,(char*)phi.data(),size,offset);
         
-        IO_Server.sendData(ubin_file,sendbuffer,sentence.size()+1);
-        IO_Server.sendData(ubin_file,sendbuffer,sentence.size()+1);
+        ioserver.sendData(ubin_file,sendbuffer,sentence.size()+1);
+        ioserver.sendData(ubin_file,sendbuffer,sentence.size()+1);
         
-        IO_Server.sendData(uh5_file,(char*)pcls,nparts*sizeof(part_simple));
+        ioserver.sendData(uh5_file,(char*)pcls,nparts*sizeof(part_simple));
         
         
         float testAttr[4] = {31.3,2.3,4.4,5};
         datatype =H5T_NATIVE_FLOAT;
         string attr_name = "test";
-        IO_Server.sendATTR(uh5_file,attr_name,(char*)&testAttr,1,datatype);
+        ioserver.sendATTR(uh5_file,attr_name,(char*)&testAttr,1,datatype);
         attr_name = "test3";
-        IO_Server.sendATTR(uh5_file,attr_name,(char*)&testAttr,3,datatype);
-        //IO_Server.sendData(sh5_file,(char*)phi.data(),size,offset);
+        ioserver.sendATTR(uh5_file,attr_name,(char*)&testAttr,3,datatype);
+        //ioserver.sendData(sh5_file,(char*)phi.data(),size,offset);
         
         
     
@@ -153,24 +153,24 @@ int main(int argc, char **argv)
         
         for(int i=0;i<dset_size[0]*dset_size[1]*dset_size[2];i++)dset[i]=0.1+i;
         
-        IO_Server.sendDataset(uh5_file,"blabla",(char *)dset, dset_dim, dset_size, H5T_NATIVE_FLOAT);
+        ioserver.sendDataset(uh5_file,"blabla",(char *)dset, dset_dim, dset_size, H5T_NATIVE_FLOAT);
         
         
         
-        IO_Server.closeFile(ubin_file);
-        IO_Server.closeFile(uh5_file);
-        //IO_Server.closeFile(sh5_file);
+        ioserver.closeFile(ubin_file);
+        ioserver.closeFile(uh5_file);
+        //ioserver.closeFile(sh5_file);
         
-        IO_Server.closeOstream();
+        ioserver.closeOstream();
         
-        //if(IO_Server.openOstream()== OSTREAM_FAIL) cout<< "arg"<<endl ;
+        //if(ioserver.openOstream()== OSTREAM_FAIL) cout<< "arg"<<endl ;
         
-        //while(IO_Server.openOstream()== OSTREAM_FAIL){}
+        //while(ioserver.openOstream()== OSTREAM_FAIL){}
         
         
-        //IO_Server.closeOstream();
+        //ioserver.closeOstream();
         
-        IO_Server.stop();
+        ioserver.stop();
     }
     
     
