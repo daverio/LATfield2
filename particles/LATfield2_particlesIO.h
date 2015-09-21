@@ -207,7 +207,7 @@ int save_hdf5_particles(string filename,
   plist_id_file = H5Pcreate(H5P_FILE_ACCESS);
   H5Pset_fapl_mpio(plist_id_file,comm,info);
 
-  file_id = H5Fcreate(filename.c_str, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id_file);
+  file_id = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, plist_id_file);
   
   filespace_id = H5Screate_simple(1,&globalNumParts,NULL);
   memspace_id  = H5Screate_simple(1,&localNumParts,NULL); 
