@@ -108,7 +108,7 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
             filespace = H5Screate_simple(lat_dim,sizeGlobal,NULL);
             
             plist_id = H5Pcreate(H5P_DATASET_CREATE);
-            H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
+            //H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
             
             dset_id = H5Dcreate1(file_id, "/comp_000", dtype_id, filespace,plist_id);
             
@@ -143,7 +143,7 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
                 filespace = H5Screate_simple(lat_dim,sizeGlobal,NULL);
                 
                 plist_id = H5Pcreate(H5P_DATASET_CREATE);
-                H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
+                //H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
                 
                 string compName;
                 compName = "/comp_"+int2string(c,999);
@@ -152,6 +152,8 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
                 H5Pclose(plist_id);
                 H5Sclose(filespace);
                 
+		offset[lat_dim]=c;
+
                 filespace = H5Dget_space(dset_id);
                 memspace = H5Screate_simple(lat_dim+1,localSize,NULL);
                 status = H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offsetf, NULL, count, NULL);
