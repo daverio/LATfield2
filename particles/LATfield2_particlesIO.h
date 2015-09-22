@@ -222,9 +222,9 @@ int save_hdf5_particles(string filename,
   H5Dwrite(dataset_id,partdatatype.part_memType, memspace_id, filespace_id, plist_id,partlist);
 
   H5Pclose(plist_id);
-  H5Sclose(memspace);
+  H5Sclose(memspace_id);
   H5Dclose(dataset_id);
-  H5Sclose(filespace);
+  H5Sclose(filespace_id);
 
   if(mpi_rank=0){
     filespace_id = H5Screate_simple(1,&one,NULL);
