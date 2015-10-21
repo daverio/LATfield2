@@ -94,7 +94,7 @@ int main(int argc, char **argv)
         double timerRef,timerSend2Server_ubin, timerSend2Server_uh5, timerSend2Server_sh5, timerSend2Server_fieldSlice;
         
         
-        
+        long total_uh5 = nparts*sizeof(part_simple)*runs;
         
         
         while(!ioserver.openOstream())usleep(50);
@@ -135,7 +135,7 @@ int main(int argc, char **argv)
         if(parallel.isRoot())
         {
         textfile.open(str_filename.c_str(),ios::out | ios::app); 
-        textfile<< n<<","<<m<< ","<< io_size<< ","<<io_groupe_size<< ","<<timerSend2Server_ubin<< ","<<total_ubin<<endl;
+        textfile<< n<<","<<m<< ","<< io_size<< ","<<io_groupe_size<< ","<<timerSend2Server_ubin<< ","<<total_ubin<<","<< timerSend2Server_uh5 <<","<< total_uh5 <<","<< timerSend2Server_sh5 <<","<< timerSend2Server_fieldSlice <<endl;
         textfile.close();
         }
         ioserver.stop();
