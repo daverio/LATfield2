@@ -8,9 +8,9 @@
 #include <unistd.h>
 
 #include <iostream>
-#include "LATfield2d.hpp"
+#include "LATfield2.hpp"
 
-using namespace LATfield2d;
+using namespace LATfield2;
 
 
 
@@ -52,41 +52,93 @@ int main(int argc, char **argv)
 	
     parallel.initialize(n,m,io_size,io_groupe_size);
     
-    if(parallel.isIO())IO_Server.start();
+    if(parallel.isIO())ioserver.start();
     else
     {
                
         
         double * buffer;
-        long size = 4l*1024l*1024l*sizeof(double);
-        long total = 4l*sizeof(double);
-        parallel.sum(total); // total in Mb
-        total*=runs;
+        long size = 32l*1024l*1024l*sizeof(double);
+        long total_ubin = 32l*sizeof(double);
+        parallel.sum(total_ubin); // total in Mb
+        total_ubin*=runs;
         
         buffer = (double*)malloc(size);
         
         
+        Lattice lat(3,1024,0);
+        Field<double> phi(lat,3);
         
-        while(IO_Server.openOstream()==OSTREAM_FAIL)usleep(50);
+        hsize_t size_dset[lat.dim()];
+        hsize_t offset[lat.dim()];
+        
+        
+        for(int i=0;i<lat.dim();i++)size_dset[i] = lat.sizeLocal(i);
+        
+        offset[0]=0;
+        offset[1]=lat.coordSkip()[1];
+        offset[2]=lat.coordSkip()[0];
+        
+        
+        
+        
+        int nparts=1000000;
+        part_simple pcls[nparts];
+        part_simple_dataType pcls_types;
+        
+        
+        
+        
+        ioserver_file ubin_file,uh5_file,sh5_file;
+        
+        double timerRef,timerSend2Server_ubin, timerSend2Server_uh5, timerSend2Server_sh5, timerSend2Server_fieldSlice;
+        
+        
+        
+        
+        
+        while(!ioserver.openOstream())usleep(50);
+        
+        ubin_file = ioserver.openFile("./server/TestServer_ubin",UNSTRUCTURED_BIN_FILE);
+        uh5_file = ioserver.openFile("./server/TestServer_uh5",UNSTRUCTURED_H5_FILE,pcls_types.part_memType,pcls_types.part_fileType);
+        sh5_file = ioserver.openFile("./server/TestServer_sh5",STRUCTURED_H5_FILE,H5T_NATIVE_DOUBLE,H5T_NATIVE_DOUBLE,&lat,3,1);
+        phi.saveHDF5_server_open("testPhi",10,64);
+        
+        
+        
         
         timerRef = MPI_Wtime();
-        file = IO_Server.createFile("./server/TestServer");
-        for(int i=0;i<runs;i++)IO_Server.writeBuffer(file,(char*)buffer,size);
-        IO_Server.closeFile(file);
-        timerSend2Server = MPI_Wtime()-timerRef;
+        for(int i=0;i<runs;i++)ioserver.sendData(ubin_file,(char*)buffer,size);
+        timerSend2Server_ubin = MPI_Wtime()-timerRef;
         
-        COUT<< timerSend2Server << endl;
+        timerRef = MPI_Wtime();
+        for(int i=0;i<runs;i++)ioserver.sendData(uh5_file,(char*)pcls,size*sizeof(part_simple));
+        timerSend2Server_uh5 = MPI_Wtime()-timerRef;
         
-        IO_Server.closeOstream();
+        timerRef = MPI_Wtime();
+        ioserver.sendData(sh5_file,(char*)phi.data(),size_dset,offset);
+        timerSend2Server_sh5 = MPI_Wtime()-timerRef;
         
+        timerRef = MPI_Wtime();
+        phi.saveHDF5_server_write(4);
+        timerSend2Server_fieldSlice = MPI_Wtime()-timerRef;
+        
+        
+        ioserver.closeFile(ubin_file);
+        ioserver.closeFile(uh5_file);
+        ioserver.closeFile(sh5_file);
+        
+        ioserver.closeOstream();
+        
+        ofstream textfile;
         
         if(parallel.isRoot())
         {
         textfile.open(str_filename.c_str(),ios::out | ios::app); 
-        textfile<< n<<","<<m<< ","<< io_size<< ","<<io_groupe_size<< ","<<timerSend2Server<< ","<<total<<endl;
+        textfile<< n<<","<<m<< ","<< io_size<< ","<<io_groupe_size<< ","<<timerSend2Server_ubin<< ","<<total_ubin<<endl;
         textfile.close();
         }
-        IO_Server.stop();
+        ioserver.stop();
     }
     
     

@@ -90,7 +90,9 @@ int main(int argc, char **argv)
         
         
         Lattice lat(3,64,2);
-        Field<float> phi(lat,3);
+        Field<double> rho(lat,1);
+        Field<double> phi(lat,3);
+        
         
         Site x(lat);
         
@@ -99,11 +101,11 @@ int main(int argc, char **argv)
             phi(x,0)=x.coord(0);
             phi(x,1)=x.coord(1);
             phi(x,2)=x.coord(2);
-            
+            rho(x)= phi(x);
         }
         
         phi.saveHDF5_server_open("testPhi",10,10);
-        phi.saveHDF5_server_write(5);
+        phi.saveHDF5_server_write(4);
         
         ioserver_file ubin_file,ubin_file1,uh5_file,sh5_file;
         

@@ -7,7 +7,7 @@
  */
 
 #include "int2string.hpp"
-
+#include <cstring>
 #include "mpi.h"
 
 
@@ -1527,7 +1527,7 @@ void IOserver::write_files()
                              hsize_t sizeReverse[(*it_dset).dim];
                              for(int i=0;i<(*it_dset).dim;i++)sizeReverse[i]=(*it_dset).size[(*it_dset).dim-1-i];
                              dataspace_id = H5Screate_simple((*it_dset).dim,sizeReverse,NULL);
-                             dataset_id = H5Dcreate(file_id, (*it_dset).name, (*it_dset).dtype, dataspace_id,H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+                             dataset_id = H5Dcreate(file_id, ((*it_dset).name).c_str(), (*it_dset).dtype, dataspace_id,H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
                              H5Dwrite(dataset_id, (*it_dset).dtype, H5S_ALL, H5S_ALL, H5P_DEFAULT,(*it_dset).dset);
                              H5Dclose(dataset_id);
                              H5Sclose(dataspace_id);
