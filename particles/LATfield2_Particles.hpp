@@ -16,7 +16,6 @@ CREATE_MEMBER_DETECTOR(ID)
 CREATE_MEMBER_DETECTOR(vel)
 CREATE_MEMBER_DETECTOR(pos)
 CREATE_MEMBER_DETECTOR(type_name)
-
 CREATE_MEMBER_DETECTOR_MAXI(mass)
 
 #define GLOBAL_MASS     0
@@ -73,8 +72,8 @@ public:
     
     Real updateVel(Real (*updateVel_funct)(double,double,part*,double *,part_info,Field<Real> **,Site *,int,double*,double*,int),
                    double dtau,
-                   Field<Real> ** fields,
-                   int nfields,
+                   Field<Real> ** fields=NULL,
+                   int nfields=0,
                    double * params=NULL,
                    double * output=NULL,
                    int * reduce_type=NULL,
@@ -95,7 +94,7 @@ public:
     
 #ifdef EXTERNAL_IO
     void saveHDF5_server_open(string filename_base);
-    void saveHDF5_server_write(string filename_base);
+    void saveHDF5_server_write(string filename_base  = "defaultfilename");
 #endif
     void coutPart(long ID);
     
@@ -308,16 +307,14 @@ Real Particles<part,part_info,part_dataType>::updateVel(Real (*updateVel_funct)(
                int * reduce_type,
                int noutput)
 {
-    if(nfields<1)
-    {
-        COUT<< "LATfield2::Particles::updateVel: updateVel needs at least 1 input field" <<endl;
-        exit(-121);
-    }
     
-    Site xPart(lat_part_);
+    Site  xPart(lat_part_);
     
-    Site  sites[nfields];
-    for(int i=0;i<nfields;i++)sites[i].initialize(fields[i]->lattice());
+    
+    Site * sites;
+    
+    if(nfields>0)sites = new Site[nfields];
+    for(int i=0;i<nfields;i++) sites[i].initialize(fields[i]->lattice());
     
     
     typename std::list<part>::iterator it;
@@ -420,7 +417,7 @@ Real Particles<part,part_info,part_dataType>::updateVel(Real (*updateVel_funct)(
     }
 
     delete[] output_temp;
-    
+    if(nfields>0) delete[] sites;
     
     return sqrt(maxvel);
 
@@ -438,6 +435,8 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                                                             int * reduce_type,
                                                             int noutput)
 {
+    
+
 #ifdef DEBUG_MOVE
     cout<<parallel.rank()<<"; move start"<<endl;
 #endif
@@ -677,8 +676,16 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
         if(nfields!=0) for(int i=0;i<nfields;i++) sites[i].next();
         
     }
+     
+    
+    
+     
     for(x.first();x.test();x.next())if((field_part_)(x).size!=0)(field_part_)(x).parts.splice((field_part_)(x).parts.end(), (field_part_)(x).partsTemp );
     
+     
+     //cout<<"starting first dim"<<endl;
+     
+     
     if(noutput>0)for(int i=0;i<noutput;i++)
     {
         //COUT<<reduce_type[i]<<endl;
@@ -696,7 +703,7 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
         }
     }
     delete[] output_temp;
-    
+    if(nfields!=0)delete[] sites;
 
     //remove the number of part...
     for(int i=0;i<8;i++)
@@ -710,7 +717,7 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
     //First send Y direction
     
     
-    
+    //cout<<"okokok  move firs statrt pack"<<endl;
     //pack data
     for(int i=0;i<6;i++)
     {
@@ -723,6 +730,9 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
         }
     
     }
+    
+    
+     //cout<<"okokok  move firs statrt comm"<<endl;
     
     if(parallel.grid_rank()[1]%2==0)
 	{
@@ -948,6 +958,9 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
         }
     }
     
+    
+    //cout<<"okokok  move firs statrt unpack"<<endl;
+    
     //unpack local list: rec[2] and rec[5]
     
     //add partnum
@@ -970,15 +983,18 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
 #endif
     }
     
-    
+    //cout<<"buffer size: "<<bufferSizeRec[5]<<endl;
+    //if(bufferSizeRec[5]!=0)
     for(int i=0;i<bufferSizeRec[5];i++)
     {
+        //cout<<i<<endl;
+        
         this->getPartCoordLocal(recBuffer[5][i],newLocalCoord);
         
         x.setCoordLocal(newLocalCoord);
         
         field_part_(x).size += 1;
-        field_part_(x).parts.push_back(recBuffer[5][i]);        
+        field_part_(x).parts.push_back(recBuffer[5][i]);
 #ifdef DEBUG_MOVE
         int verif;
         verif=addParticle_global(recBuffer[5][i]);
@@ -996,6 +1012,7 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
     cout<<parallel.rank()<<"; move : end of buffer 2 and 5 copy"<<endl;
 #endif
     
+    //cout<<"unpack done  "<<endl;
     
     pTemp = sendBuffer[0];
     sendBuffer[0]=recBuffer[0];
@@ -1033,21 +1050,24 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
     bufferSize[2]=part_moveProc[6].size();
     if( bufferSize[2]!=0 )
     {
+        //cout<<"okokok 222 arg  "<< bufferSize[2] <<endl;
         sendBuffer[2] = new part[bufferSize[2]];
-        for(it=part_moveProc[6].begin(),p=0; it != part_moveProc[6].end();++it,p++)sendBuffer[2][p]=(*it);
-        part_moveProc[6].clear();
     }
+    //cout<<"okokok  "<< bufferSize[2] <<endl;
+    for(it=part_moveProc[6].begin(),p=0; it != part_moveProc[6].end();++it,p++)sendBuffer[2][p]=(*it);
+       // part_moveProc[6].clear();
+    
+    //else sendBuffer[2] = new part[10];
     
     bufferSize[5]=part_moveProc[7].size();
     if( bufferSize[5]!=0 )
     {
-        sendBuffer[5] = new part[bufferSize[5]];
-        for(it=part_moveProc[7].begin(),p=0; it != part_moveProc[7].end();++it,p++)sendBuffer[5][p]=(*it);
-        part_moveProc[7].clear();
+        //sendBuffer[5] = new part[bufferSize[5]];
+        //for(it=part_moveProc[7].begin(),p=0; it != part_moveProc[7].end();++it,p++)sendBuffer[5][p]=(*it);
+        //part_moveProc[7].clear();
     }
-    
+    //else sendBuffer[2] = new part[10];
    //send z
-    
     
     if(parallel.grid_rank()[0]%2==0)
 	{
@@ -1306,7 +1326,6 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
     
     if(nfields!=0) delete[] sites;
     
-    
 }
 
 
@@ -1465,7 +1484,7 @@ void Particles<part,part_info,part_dataType>::loadHDF5(string filename_base, int
     
     
     if(fd[0].boxSize[0]!=boxSize_[0] || fd[0].boxSize[1]!=boxSize_[1] || fd[0].boxSize[2]!=boxSize_[2]){
-        cout<<"LATfield2::Particles::loadHDF5  :  wrong boxSize, exiting"<<endl;
+        cout<<"LATfield2::Particles::loadHDF5  :  wrong boxSize, exiting: "<< fd[0].boxSize[0] <<", "<< boxSize_[0] <<endl;
         exit(-111);
     }
     
@@ -1574,10 +1593,11 @@ void Particles<part,part_info,part_dataType>::saveHDF5_server_open(string filena
     io_file_ = ioserver.openFile(filename_base.c_str() ,UNSTRUCTURED_H5_FILE, part_datatype_.part_memType, part_datatype_.part_fileType);
 }
 template <typename part, typename part_info, typename part_dataType>
-void Particles<part,part_info,part_dataType>::saveHDF5_server_write(string filename_base = "defaultfilename")
+void Particles<part,part_info,part_dataType>::saveHDF5_server_write(string filename_base)
 {
     if(!(io_file_.is_open))
         io_file_ = ioserver.openFile(filename_base.c_str() ,UNSTRUCTURED_H5_FILE, part_datatype_.part_memType, part_datatype_.part_fileType);
+    
     
     part * partlist;
     partlist = new part[numParticles_];

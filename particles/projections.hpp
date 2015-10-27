@@ -924,7 +924,7 @@ void vectorProjectionCIC_comm(Field<Real> * vel)
 //////tensor projection
 
 template<typename part, typename part_info, typename part_dataType>
-void VecVecProjectionCICNGP_project(Particles<part,part_info,part_dataType> * parts,Field<Real> * Tij, size_t * oset = NULL,int flag_where = FROM_INFO)
+void tensorProjectionCICNGP_project(Particles<part,part_info,part_dataType> * parts,Field<Real> * Tij, size_t * oset = NULL,int flag_where = FROM_INFO)
 {    
     
     Site xPart(parts->lattice() );
@@ -1066,7 +1066,7 @@ void VecVecProjectionCICNGP_project(Particles<part,part_info,part_dataType> * pa
 }
 
 
-void VecVecProjectionCICNGP_comm(Field<Real> * Tij)
+void tensorProjectionCICNGP_comm(Field<Real> * Tij)
 {
     
     if(Tij->lattice().halo() == 0)

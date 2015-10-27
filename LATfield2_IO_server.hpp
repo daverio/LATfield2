@@ -53,6 +53,9 @@
 
 #define IO_CORE_BUFFER_SIZE  1073741824
 
+
+#define MPI_BSEND_BUFFER_SIZE 40960
+
 struct ioserver_file
 {
     int ID;
@@ -236,12 +239,20 @@ private:
     
     char * data_;
     char * wp_data_;
+    
+    char * sendBuffer_;
+    
+    
 };
 
 
 IOserver::~IOserver()
 {
-    
+    int * size;
+    *size =MPI_BSEND_BUFFER_SIZE;
+    MPI_Buffer_detach(sendBuffer_,size);
+    free(sendBuffer_);
+    //cout<<size<<endl;
     delete[] data_;
 }
 
@@ -283,6 +294,8 @@ void IOserver::initialize(int proc_size0,int proc_size1,
     }
     
     data_ = new char[IO_CORE_BUFFER_SIZE];
+    sendBuffer_ = (char*)malloc(MPI_BSEND_BUFFER_SIZE);
+    MPI_Buffer_attach(sendBuffer_,MPI_BSEND_BUFFER_SIZE);
     
     proc_size0_ = proc_size0;
     proc_size1_ = proc_size1;
@@ -390,9 +403,11 @@ void IOserver::stop()
 {
     if(isRoot_)
     {
-        int send=CONTROL_STOP;
-        MPI_Bsend(&send,1,MPI::INT,0,SERVER_CONTROL_TAG,sync_global_comm_);
+        int send=0;
+        MPI_Ssend(&send,1,MPI::INT,0,SERVER_CONTROL_TAG,sync_global_comm_);
+        //cout<< "call stop"<<endl;
     }
+    
     MPI_Barrier(compute_world_comm_);
 }
 int IOserver::openOstream()
@@ -417,10 +432,13 @@ int IOserver::openOstream()
         {
             int send=CONTROL_OPEN_OSTREAM ;
             MPI_Bsend(&send,1,MPI::INT,0,SERVER_CONTROL_TAG,sync_global_comm_);
+            //cout << "call openostream"<<endl;
         }
     }
     
     MPI_Bcast(&state_,1,MPI::INT,0,compute_world_comm_);
+    
+    
     
     if(state_ == SERVER_READY) return OSTREAM_SUCCESS;
     else return OSTREAM_FAIL;
@@ -441,7 +459,7 @@ ioserver_file IOserver::openFile(string file_name,
                                  int components = 1,
                                  int array_size = 1)
 {
-    //MPI_Barrier(compute_file_comm_);
+
     
     
     //verification:
@@ -652,9 +670,11 @@ void IOserver::sendData(ioserver_file file, char * message,long size,int sendTyp
     
     MPI_Bsend(sendinfo,3,MPI::LONG,client_size_,GET_DATA_TAG,client_comm_);
     
+    //cout<< "send data to file id : "<<sendinfo[0]<<", size :"<<sendinfo[1]<<endl;
+    
     if(sendType == DEFAULT_SEND)MPI_Send(message,size,MPI::CHAR,client_size_,file.ID,client_comm_);
     else if(sendType == BUFFERED_SEND)MPI_Bsend(message,size,MPI::CHAR,client_size_,file.ID,client_comm_);
-    
+    //cout<< "send has been sent data to file id : "<<sendinfo[0]<<endl;
 }
 void IOserver::sendData(ioserver_file file, char * message,hsize_t * size, hsize_t * offset,int sendType = DEFAULT_SEND)
 {
@@ -672,6 +692,7 @@ void IOserver::sendData(ioserver_file file, char * message,hsize_t * size, hsize
     
     sendinfo[0]= file.ID;
     sendinfo[1]= mSize * file.sizeof_mem_dtype * file.components * file.array_size;
+    //cout<<sendinfo[1]<<endl;
     sendinfo[2]= file.type;
     for(int i = 0;i<file.dim;i++)sendinfo[3+i] = size[i];
     for(int i = 0;i<file.dim;i++)sendinfo[3+file.dim+i] = offset[i];
@@ -792,14 +813,18 @@ void IOserver::start()
     
     while(serverOn_flag)
     {
+        int control;
+        
         state_ = SERVER_READY;
         if(isRoot_)
         {
+            //MPI_Bsend(&state_,1,MPI::INT,1,SERVER_STATE_TAG,sync_global_comm_);
             MPI_Isend(&state_,1,MPI::INT,1,SERVER_STATE_TAG,sync_global_comm_,&send_statut_request);
-            
+        
             MPI_Recv(&control,1,MPI::INT,1,SERVER_CONTROL_TAG,sync_global_comm_,&status);
         }
         MPI_Bcast(&control,1,MPI::INT,0,io_world_comm_);
+        //cout<< "control: " <<control<<endl;
         
         if(control==CONTROL_STOP)
         {
@@ -816,7 +841,7 @@ void IOserver::start()
             
             MPI_Barrier(io_world_comm_);
             
-            this->write_files();
+            //this->write_files();
             
             MPI_Barrier(io_world_comm_);
         }
@@ -1146,6 +1171,9 @@ void IOserver::ostream()
                 unstruct_message message;
                 message.core = source;
                 message.data = wp_data_;
+                
+                //cout<< "receiving usb data file:"<<info[0]<<" , size : "<<info[1]<<endl;
+                
                 MPI_Recv(message.data,info[1],MPI::CHAR,source,info[0],client_comm_,&status);
                 wp_data_ += info[1];
                 for(it_usb=usb_files_.begin(); it_usb != usb_files_.end(); ++it_usb)
@@ -1165,6 +1193,9 @@ void IOserver::ostream()
                 unstruct_message message;
                 message.core = source;
                 message.data = wp_data_;
+                
+                //cout<< "receiving ush data file:"<<info[0]<<" , size : "<<info[1]<<endl;
+                
                 MPI_Recv(message.data,info[1],MPI::CHAR,source,info[0],client_comm_,&status);
                 wp_data_ += info[1];
                 
@@ -1381,7 +1412,7 @@ void IOserver::ostream()
         if(ostream_close_flag==client_size_ && allfiles_closed)
         {
             ostream_flag=false;
-            //cout<< "close ostream"<<endl;
+            //cout<< "closing ostream"<<endl;
             
         }
     
@@ -1403,6 +1434,7 @@ void IOserver::write_files()
     
     if(usb_files_.size()!=0)
     {
+        //cout<< "wrinting usb file"<<endl;
         usb_files_.sort();
         for(it_usb=usb_files_.begin(); it_usb != usb_files_.end(); ++it_usb)
         {
@@ -1443,6 +1475,7 @@ void IOserver::write_files()
     
     if(ush_files_.size()!=0)
     {
+         //cout<< "wrinting uh5 file"<<endl;
          ush_files_.sort();
          for(it_ush=ush_files_.begin(); it_ush != ush_files_.end(); ++it_ush)
          {
@@ -1477,14 +1510,17 @@ void IOserver::write_files()
                  hsize_t msize,offsetf,offset;
                  
 #ifdef H5_HAVE_PARALLEL
+                 
                  MPI_Info info  = MPI_INFO_NULL;
                 
                  plist_id_file = H5Pcreate(H5P_FILE_ACCESS);
                  H5Pset_fapl_mpio(plist_id_file,io_node_comm_,info);
+                 file_id = H5Fcreate((*it_ush).filename, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id_file);
                  filespace_id = H5Screate_simple(1,&fsize,NULL);
                  dataset_id = H5Dcreate(file_id, "data",(*it_ush).file_dtype , filespace_id,H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
                  H5Dclose(dataset_id);
                  H5Sclose(filespace_id);
+                 
                  
                  (*it_ush).msg.sort();
                  offsetf=file_offset;
@@ -1536,6 +1572,7 @@ void IOserver::write_files()
                  }
                  
                  H5Fclose(file_id);
+                 
 #else
                  if(io_node_rank_==0)
                  {
@@ -1627,16 +1664,17 @@ void IOserver::write_files()
     
     if(sh_files_.size()!=0)
     {
+        //cout<< "wrinting sh5 file"<<endl;
         sh_files_.sort();
         for(it_sh=sh_files_.begin(); it_sh != sh_files_.end(); ++it_sh)
         {
-            hid_t plist_id,file_id,filespace,dataset_id,dataspace_id,attribute_id,dset_id,memspace;
+            hid_t plist_id,plist_id_file,file_id,filespace,dataset_id,dataspace_id,attribute_id,dset_id,memspace;
             hid_t mem_dtype_id,file_dtype_id,dtbase_id;
             hsize_t * components;
             herr_t status;
             
             
-            cout<<(*it_sh).components<<"  "<<(*it_sh).array_size<<endl;
+            //cout<<(*it_sh).components<<"  "<<(*it_sh).array_size<<endl;
             ///////////////////////////////
             // creat mem datatype
             ///////////////////////////////
@@ -1714,6 +1752,89 @@ void IOserver::write_files()
             
             
 #ifdef H5_HAVE_PARALLEL
+            
+           
+            //cout << "arg wroking in parallel" <<endl;
+            
+            MPI_Info info  = MPI_INFO_NULL;
+            
+            hsize_t size[(*it_sh).dim];
+            for(int i=0;i<(*it_sh).dim;i++)size[i] = (*it_sh).size[(*it_sh).dim-1-i];
+            
+            
+            plist_id_file = H5Pcreate(H5P_FILE_ACCESS);
+            H5Pset_fapl_mpio(plist_id_file,io_node_comm_,info);
+            
+            file_id = H5Fcreate((*it_sh).filename, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id_file);
+            filespace = H5Screate_simple((*it_sh).dim,size,NULL);
+            dataset_id = H5Dcreate(file_id, "data",file_dtype_id , filespace,H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+            
+            H5Sclose(filespace);
+            H5Dclose(dataset_id);
+            
+            for(it_sm=(*it_sh).msg.begin();it_sm != (*it_sh).msg.end();++it_sm)
+            {
+                //offset,offsetf,local_size
+                hsize_t offsetf[(*it_sh).dim];
+                hsize_t local_size[(*it_sh).dim];
+                for(int i =0;i<(*it_sh).dim;i++)
+                {
+                    offsetf[i]=(*it_sm).offset[(*it_sh).dim-1-i];
+                    local_size[i]=(*it_sm).size[(*it_sh).dim-1-i];
+                }
+                offsetf[1] -= (*it_sh).offset;
+                //cout<< offsetf[1] << endl;
+                
+                dset_id = H5Dopen(file_id, "/data", H5P_DEFAULT);
+                filespace = H5Dget_space(dset_id);
+                memspace = H5Screate_simple((*it_sh).dim,local_size,NULL);
+                H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offsetf, NULL,local_size, NULL);
+                plist_id = H5Pcreate(H5P_DATASET_XFER);
+                H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
+                H5Dwrite(dset_id, file_dtype_id, memspace, filespace, plist_id, (*it_sm).data);
+                H5Pclose(plist_id);
+                H5Sclose(filespace);
+                H5Dclose(dset_id);
+                
+            }
+            
+            if(io_node_rank_==0)
+            {
+                if((*it_sh).attr.size() != 0)
+                {
+                    for(it_attr = (*it_sh).attr.begin();it_attr != (*it_sh).attr.end();++it_attr)
+                    {
+                        if((*it_attr).size == 1)dataspace_id = H5Screate(H5S_SCALAR);
+                        else dataspace_id = H5Screate_simple(1,&((*it_attr).size),NULL);
+                        attribute_id = H5Acreate (file_id,(*it_attr).name.c_str() ,(*it_attr).dtype , dataspace_id,H5P_DEFAULT, H5P_DEFAULT);
+                        H5Awrite(attribute_id,(*it_attr).dtype  ,(*it_attr).attr );
+                        H5Aclose(attribute_id);
+                        H5Sclose(dataspace_id);
+                    }
+                }
+                
+                if((*it_sh).dset.size() != 0)
+                {
+                    for(it_dset = (*it_sh).dset.begin();it_dset != (*it_sh).dset.end();++it_dset)
+                    {
+                        hsize_t sizeReverse[(*it_dset).dim];
+                        for(int i=0;i<(*it_dset).dim;i++)sizeReverse[i]=(*it_dset).size[(*it_dset).dim-1-i];
+                        dataspace_id = H5Screate_simple((*it_dset).dim,sizeReverse,NULL);
+                        dataset_id = H5Dcreate(file_id, (*it_dset).name.c_str(), (*it_dset).dtype, dataspace_id,H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+                        H5Dwrite(dataset_id, (*it_dset).dtype, H5S_ALL, H5S_ALL, H5P_DEFAULT,(*it_dset).dset);
+                        H5Dclose(dataset_id);
+                        H5Sclose(dataspace_id);
+                    }
+                }
+
+            }
+            
+            H5Fclose(file_id);
+            H5Pclose(plist_id_file);
+
+            
+            
+            
 #else
             if(io_node_rank_==0)
             {
@@ -1806,7 +1927,7 @@ void IOserver::write_files()
         }
     }
     
-    
+    //cout<<"write done"<<endl;
 }
 
 #endif

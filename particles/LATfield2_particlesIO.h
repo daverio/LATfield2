@@ -31,10 +31,13 @@ struct fileDsc
 template<typename part_info,typename parts_datatype>
 void get_partInfo(string filename, part_info &partInfo, parts_datatype partdatatype)
 {
+    
+    if(parallel.rank()==0)
+    {
     hid_t plist_id,file_id,dataset_id;
     
     plist_id = H5Pcreate(H5P_FILE_ACCESS);
-	file_id = H5Fopen(filename.c_str(),H5F_ACC_RDWR,plist_id);
+	file_id = H5Fopen(filename.c_str(),H5F_ACC_RDONLY,plist_id);
 	H5Pclose(plist_id);
     
     dataset_id = H5Dopen(file_id, "/part_info", H5P_DEFAULT);
@@ -42,26 +45,49 @@ void get_partInfo(string filename, part_info &partInfo, parts_datatype partdatat
     H5Dread(dataset_id, partdatatype.part_info_memType, H5S_ALL, H5S_ALL, H5P_DEFAULT,&partInfo);
     H5Dclose(dataset_id);
     H5Fclose(file_id);
+    }
+    parallel.broadcast<part_info>(partInfo,0);
+     
 }
 
 void get_fileDsc_global(string filename,fileDsc &fd)
 {
-    hid_t plist_id,file_id,attr_id,root_id;
     
-
-    plist_id = H5Pcreate(H5P_FILE_ACCESS);
-	file_id = H5Fopen(filename.c_str(),H5F_ACC_RDWR,plist_id);
-	H5Pclose(plist_id);
     
-    root_id = H5Gopen(file_id, "/", H5P_DEFAULT);
+    if(parallel.rank()==0)
+    {
+        hid_t plist_id,file_id,attr_id,root_id;
+        
+        plist_id = H5Pcreate(H5P_FILE_ACCESS);
+        file_id = H5Fopen(filename.c_str(),H5F_ACC_RDWR,plist_id);
+        H5Pclose(plist_id);
+        
+        root_id = H5Gopen(file_id, "/", H5P_DEFAULT);
+        
+               
+        H5Gclose(root_id);
+        
+        
+        
+        
+        H5Fclose(file_id);
+        
+        
+        /*
+         plist_id = H5Pcreate(H5P_FILE_ACCESS);
+         file_id = H5Fopen(filename.c_str(),H5F_ACC_RDONLY,plist_id);
+         H5Pclose(plist_id);
     
-    attr_id = H5Aopen_name(root_id, "fileNumber");
-    H5Aread(attr_id, H5T_NATIVE_INT, &(fd.fileNumber));
-    H5Aclose(attr_id);
-    attr_id = H5Aopen_name(root_id, "numProcPerFile");
-    H5Aread(attr_id, H5T_NATIVE_INT, &(fd.numProcPerFile));
-    H5Aclose(attr_id);
-    attr_id = H5Aopen_name(root_id, "world_size");
+    
+         root_id = H5Gopen(file_id, "/", H5P_DEFAULT);
+    
+         attr_id = H5Aopen_name(root_id, "fileNumber");
+         H5Aread(attr_id, H5T_NATIVE_INT, &(fd.fileNumber));
+         H5Aclose(attr_id);
+         attr_id = H5Aopen_name(root_id, "numProcPerFile");
+         H5Aread(attr_id, H5T_NATIVE_INT, &(fd.numProcPerFile));
+         H5Aclose(attr_id);
+         attr_id = H5Aopen_name(root_id, "world_size");
     H5Aread(attr_id, H5T_NATIVE_INT, &(fd.world_size));
     H5Aclose(attr_id);
     attr_id = H5Aopen_name(root_id, "grid_size");
@@ -76,11 +102,10 @@ void get_fileDsc_global(string filename,fileDsc &fd)
     attr_id = H5Aopen_name(root_id, "fileBoxOffset");
     H5Aread(attr_id, REAL_TYPE, &(fd.fileBoxOffset));
     H5Aclose(attr_id);
-    
     H5Gclose(root_id);
-    
-    
     H5Fclose(file_id);
+         */
+    }
 }
 void get_fileDsc_local(string filename,long * numParts, RealC * localBoxOffset, RealC * localBoxSize)
 {
@@ -204,6 +229,8 @@ int save_hdf5_particles(string filename,
 
 #ifdef H5_HAVE_PARALLEL
 
+    cout<<"arg parallel"<<endl;
+  
   plist_id_file = H5Pcreate(H5P_FILE_ACCESS);
   H5Pset_fapl_mpio(plist_id_file,comm,info);
 
@@ -225,13 +252,23 @@ int save_hdf5_particles(string filename,
   H5Sclose(memspace_id);
   H5Dclose(dataset_id);
   H5Sclose(filespace_id);
-
-  if(mpi_rank=0){
-    filespace_id = H5Screate_simple(1,&one,NULL);
-    dataset_id = H5Dcreate(file_id, "part_info", partdatatype.part_info_fileType , filespace_id,H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
-    H5Dwrite(dataset_id, partdatatype.part_info_memType, H5S_ALL, H5S_ALL, H5P_DEFAULT,&partInfo);
-    H5Dclose(dataset_id);
-    H5Sclose(filespace_id);
+    
+  H5Pclose(plist_id_file);
+  H5Fclose(file_id);
+  
+  if(mpi_rank==0){
+      cout<< "atribute part adds"<<endl;
+      plist_id = H5Pcreate(H5P_FILE_ACCESS);
+      file_id = H5Fopen(filename.c_str(),H5F_ACC_RDWR,plist_id);
+      H5Pclose(plist_id);
+      
+      
+      filespace_id = H5Screate_simple(1,&one,NULL);
+      dataset_id = H5Dcreate(file_id, "part_info", partdatatype.part_info_fileType , filespace_id,H5P_DEFAULT,H5P_DEFAULT,H5P_DEFAULT);
+      H5Dwrite(dataset_id, partdatatype.part_info_memType, H5S_ALL, H5S_ALL, H5P_DEFAULT,&partInfo);
+      H5Dclose(dataset_id);
+      H5Sclose(filespace_id);
+      
       
       dataspace_id = H5Screate(H5S_SCALAR);
       attribute_id = H5Acreate (file_id, "fileNumber", H5T_NATIVE_INT, dataspace_id,H5P_DEFAULT, H5P_DEFAULT);
@@ -256,8 +293,7 @@ int save_hdf5_particles(string filename,
       H5Awrite(attribute_id,H5T_NATIVE_INT , fd.grid_size);
       H5Aclose(attribute_id);
       H5Sclose(dataspace_id);
-      
-      
+
       dataspace_id = H5Screate_simple(1,&numPartsSize[1],NULL);
       attribute_id = H5Acreate (file_id, "boxSize", REAL_TYPE, dataspace_id,H5P_DEFAULT, H5P_DEFAULT);
       H5Awrite(attribute_id,REAL_TYPE , fd.boxSize);
@@ -299,12 +335,12 @@ int save_hdf5_particles(string filename,
       H5Dwrite(dataset_id, REAL_TYPE, H5S_ALL, H5S_ALL, H5P_DEFAULT,localBoxSize);
       H5Dclose(dataset_id);
       H5Sclose(dataspace_id);
+
+      
+      
+      H5Fclose(file_id);
+
   }
-
-
-  H5Fclose(file_id);
-  H5Pclose(plist_id_file);
-  
 
 
 #else
@@ -435,6 +471,7 @@ int save_hdf5_particles(string filename,
 
 #endif
 
+    return 0;
 }
 
 

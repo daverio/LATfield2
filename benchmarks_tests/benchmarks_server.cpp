@@ -16,7 +16,7 @@ using namespace LATfield2;
 
 int main(int argc, char **argv)
 {
-    int n,m;
+    int l,m;
     int io_size;
     int io_groupe_size;
     int runs=10;
@@ -28,8 +28,8 @@ int main(int argc, char **argv)
 		if ( argv[i][0] != '-' )
 			continue;
 		switch(argv[i][1]) {
-			case 'n':
-				n = atoi(argv[++i]); 
+			case 'l':
+				l = atoi(argv[++i]);
 				break;
 			case 'm':
 				m =  atoi(argv[++i]);
@@ -50,16 +50,16 @@ int main(int argc, char **argv)
 	}
 
 	
-    parallel.initialize(n,m,io_size,io_groupe_size);
+    parallel.initialize(l,m,io_size,io_groupe_size);
     
     if(parallel.isIO())ioserver.start();
     else
     {
-               
+        
         
         double * buffer;
-        long size = 32l*1024l*1024l*sizeof(double);
-        long total_ubin = 32l*sizeof(double);
+        long size = 1l*1024l*1024l*sizeof(double);
+        long total_ubin = 1l*sizeof(double);
         parallel.sum(total_ubin); // total in Mb
         total_ubin*=runs;
         
@@ -69,6 +69,13 @@ int main(int argc, char **argv)
         Lattice lat(3,1024,0);
         Field<double> phi(lat,3);
         
+        Site x(lat);
+        /*
+        for(x.first();x.test();x.next())
+        {
+            for(int i=0;i<3;i++)phi(x,i)=x.coord(i);
+        }
+        */
         hsize_t size_dset[lat.dim()];
         hsize_t offset[lat.dim()];
         
@@ -82,7 +89,7 @@ int main(int argc, char **argv)
         
         
         
-        int nparts=1000000;
+        int nparts=100000;
         part_simple pcls[nparts];
         part_simple_dataType pcls_types;
         
@@ -95,14 +102,16 @@ int main(int argc, char **argv)
         
         
         long total_uh5 = nparts*sizeof(part_simple)*runs;
+        parallel.sum(total_uh5);
         
         
-        while(!ioserver.openOstream())usleep(50);
         
-        ubin_file = ioserver.openFile("./server/TestServer_ubin",UNSTRUCTURED_BIN_FILE);
-        uh5_file = ioserver.openFile("./server/TestServer_uh5",UNSTRUCTURED_H5_FILE,pcls_types.part_memType,pcls_types.part_fileType);
-        sh5_file = ioserver.openFile("./server/TestServer_sh5",STRUCTURED_H5_FILE,H5T_NATIVE_DOUBLE,H5T_NATIVE_DOUBLE,&lat,3,1);
-        phi.saveHDF5_server_open("testPhi",10,64);
+        while(ioserver.openOstream()!=OSTREAM_SUCCESS);
+        
+        ubin_file = ioserver.openFile("./server/TestServer"+int2string(l,999)+"_"+int2string(m,999)+"_"+int2string(io_size,999)+"_ubin",UNSTRUCTURED_BIN_FILE);
+        uh5_file = ioserver.openFile("./server/TestServer"+int2string(l,999)+"_"+int2string(m,999)+"_"+int2string(io_size,999)+"_uh5",UNSTRUCTURED_H5_FILE, pcls_types.part_memType , pcls_types.part_fileType);
+        sh5_file = ioserver.openFile("./server/TestServer"+int2string(l,999)+"_"+int2string(m,999)+"_"+int2string(io_size,999)+"_sh5",STRUCTURED_H5_FILE,H5T_NATIVE_DOUBLE,H5T_NATIVE_DOUBLE,&lat,3,1);
+        phi.saveHDF5_server_open("./server/testPhi"+int2string(l,999)+"_"+int2string(m,999)+"_"+int2string(io_size,999),10,64);
         
         
         
@@ -112,7 +121,7 @@ int main(int argc, char **argv)
         timerSend2Server_ubin = MPI_Wtime()-timerRef;
         
         timerRef = MPI_Wtime();
-        for(int i=0;i<runs;i++)ioserver.sendData(uh5_file,(char*)pcls,size*sizeof(part_simple));
+        for(int i=0;i<runs;i++)ioserver.sendData(uh5_file,(char*)pcls,nparts*sizeof(part_simple));
         timerSend2Server_uh5 = MPI_Wtime()-timerRef;
         
         timerRef = MPI_Wtime();
@@ -135,9 +144,12 @@ int main(int argc, char **argv)
         if(parallel.isRoot())
         {
         textfile.open(str_filename.c_str(),ios::out | ios::app); 
-        textfile<< n<<","<<m<< ","<< io_size<< ","<<io_groupe_size<< ","<<timerSend2Server_ubin<< ","<<total_ubin<<","<< timerSend2Server_uh5 <<","<< total_uh5 <<","<< timerSend2Server_sh5 <<","<< timerSend2Server_fieldSlice <<endl;
+        textfile<< l<<","<<m<< ","<< io_size<< ","<<io_groupe_size<< ","<<timerSend2Server_ubin<< ","<<total_ubin<<","<< timerSend2Server_uh5 <<","<< total_uh5 <<","<< timerSend2Server_sh5 <<","<< timerSend2Server_fieldSlice <<endl;
         textfile.close();
         }
+        
+        
+        
         ioserver.stop();
     }
     

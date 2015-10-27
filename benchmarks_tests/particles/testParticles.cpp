@@ -46,8 +46,7 @@ int main(int argc, char **argv)
         
         Real boxSize[3]={1.,1.,1.};
         
-        Real  latresolution;
-        latresolution = get_lattice_resolution(npts,boxSize);
+        Real  latresolution = get_lattice_resolution(npts,boxSize);
         
         
         Lattice lat_part(dim,npts,0);
@@ -65,20 +64,12 @@ int main(int argc, char **argv)
         }
         
         part_simple_info particles_global_info;
-        particles_global_info.mass=0.21;
-        particles_global_info.relativistic=1;
-        //string part_type="part_simple";
-        
-        
-        //particles_global_info.type_name= new char[part_type.size()];
-        
-        //strcpy(particles_global_info.type_name,part_type.c_str());
-        //particles_global_info.type_name=   part_type;
-        
+        particles_global_info.mass=0.1;
+        particles_global_info.relativistic=false;
         set_parts_typename(&particles_global_info,"part_simple");
         
         
-        particles_global_info.relativistic=true;
+        
         part_simple_dataType particles_dataType;
         
         Particles<part_simple,part_simple_info,part_simple_dataType> parts,parts_verif;
@@ -88,7 +79,6 @@ int main(int argc, char **argv)
         
  
         part_simple part;
-        
         long index =0;
         for(int i=0;i<numparts;i++)
             for(int j=0;j<numparts;j++)
@@ -98,14 +88,15 @@ int main(int argc, char **argv)
                     part.pos[1]= (Real)j * (Real)boxSize[1] / (Real)numparts;
                     part.pos[2]= (Real)k * (Real)boxSize[2] / (Real)numparts;
                     part.vel[0]=0.1;
-                    part.vel[1]=0.2;
-                    part.vel[2]=0.3;
+                    part.vel[1]=0.1;
+                    part.vel[2]=0.1;
                     //part.mass=0.22;
                     parts.addParticle_global(part);
                     index++;
                 }
-        
-        
+            }
+        }
+    
         
         parts.saveHDF5("test",2);
         
@@ -183,10 +174,7 @@ int main(int argc, char **argv)
         
          for(int i=0;i<1;i++)
          {
-         //cout<<i<<endl;
-         parts.coutPart(0);
-       parts.updateVel(&updateVel_gevolution,1,listField_updateVel,2,updateVel_gevolution_params,output,output_type,6);
-             //cout<<"vel ok"<<endl;
+             parts.updateVel(&updateVel_gevolution,1,listField_updateVel,2,updateVel_gevolution_params,output,output_type,6);
              parts.moveParticles(&move_particles_gevolution,1,listField_move,0,&rescaleB,output,output_type,6);
          }
         
