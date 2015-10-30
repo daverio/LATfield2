@@ -511,7 +511,7 @@ void Field<FieldType>::get_h5type()
     else if (type_name[nt+12]=='p' && type_name[nt+13]=='a' && type_name[nt+14]=='r' && type_name[nt+15]=='t' &&
              type_name[nt+16]=='L' && type_name[nt+17]=='i' && type_name[nt+18]=='s' && type_name[nt+19]=='t')
     {
-        COUT<< "initializing particle field... unable to call Field.saveHDF5"<<endl;
+        //COUT<< "initializing particle field... unable to call Field.saveHDF5"<<endl;
     }
 	else 
 	{
