@@ -3,9 +3,17 @@
 
 \section intro_sec Introduction
 
-LATField 2.0, the second version of the LATfield library is a simple C++ framework for lattice based simulation on massively parallel computer.
+LATField2, the second version of the LATfield library is a simple C++ framework for lattice based simulation on massively parallel computer.
 
-Version 2.0 changes:
+
+Version 1.1:
+
+- Output server completly rebuilt.
+- A particles handler for colisionless particles
+
+
+
+Version 1.0:
 
 - the parallelization has been rebuilt to distribute 2 of the lattice dimensions into a 2-dimensional MPI process grid.
 - A FFT wrapper for 3d cubic lattices. 
@@ -14,10 +22,9 @@ Version 2.0 changes:
 
 \section install_sec Downloads
 
-The current stable version can be downloaded at: http://www.latfield.org
+The library git repository is on gitHub: https://github.com/daverio/LATfield2.git. To clone it:
 
-
-For user who would like to contribute to LATfield, the library git repository is on gitHub: https://github.com/daverio/LATfield2.git
+git clone https://github.com/daverio/LATfield2.git
 
 
 \section getstart_sec Getting Started

@@ -47,10 +47,11 @@ class Parallel2d{
 	//Communicators initialization (grid initialization)===================
 	
 
-#ifdef EXTERNAL_IO
-    
+
+
+
     /*!
-     Overall LATfield2 initialization when the IO server is used. Should be the first call in any LATfield2 based application, as it initialize MPI (preprocessor define: -DEXTERNAL_IO)
+     Overall LATfield2 initialization when the output server is used. Should be the first call in any LATfield2 based application, as it initialize MPI (preprocessor define: -DEXTERNAL_IO)
      
      \param proc_size0    : size of the first dimension of the MPI process grid.
      \param proc_size1    : size of the second dimension of the MPI process grid.
@@ -58,15 +59,15 @@ class Parallel2d{
      \param IO_node_size  : size of 1 goupe of process reserved for the IO server. Each group will write in a seperated file.
      */
     void initialize(int proc_size0, int proc_size1,int IO_total_size, int IO_node_size);
-#else
+
     /*!
-     Overall LATfield2 initialization used when the IO server is not used. Should be the first call in any LATfield2 based application, as it initialize MPI. 
+     Overall LATfield2 initialization used when the output server is not used. Should be the first call in any LATfield2 based application, as it initialize MPI. 
      
      \param proc_size0 : size of the first dimension of the MPI process grid.
      \param proc_size1 : size of the second dimension of the MPI process grid.
      */
     void initialize(int proc_size0, int proc_size1);
-#endif	
+	
     //ABORT AND BARRIER===============================
 	
     /*!
@@ -498,11 +499,14 @@ Parallel2d::Parallel2d()
 #endif
 	
 }
-#ifdef EXTERNAL_IO
-void Parallel2d::initialize(int proc_size0, int proc_size1,int IO_total_size, int IO_node_size)
-#else
+
 void Parallel2d::initialize(int proc_size0, int proc_size1)
-#endif
+{
+    this->initialize(proc_size0, proc_size1,0,0);
+}
+
+
+void Parallel2d::initialize(int proc_size0, int proc_size1,int IO_total_size, int IO_node_size)
 {
     
     grid_size_[0]=proc_size0;

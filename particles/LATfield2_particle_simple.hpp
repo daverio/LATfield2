@@ -1,6 +1,12 @@
 #ifndef LATFIELD2_PARTICLE_DEF_HPP
 #define LATFIELD2_PARTICLE_DEF_HPP
 
+/*! \file LATfield2_particle_simple.hpp
+ \brief Description of the particle type: "part_simple"
+ 
+ */
+
+
 /*type table
  
  datatype      memType         fileType
@@ -13,19 +19,45 @@
 
 
 
+
+/**
+ * \addtogroup partdesc
+ * @{
+ */
+
+/**
+ * \addtogroup partSimple "part_simple"
+ * @{
+ */
+
 // part_simple definition
+
+/*! \struct part_simple
+ \brief individual properties of the particle type "part_simple".
+ 
+ "part_simple" contains the minimal list of individual properties is: ID, position,velocity,
+ */
 struct part_simple{
   
   long ID;
   LATfield2::Real pos[3];
   LATfield2::Real vel[3];
 };
+/*!
+ \brief overloading of the << operator for individual property strucutre.
+ \return ostream containing the ID, position and velocity of the particle.
+ */
 ostream& operator<<(ostream& os, const part_simple& p)
 {
     os << "ID: "<<p.ID<<" , Pos: ("<< p.pos[0]<<","<< p.pos[1]<<","<< p.pos[2]<<") , Vel: (" << p.vel[0]<<","<< p.vel[1]<<","<< p.vel[2]<<")"; 
     return os;
 }
 
+/*! \struct part_simple_info
+ \brief individual properties of the particle type "part_simple".
+ 
+ "part_simple" contains the minimal list of global properties is: type_name and size of type_name. But also contain two additionnal global properties: "mass" and "relativistic".
+ */
 struct part_simple_info{
     double  mass;
     int relativistic;
@@ -35,17 +67,12 @@ struct part_simple_info{
 };
 
 
-template<typename pInfo>
-void set_parts_typename(pInfo *info, string type_name){
-    
-    info->type_name_size = type_name.size();
-    //info->type_name = new char[info->type_name_size];
-    strcpy(info->type_name,type_name.c_str());
-    
-}
-
-
 #ifdef HDF5
+/*! \struct part_simple_dataType
+ \brief properties datatype structure.
+ 
+ Structure which contain the HDF5 datatype of all properties.
+ */
 struct part_simple_dataType{
   hid_t part_memType;
   hid_t part_fileType;
@@ -100,9 +127,9 @@ struct part_simple_dataType{
 
 
 
+/**@}*/
 
-
-
+/**@}*/
 
 
 #endif

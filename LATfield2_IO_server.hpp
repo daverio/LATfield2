@@ -56,6 +56,11 @@
 
 #define MPI_BSEND_BUFFER_SIZE 40960
 
+
+
+/*! \struct ioserver_file
+    \brief Structure describing a output server file (used by compute processes)
+ */
 struct ioserver_file
 {
     int ID;
@@ -76,6 +81,8 @@ struct ioserver_file
     }
 };
 
+
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 struct h5_attr
 {
     string name;
@@ -108,6 +115,8 @@ struct unstruct_bin_file
     int sizeof_mem_dtype;
     int * isClosed_client;
     int totalSize;
+    int headerSize;
+    char * header;
     list<unstruct_message> msg;
 };
 bool operator<(struct unstruct_bin_file f,struct unstruct_bin_file f1){return (f.ID<f1.ID);}
@@ -149,40 +158,188 @@ struct struct_h5_file
 };
 bool operator<(struct struct_h5_file f,struct struct_h5_file f1){return (f.ID<f1.ID);}
 
+#endif /* DOXYGEN_SHOULD_SKIP_THIS */
+
+
+
+/*! \class IOserver
+ 
+ \brief \brief A class to handle the outputs using MPI process reserved for output purpose.
+ 
+ The output server is a group of processes reserved for output purpose. It's usage is exposed in details by the Ioserver example.
+ As for the parallel object, users should never instanciate an IOserver object as the IOserver objet (ioserver) is instanciate within the library header.
+
+ */
+
 class IOserver {
 
 public:
     ~IOserver();
-    
+    /*!
+     Initialize the I/O server, this method is called by parallel.initialize(...). Should never be called. When using the server, the method parallel.initalize() is used to initialize both the parallel and ioserver objects.
+     
+     */
     void initialize(int proc_size0,int proc_size1,
                     int IOserver_size, int IO_node_size);
     
+    /*! \brief Server method (only called by server nodes)
+     
+     Method which is called to start the server.
+     */
     void start();
+    
+    /*! \brief Client method (only called by compute nodes)
+     
+     Method which is called to stop the server.
+     
+     */
     void stop();
+    
+    /*! \brief Client method (only called by compute nodes)
+     
+     Method to open an Ostream. Meaning a stream from the compute to the server processes.
+     
+     \return OSTREAM_SUCCESS if the stream is open.
+     \return OSTREAM_FAIL  if the stream cannot be open.
+     */
     int  openOstream();
+    
+    /*! \brief Client method (only called by compute nodes)
+     
+     Method to close the current Ostream. After the stream is closed, the server will start to write the files it have in memory.
+     
+     */
     void closeOstream();
+    
+    
+    /*! \brief Client method (only called by compute nodes)
+     
+     Method to create a new file, it return the fileID.
+     
+     \param  string filename: name of the file (including the path...)
+     \param  int type: type of the file. Can take the value: UNSTRUCTURED_BIN_FILE, UNSTRUCTURED_H5_FILE or STRUCTURED_H5_FILE.
+     \param  hid_t mem_datatype: used only for HDF5 files, hdf5 datatype used for memory.
+     \param  hid_t file_datatype: used only for HDF5 files, hdf5 datatype used for memory.
+     \param  LATfield2::Lattice * lat: used only for structured HDF5 files, pointer to a Lattice object. The lattice describe the dataset used for the file, and its distribution in the compute process grid.
+     \param  int components: used only for structured HDF5 files, number of elements per lattice per lattice site.
+     \param  int array_size: used only for structured HDF5 files, each elements/components can be an array of a given type, size of this array.
+     \return  oiserver_file
+     */
     ioserver_file openFile(string file_name,
                            int type,
-                           hid_t mem_datatype,
-                           hid_t file_datatype,
-                           LATfield2::Lattice * lat,
-                           int components,
-                           int array_size);
+                           hid_t mem_datatype = -1,
+                           hid_t file_datatype = -1,
+                           LATfield2::Lattice * lat = NULL,
+                           int components = 1,
+                           int array_size = 1);
     
+    /*! \brief Client method (only called by compute nodes)
+     
+     Method to close a given file.
+     
+     \param ioserver_file file: file to close.
+     */
     void closeFile(ioserver_file file);
+    
+    /*! \brief Client method (only called by compute nodes)
+     
+     Method send data to unstructured files (UNSTRUCTURED_BIN_FILE and UNSTRUCTURED_H5_FILE).
+     
+     \param ioserver_file file: destination file
+     \param char * message: pointer to the array containing the data to be send.
+     \param long size: size of the message array, in byte.
+     \param int sendType: method use for the MPI send. Default is: DEFAULT_SEND, using MPI_Send. BUFFERED_SEND will use MPI_Bsend
+     */
     void sendData(ioserver_file file, char * message,long size,int sendType);
+    
+    /*! \brief Client method (only called by compute nodes)
+     
+     Method send data to an UNSTRUCTURED_H5_FILE files.
+     
+     \param ioserver_file file: destination file
+     \param char * message: pointer to the array containing the data to be send. Stored continuously, in row major order.
+     \param hsize_t * size: pointer to an array contining the size of each demension of the sub-lattice which is sent.
+     \param hsize_t * offset: offset of the sub-lattice in respect to the entire lattice (global coordinate of the lowest site of the message.).
+     \param int sendType: method use for the MPI send. Default is: DEFAULT_SEND, using MPI_Send. BUFFERED_SEND will use MPI_Bsend
+     */
     void sendData(ioserver_file file, char * message,hsize_t * size, hsize_t * offset,int sendType);
 
+    
+    
+    /*! \brief Client method (only called by compute nodes)
+     
+     Method send a header to an UNSTRUCTURED_BIN_FILE files. The header is sent only the root compute process of the server nodes. This list of processes can be selected using: if(isClientFileRoot_){}
+     Headers are send using MPI_Bsend.
+     
+     \param ioserver_file file: destination file
+     \param char * header: pointer to the array containing the header to send.
+     \param int size: size of the header in byte.
+     */
     void sendHeader(ioserver_file file,char* header,int size);
     
+    /*! \brief Client method (only called by compute nodes)
+     
+     Method send a attribute to HDF5 files. The attribute is sent only the root compute process of the server nodes. This list of processes can be selected using: if(isClientFileRoot_){}
+     Attributes are send using MPI_Bsend.
+     
+     \param ioserver_file file: destination file
+     \param string attr_name: string containing the name of the attribute to write.
+     \param char * attr: pointer to the array containing the attribute to send.
+     \param int size: size of the attr array. Given in units of H5Tget_size(dtype).
+     \param hid_t dtype: HDF5 datatype of the attribute.
+     */
     void sendATTR(ioserver_file file,string attr_name,char * attr, int size,hid_t dtype);
+    
+    /*! \brief Client method (only called by compute nodes)
+     
+     Method send a dataset to an HDF5 files. The dataset is sent only the root compute process of the server nodes. This list of processes can be selected using: if(isClientFileRoot_){}
+     Attributes are send using MPI_Bsend.
+     
+     \param ioserver_file file: destination file
+     \param string dset_name: string containing the name of the dataset to write.
+     \param char * dset: pointer to the array containing the dataset to send.
+     \param hsize_t dim: number of dismension of the dataset.
+     \param hsize_t * size: size of each dimension of the dataset.
+     \param hid_t dtypee: HDF5 datatype of the attribute.
+     */
     void sendDataset(ioserver_file file,string dset_name, char * dset, hsize_t dim, hsize_t * size, hid_t dtype);
     
+    /*! \brief Client method (only called by compute nodes)
+     
+     \return MPI_Comm compute_file_comm_: This communicator contains all compute processes linked to the same IO node. All compute processes contained in this communicator will write within the same files. This communicator is used to broadcast the ID of a file to each processes which share the same file. It is used by the openFile(...) method of the IOserver class.
+
+     */
     MPI_Comm compute_file_comm(){return compute_file_comm_;};
+    /*! \brief Client method (only called by compute nodes)
+     
+     \return int compute_file_size_: size of the compute_file_comm_ communicator.
+     \sa compute_file_comm()
+     
+     */
     int compute_file_size(){return compute_file_size_;};
+    
+    /*! \brief Client method (only called by compute nodes)
+     
+     \return int compute_file_rank_: rank in the compute_file_comm_ communicator.
+     \sa compute_file_comm()
+     
+     */
     int compute_file_rank(){return compute_file_rank_;};
+    /*! \brief Client & server method
+     
+     \return int io_node_number_: number of server nodes.
+     */
     int io_node_number(){return io_node_number_;};
+    /*! \brief Client & server method
+     
+     \return int io_node_number_: return the node in which this process is.
+     */
     int my_node(){return my_node_;};
+    
+    /*! \brief Client method (only called by compute nodes)
+     
+     \return bool isClientFileRoot: return true if the process is the root of the compute_file_comm_.
+     */
     bool isClientFileRoot(){return isClientFileRoot_;};
     
 private:
@@ -453,11 +610,12 @@ void IOserver::closeOstream()
 
 ioserver_file IOserver::openFile(string file_name,
                                  int type,
-                                 hid_t mem_datatype = -1,
-                                 hid_t file_datatype = -1,
-                                 LATfield2::Lattice * lat = NULL,
-                                 int components = 1,
-                                 int array_size = 1)
+                                 hid_t mem_datatype,
+                                 hid_t file_datatype,
+                                 LATfield2::Lattice * lat,
+                                 int components,
+                                 int array_size
+                                 )
 {
 
     
@@ -704,6 +862,36 @@ void IOserver::sendData(ioserver_file file, char * message,hsize_t * size, hsize
     else if(sendType == BUFFERED_SEND)MPI_Bsend(message,sendinfo[1],MPI::CHAR,client_size_,file.ID,client_comm_);
 }
 
+
+void IOserver::sendHeader(ioserver_file file,char* header,int size)
+{
+    if(file.type != UNSTRUCTURED_BIN_FILE)
+    {
+        cout<<"IOserver::sendHeader: trying to add header to a non binary file..."<<endl;
+        cout<<"IOserver::sendHeader: returning without adding the header"<<endl;
+        return;
+    }
+    if(isClientFileRoot_)
+    {
+        char * send;
+        int send_size;
+        int ID=file.ID;
+        int header_size = size;
+        
+        send_size = size + (2 * sizeof(int));
+        send = new char[send_size];
+        
+        memcpy(send,(char*)&ID,sizeof(int));
+        memcpy(send + sizeof(int),(char*)&header_size,sizeof(int));
+        memcpy(send + (2*sizeof(int)),header,header_size);
+        
+        MPI_Bsend(send,send_size,MPI::CHAR,client_size_,GET_HEADER_TAG,client_comm_);
+        delete[] send;
+    }
+    
+}
+
+
 void IOserver::sendATTR(ioserver_file file,string attr_name, char * attr, int size,hid_t dtype)
 {
     if(file.type != UNSTRUCTURED_H5_FILE && file.type!=STRUCTURED_H5_FILE)
@@ -841,8 +1029,7 @@ void IOserver::start()
             
             MPI_Barrier(io_world_comm_);
             
-            //this->write_files();
-            
+            this->write_files();
             MPI_Barrier(io_world_comm_);
         }
 
@@ -925,6 +1112,7 @@ void IOserver::ostream()
                 file.isClosed_client = new int[client_size_];
                 for(int i=0;i<client_size_;i++)file.isClosed_client[i]=0;
                 
+                file.headerSize = 0;
                 file.totalSize = 0;
                 file.msg.clear();
                 
@@ -1247,6 +1435,50 @@ void IOserver::ostream()
         
         if(io_node_rank_==0)
         {
+            MPI_Iprobe(MPI_ANY_SOURCE,GET_HEADER_TAG,client_comm_,&message_flag,&status);
+            if(message_flag)
+            {
+                int infosize;
+                int source;
+                MPI_Get_count(&status,MPI::CHAR,&infosize);
+                source = status.MPI_SOURCE;
+                int file_id;
+                int header_size;
+                char info[infosize];
+                bool notfinded = true;
+                list<unstruct_bin_file>::iterator it_ubin;
+                
+                
+                
+                MPI_Recv(info,infosize,MPI::CHAR,source,GET_HEADER_TAG,client_comm_,&status);
+                
+                memcpy((char*)&file_id,info,sizeof(int));
+                memcpy((char*)&header_size,info+sizeof(int),sizeof(int));
+                
+                if(usb_files_.size()!=0)
+                {
+                    for(it_ubin=usb_files_.begin(); it_ubin != usb_files_.end(); ++it_ubin)
+                    {
+                        if((*it_ubin).ID == file_id)
+                        {
+                            (*it_ubin).headerSize = header_size;
+                            (*it_ubin).header = new char[header_size];
+                            memcpy((*it_ubin).header,info+(2*sizeof(int)),header_size);
+                            notfinded = false;
+                        }
+                    }
+                }
+                
+
+                
+                if(notfinded)cout<<"argargarga"<<endl;
+                
+                
+                
+                flag_continue = true;
+                
+                
+            }
             MPI_Iprobe(MPI_ANY_SOURCE,GET_ATTR_TAG,client_comm_,&message_flag,&status);
             if(message_flag)
             {
@@ -1442,6 +1674,7 @@ void IOserver::write_files()
             MPI_Status status;
             
             long file_offset=0;
+            if(io_node_rank_==0)file_offset += (*it_usb).headerSize;
             long temp_long;
             
             for(int k=0;k<(io_node_size_-1); k++)
@@ -1456,9 +1689,21 @@ void IOserver::write_files()
                     MPI_Recv( &file_offset, 1, MPI_LONG, k, 0, io_node_comm_, &status);
                 }
             }
+            
+            
+            
+            
             if((*it_usb).totalSize!=0)
             {
                 MPI_File_open(io_node_comm_,(*it_usb).filename,MPI_MODE_WRONLY | MPI_MODE_CREATE,MPI_INFO_NULL,&ofile);
+                
+                
+                if((*it_usb).headerSize>0 && io_node_rank_==0)
+                {
+                    //MPI_File_set_view(ofile,file_offset+msg_offset,MPI_CHAR,MPI_CHAR,(char*)"native",MPI_INFO_NULL);
+                    int headerOffset = 0;
+                    MPI_File_write_at(ofile, headerOffset,(*it_usb).header,(*it_usb).headerSize, MPI_CHAR, &status);
+                }
                 (*it_usb).msg.sort();
                 long msg_offset=0;
                 for(it_um=(*it_usb).msg.begin();it_um != (*it_usb).msg.end();++it_um)

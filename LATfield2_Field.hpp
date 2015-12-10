@@ -22,12 +22,12 @@ template<class FieldType>
 void defaultFieldLoad(fstream& file, FieldType* siteData, int components);
 
 
-/*! \class Field  
+/*! \class Field
  
  \brief The Field class represent a field on a given lattice.
  
  
- It stores the description of the field i.e. the datatype, the number of components, and the pointer to the field array in the memory.  
+ It stores the description of the field i.e. the datatype (given as template), the number of components, and the pointer to the field array in the memory.
  
  
  The datatype is under user control; a field of structur or class can be also used (to be able to use the update halo method, the = operator must be defined or overloaded). However, the I/O support only native datatype and 1d array of them.

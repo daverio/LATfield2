@@ -2,8 +2,11 @@
 #define LATFIELD2_MOVE_FUNCTION_HPP
 
 
-/*
- move particles method for gevolution, made to work with any particles type
+
+
+/**
+ * \addtogroup prartClass
+ * @{
  */
 
 using namespace LATfield2;
@@ -28,6 +31,6 @@ void move_particles_simple(double dtau,
    
 }
 
-
+/**@}*/
 
 #endif

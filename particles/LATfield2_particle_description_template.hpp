@@ -1,44 +1,78 @@
 #ifndef LATFIELD2_PARTICLE_DEF_HPP
 #define LATFIELD2_PARTICLE_DEF_HPP
 
+
+/*! \file LATfield2_particle_description_template.hpp
+ \brief Template to create a particle description
+ 
+ */
+
 /*type table
  
  datatype      memType     fileType     size
- 
+ int            H5T_NATIVE_INT   INT_TYPE_FILE
+ long           H5T_NATIVE_LONG  INT_TYPE_FILE
+ float          H5T_NATIVE_FLOAT  FLOAT_TYPE_FILE
+ double         H5T_NATIVE_DOUBLE  DOUBLE_TYPE_FILE
+ bool           H5T_NATIVE_HBOOL  BOOL_TYPE_FILE
  
  
  
  */
 
+
+/**
+ * \addtogroup partdesc
+ * @{
+ */
+
+
+/**
+ * \addtogroup partTemplate Particle description templates
+ * @{
+ */
+
+
+
+/*! \struct particles_name
+ \brief individual properties structure.
+ 
+ Structure which contain all individual properties. The minimal list of individual properties is: ID, position,velocity,
+ */
 struct particles_name{
   
   long ID;
   LATfield2::Real pos[3];
   LATfield2::Real vel[3];
 };
+
+/*!
+    \brief overloading of the << operator for individual property strucutre.
+    \return ostream containing the ID, position and velocity of the particle.
+ */
 ostream& operator<<(ostream& os, const particles_name& p)
 {
     os << "ID: "<<p.ID<<" , Pos: ("<< p.pos[0]<<","<< p.pos[1]<<","<< p.pos[2]<<") , Vel: (" << p.vel[0]<<","<< p.vel[1]<<","<< p.vel[2]<<")"; 
     return os;
 }
 
+/*! \struct particles_name_info
+ \brief global properties structure.
+ 
+ Structure which contain all global properties. The minimal list of global properties is: type_name and size of type_name.
+ */
 struct particles_name_info{
     
     char * type_name;
     int type_name_size;
 };
 
-
-template<typename pInfo>
-void set_parts_typename(pInfo *info, string type_name){
-    
-    info->type_name_size = type_name.size();
-    info->type_name = new char[info->type_name_size];
-    strcpy(info->type_name,type_name.c_str());
-    
-}
-
 #ifdef HDF5
+/*! \struct particles_name_dataType
+ \brief properties datatype structure.
+ 
+ Structure which contain the HDF5 datatype of all properties.
+ */
 struct particles_name_dataType{
   hid_t part_memType;
   hid_t part_fileType;
@@ -105,7 +139,7 @@ struct particles_name_dataType{
 
 
 
-
+/**@}*/
 
 
 #endif

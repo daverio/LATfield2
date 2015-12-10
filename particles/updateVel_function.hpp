@@ -2,12 +2,13 @@
 #define LATFIELD2_UPDATEVEL_FUNCTION_HPP
 
 
-/*
- move particles method for gevolution, made to work with any particles type
- */
 
 using namespace LATfield2;
 
+/**
+ * \addtogroup prartClass
+ * @{
+ */
 
 Real updateVel_simple(double dtau,
                           double lat_resolution,
@@ -36,6 +37,6 @@ Real updateVel_simple(double dtau,
 
 }
 
-
+/**@}*/
 
 #endif

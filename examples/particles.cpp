@@ -212,14 +212,14 @@ int main(int argc, char **argv)
         //cout<<"vector comm done"<<endl;
         
         timerRef = MPI_Wtime();
-        symtensorProjectionCICNGP_project(&parts,&Tij);
+        tensorProjectionCICNGP_project(&parts,&Tij);
         timerProjTensor = MPI_Wtime() - timerRef;
         
         
         //cout<<"tensor proj done"<<endl;
         
         timerRef = MPI_Wtime();
-        symtensorProjectionCICNGP_comm(&Tij);
+        tensorProjectionCICNGP_comm(&Tij);
         timerCommTensor = MPI_Wtime() - timerRef;
 
         //cout<<"tensor comm done"<<endl;

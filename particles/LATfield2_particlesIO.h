@@ -12,7 +12,7 @@
 #endif
 #endif
 
-
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 struct fileDsc
 {
   int fileNumber;
@@ -27,6 +27,8 @@ struct fileDsc
   RealC localBoxOffset[3];
   RealC localBoxSize[3];
 };
+#endif
+
 
 template<typename part_info,typename parts_datatype>
 void get_partInfo(string filename, part_info &partInfo, parts_datatype partdatatype)

@@ -1,4 +1,8 @@
+#ifndef PARTICLES_TOOLS_HPP
+#define PARTICLES_TOOLS_HPP
 
+
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 LATfield2::Real get_lattice_resolution(int npts[3],LATfield2::Real boxSize[3])
 {
   LATfield2::Real latRes[3];
@@ -36,3 +40,6 @@ LATfield2::Real get_lattice_resolution(int npts[3],LATfield2::Real boxSize[3])
     int gos(){return f<Derived,T>(0);} \
 };
 
+#endif
+
+#endif

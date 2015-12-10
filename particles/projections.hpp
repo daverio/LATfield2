@@ -1,21 +1,23 @@
 #ifndef LATFIELD2_PROJECTIONS_HPP
 #define LATFIELD2_PROJECTIONS_HPP
-/*! \file projections.hpp
- \breif bablbalbal
 
- hjkhkj
+
+
+/*! \file projections.hpp
+ \brief projection function for scalar, vector and tensor particle properties. 
+ 
  */
 
 
-
 /**
- * \addtogroup projections Projection Function
+ * \addtogroup projections
  * @{
  */
 
 
+
 /*! \fn inline long setIndex(long * size, long i, long j,long k)
- bablabla
+ \return  i + size[0] *( j+size[1]*k)
  */
 inline long setIndex(long * size, long i, long j,long k)
 {
@@ -23,7 +25,8 @@ inline long setIndex(long * size, long i, long j,long k)
 }
 
 /*! \fn void projection_init(Field<Real> * f)
- bablabla
+ Set to zero all components of the field f on the entire lattice (including the halo).
+ Have to be performed before any projection.
  */
 void projection_init(Field<Real> * f)
 {
@@ -35,6 +38,7 @@ void projection_init(Field<Real> * f)
 static int const FROM_PART = INDIVIDUAL_MASS;
 static int const FROM_INFO = GLOBAL_MASS;
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 
 int mapv1v2[4][2][2][2] = { { {{0,6},{2,8}},{{1,7},{3,9}} } , { {{2,8},{4,10}},{{3,9},{5,11}} },
     { {{6,12},{8,14}},{{7,13},{9,15}} } , { {{8,14},{10,16}},{{9,15},{11,17}} } };
@@ -49,16 +53,24 @@ int CIC_mapv0[2][2][2][2] =   { { {{0,1},{2,3}},{{4,5},{6,7}} } , { {{4,5},{6,7}
 int CIC_mapv1[2][2][2][2] =   { { {{12,14},{16,18}},{{13,15},{17,19}} } , { {{16,18},{20,22}},{{17,19},{21,23}} } };
 int CIC_mapv2[2][2][2][2] =   { { {{24,28},{25,29}},{{26,30},{27,31}} } , { {{28,32},{29,33}},{{30,34},{31,35}} } };
 
-
+#endif
 
 //////Scalar projection
 
 
 /*! \fn template<typename part, typename part_info, typename part_dataType> void scalarProjectionCIC_project(Particles<part,part_info,part_dataType> * parts,Field<Real> * rho, size_t * oset = NULL,int flag_where = FROM_INFO)
  
- \brief blabla
+ \brief cloud-in-cell scalar projection.
  
- sdfds
+ Perform the projection of a scalar property of the particles. Last 2 argument are used to select the property. After the call of this method, the method scalarProjectionCIC_comm(Field<Real> * rho) have to be called to perform the reduction of the halo.
+ 
+ \param Particles<part,part_info,part_dataType> * parts: bla
+ \param Field<Real> * rho: pointer to the real scalar field on which the property is projected.
+ \param size_t * oset: pointer to a integer which store the offset of the scalar property in the structure it belong to. If set to NULL, the projection will project the property "mass" of the particles.
+ \param int flag_where: Flag to set if the property is a global or a individual one, i.e. the specify in which structure the property is. FROM_INFO set the property to be global and FROM_PART set the property to be individual.
+ 
+ \sa scalarProjectionCIC_comm(Field<Real> * rho)
+ \sa projection_init(Field<Real> * f)
  */
 template<typename part, typename part_info, typename part_dataType>
 void scalarProjectionCIC_project(Particles<part,part_info,part_dataType> * parts,Field<Real> * rho, size_t * oset = NULL,int flag_where = FROM_INFO)
@@ -173,8 +185,12 @@ void scalarProjectionCIC_project(Particles<part,part_info,part_dataType> * parts
 
 
 
-
-
+/*! \fn scalarProjectionCIC_comm(Field<Real> * rho)
+ \brief communication method associated to the cloud-in-cell projection of scalars .
+ 
+ 
+ \sa scalarProjectionCIC_project(...)
+*/
 void scalarProjectionCIC_comm(Field<Real> * rho)
 {
     
@@ -285,6 +301,24 @@ void scalarProjectionCIC_comm(Field<Real> * rho)
 
 //////vector projection
 
+
+
+/*! \fn template<typename part, typename part_info, typename part_dataType> void vectorProjectionCICNGP_project(Particles<part,part_info,part_dataType> * parts,Field<Real> * vel, size_t * oset = NULL,int flag_where = FROM_INFO)
+ 
+ \brief hybrid cloud-in-cell nearest-grid-point vector projection.
+ 
+ Perform the projection of a vector defined as \f$\vec{p}= \rho \vec{v}\f$ where \f$\vec{v}\f$ is a vectorial (individual) property of the particles and \f$\rho\f$ a scalar (global or individual) one.
+ 
+ 
+ 
+ \param Particles<part,part_info,part_dataType> * parts: bla
+ \param Field<Real> * vel: pointer to the real vector field (a field with 3 components) on which the property is projected.
+ \param size_t * oset: pointer to array of two elements. First element is the offset of the \f$\rho\f$ property, and second of the \f$\vec{v}\f$ property. If set to NULL, the projection will project the properties "mass" and "vel" of the particles.
+ \param int flag_where: Flag to set if the property \f$\rho\f$ is a global or a individual one, i.e. the specify in which structure the property is. FROM_INFO set the property to be global and FROM_PART set the property to be individual. The property \f$\vec{v}\f$ is always individual
+ 
+ \sa vectorProjectionCICNGP_comm(Field<Real> * rho)
+ \sa projection_init(Field<Real> * f)
+ */
 template<typename part, typename part_info, typename part_dataType>
 void vectorProjectionCICNGP_project(Particles<part,part_info,part_dataType> * parts,Field<Real> * vel, size_t * oset = NULL,int flag_where = FROM_INFO)
 {
@@ -416,7 +450,12 @@ void vectorProjectionCICNGP_project(Particles<part,part_info,part_dataType> * pa
 }
 
 
-
+/*! \fn vectorProjectionCICNGP_comm(Field<Real> * vel)
+ \brief communication method associated to the hybrid cloud-in-cell nearest-grid-point projection of vectors .
+ 
+ 
+ \sa vectorProjectionCICNGP_project(...)
+ */
 void vectorProjectionCICNGP_comm(Field<Real> * vel)
 {
     
@@ -547,384 +586,28 @@ void vectorProjectionCICNGP_comm(Field<Real> * vel)
 
 
 
-template<typename part, typename part_info, typename part_dataType>
-void vectorProjectionCIC_project(Particles<part,part_info,part_dataType> * parts,Field<Real> * vel, size_t * oset = NULL,int flag_where = FROM_INFO)
-{
-    
-    Site xPart(parts->lattice());
-    Site xVel(vel->lattice());
-    
-    typename std::list<part>::iterator it;
-
-    double mass;
-    double latresolution = parts->res();
-    double cicVol = latresolution * latresolution * latresolution;
-    
-    double vi[36]; // 3 * 12 v0:0..11 v1:12..23 v2:24..35
-    
-    int gridChoice[3];
-    
-    double weightScalarGridDown[3];
-    double weightScalarGridUp[3];
-    double weightTensorGridDown[3];
-    double weightTensorGridUp[3];
-    
-    double referDistShift;
-    
-    double referPos[3];
-    double referPosShift[3];
-    
-   
-    
-    int sfrom;
-    
-    size_t offset_mass;
-    size_t offset_vel;
-    
-    
-    
-    if(oset == NULL)
-    {
-        sfrom = parts->mass_type();
-        offset_mass = parts->mass_offset();
-        offset_vel = offsetof(part,vel);
-    }
-    else
-    {
-        sfrom =  flag_where;
-        offset_mass = oset[0];
-        offset_vel = oset[1];
-    }
-    
-    if(sfrom == FROM_INFO)
-    {
-        mass = *(double*)((char*)parts->parts_info() + offset_mass);
-        mass /= cicVol;
-        //cout << mass<<endl;
-    }
-    
-    
-    for(xPart.first(),xVel.first();xPart.test();xPart.next(),xVel.next())
-    {
-        if(parts->field()(xPart).size!=0)
-        {
-            for(int i=0;i<3;i++)
-            {
-                referPos[i] = xPart.coord(i)*latresolution;
-                referPosShift[i] = referPos[i] +  latresolution* 0.5 ;
-            }
-            
-            for(int i=0;i<36;i++)vi[i]=0.0;
-            
-            
-            for (it=(parts->field())(xPart).parts.begin(); it != (parts->field())(xPart).parts.end(); ++it)
-            {
-                
-                for(int i =0;i<3;i++)
-                {
-                    weightScalarGridUp[i] = ((*it).pos[i] - referPos[i]) / latresolution;
-                    weightScalarGridDown[i] = 1.0l - weightScalarGridUp[i];
-                    
-                    referDistShift = ((*it).pos[i] - referPosShift[i]) / latresolution;
-                    if(referDistShift<0)
-                    {
-                        gridChoice[i]=0;
-                        weightTensorGridDown[i] = -referDistShift;
-                        weightTensorGridUp[i] = 1.0l - weightTensorGridDown[i];
-                    }
-                    else
-                    {
-                        gridChoice[i]=1;
-                        weightTensorGridUp[i] = referDistShift;
-                        weightTensorGridDown[i] = 1.0l - weightTensorGridUp[i];
-                    }
-                    
-                }
-                
-                Real * v;
-                double massVel;
-                
-                
-                if(sfrom==FROM_PART)
-                {
-                    mass = *(double*)((char*)&(*it)+offset_mass);
-                    mass /= cicVol;
-                }
-                
-                v = (Real*)((char*)&(*it)+offset_vel);
-                
-                //do the projection into the buffer
-                
-                //working on v0
-                massVel = mass*v[0];
-                vi[ CIC_mapv0[gridChoice[0]][0][0][0] ] +=  massVel * weightTensorGridDown[0] * weightScalarGridDown[1] * weightScalarGridDown[2];
-                vi[ CIC_mapv0[gridChoice[0]][0][0][1] ] +=  massVel * weightTensorGridDown[0] * weightScalarGridDown[1] * weightScalarGridUp[2];
-                vi[ CIC_mapv0[gridChoice[0]][0][1][0] ] +=  massVel * weightTensorGridDown[0] * weightScalarGridUp[1]   * weightScalarGridDown[2];
-                vi[ CIC_mapv0[gridChoice[0]][0][1][1] ] +=  massVel * weightTensorGridDown[0] * weightScalarGridUp[1]   * weightScalarGridUp[2];
-                vi[ CIC_mapv0[gridChoice[0]][1][0][0] ] +=  massVel * weightTensorGridUp[0]   * weightScalarGridDown[1] * weightScalarGridDown[2];
-                vi[ CIC_mapv0[gridChoice[0]][1][0][1] ] +=  massVel * weightTensorGridUp[0]   * weightScalarGridDown[1] * weightScalarGridUp[2];
-                vi[ CIC_mapv0[gridChoice[0]][1][1][0] ] +=  massVel * weightTensorGridUp[0]   * weightScalarGridUp[1]   * weightScalarGridDown[2];
-                vi[ CIC_mapv0[gridChoice[0]][1][1][1] ] +=  massVel * weightTensorGridUp[0]   * weightScalarGridUp[1]   * weightScalarGridUp[2];
-                
-                //working on v1
-                massVel = mass*v[1];
-                vi[ CIC_mapv1[gridChoice[1]][0][0][0] ] +=  massVel * weightScalarGridDown[0] * weightTensorGridDown[1] * weightScalarGridDown[2];
-                vi[ CIC_mapv1[gridChoice[1]][0][0][1] ] +=  massVel * weightScalarGridDown[0] * weightTensorGridDown[1] * weightScalarGridUp[2];
-                vi[ CIC_mapv1[gridChoice[1]][0][1][0] ] +=  massVel * weightScalarGridDown[0] * weightTensorGridUp[1]   * weightScalarGridDown[2];
-                vi[ CIC_mapv1[gridChoice[1]][0][1][1] ] +=  massVel * weightScalarGridDown[0] * weightTensorGridUp[1]   * weightScalarGridUp[2];
-                vi[ CIC_mapv1[gridChoice[1]][1][0][0] ] +=  massVel * weightScalarGridUp[0]   * weightTensorGridDown[1] * weightScalarGridDown[2];
-                vi[ CIC_mapv1[gridChoice[1]][1][0][1] ] +=  massVel * weightScalarGridUp[0]   * weightTensorGridDown[1] * weightScalarGridUp[2];
-                vi[ CIC_mapv1[gridChoice[1]][1][1][0] ] +=  massVel * weightScalarGridUp[0]   * weightTensorGridUp[1]   * weightScalarGridDown[2];
-                vi[ CIC_mapv1[gridChoice[1]][1][1][1] ] +=  massVel * weightScalarGridUp[0]   * weightTensorGridUp[1]   * weightScalarGridUp[2];
-                
-                
-                //working on v2
-                massVel = mass*v[2];
-                vi[ CIC_mapv2[gridChoice[2]][0][0][0] ] +=  massVel * weightScalarGridDown[0] * weightScalarGridDown[1] * weightTensorGridDown[2];
-                vi[ CIC_mapv2[gridChoice[2]][0][0][1] ] +=  massVel * weightScalarGridDown[0] * weightScalarGridDown[1] * weightTensorGridUp[2];
-                vi[ CIC_mapv2[gridChoice[2]][0][1][0] ] +=  massVel * weightScalarGridDown[0] * weightScalarGridUp[1]   * weightTensorGridDown[2];
-                vi[ CIC_mapv2[gridChoice[2]][0][1][1] ] +=  massVel * weightScalarGridDown[0] * weightScalarGridUp[1]   * weightTensorGridUp[2];
-                vi[ CIC_mapv2[gridChoice[2]][1][0][0] ] +=  massVel * weightScalarGridUp[0]   * weightScalarGridDown[1] * weightTensorGridDown[2];
-                vi[ CIC_mapv2[gridChoice[2]][1][0][1] ] +=  massVel * weightScalarGridUp[0]   * weightScalarGridDown[1] * weightTensorGridUp[2];
-                vi[ CIC_mapv2[gridChoice[2]][1][1][0] ] +=  massVel * weightScalarGridUp[0]   * weightScalarGridUp[1]   * weightTensorGridDown[2];
-                vi[ CIC_mapv2[gridChoice[2]][1][1][1] ] +=  massVel * weightScalarGridUp[0]   * weightScalarGridUp[1]   * weightTensorGridUp[2];                            
-                
-            }
-            
-            //copy to field
-            
-            (*vel)(xVel -0       ,0) += vi[0];//v0
-            
-            (*vel)(xVel -0    +2 ,0) += vi[1];//v0
-            
-            (*vel)(xVel -0 +1    ,0) += vi[2];//v0
-            
-            (*vel)(xVel -0 +1 +2 ,0) += vi[3];//v0
-            
-            //--------------------------------------------
-            
-            (*vel)(xVel    -1    ,1) += vi[12];//v1
-            
-            (*vel)(xVel    -1 +2 ,1) += vi[14];//v1
-            
-            (*vel)(xVel       -2 ,2) += vi[24];//v2
-            
-            (*vel)(xVel          ,0) += vi[4];//v0
-            (*vel)(xVel          ,1) += vi[16];//v1
-            (*vel)(xVel          ,2) += vi[28];//v2
-            
-            (*vel)(xVel       +2 ,0) += vi[5];//v0
-            (*vel)(xVel       +2 ,1) += vi[18];//v1
-            (*vel)(xVel       +2 ,2) += vi[32];//v2
-            
-            (*vel)(xVel    +1 -2 ,2) += vi[25];//v2
-            
-            (*vel)(xVel    +1    ,0) += vi[6];//v0
-            (*vel)(xVel    +1    ,1) += vi[20];//v1
-            (*vel)(xVel    +1    ,2) += vi[29];//v2
-            
-            (*vel)(xVel    +1 +2 ,0) += vi[7];//v0
-            (*vel)(xVel    +1 +2 ,1) += vi[22];//v1
-            (*vel)(xVel    +1 +2 ,2) += vi[33];//v2
-            
-            //--------------------------------------------
-            
-            (*vel)(xVel +0 -1    ,1) += vi[13];//v1
-            
-            (*vel)(xVel +0 -1 +2 ,1) += vi[15];//v1
-            
-            (*vel)(xVel +0    -2 ,2) += vi[26];//v2
-            
-            (*vel)(xVel +0       ,0) += vi[8];//v0
-            (*vel)(xVel +0       ,1) += vi[17];//v1
-            (*vel)(xVel +0       ,2) += vi[30];//v2
-            
-            (*vel)(xVel +0    +2 ,0) += vi[9];//v0
-            (*vel)(xVel +0    +2 ,1) += vi[19];//v1
-            (*vel)(xVel +0    +2 ,2) += vi[34];//v2
-            
-            (*vel)(xVel +0 +1 -2 ,2) += vi[27];//v2
-            
-            (*vel)(xVel +0 +1    ,0) += vi[10];//v0
-            (*vel)(xVel +0 +1    ,1) += vi[21];//v1
-            (*vel)(xVel +0 +1    ,2) += vi[31];//v2
-            
-            (*vel)(xVel +0 +1 +2 ,0) += vi[11];//v0
-            (*vel)(xVel +0 +1 +2 ,1) += vi[23];//v1
-            (*vel)(xVel +0 +1 +2 ,2) += vi[35];//v2
-            
-        }
-    }
-    
-     
-}
-
-
-void vectorProjectionCIC_comm(Field<Real> * vel)
-{
-    
-    
-    if(vel->lattice().halo() == 0)
-    {
-        cout<< "LATfield2::scalarProjectionCIC_proj: the field has to have at least a halo of 1" <<endl;
-        cout<< "LATfield2::scalarProjectionCIC_proj: aborting" <<endl;
-        exit(-1);
-    }
-    
-    Real *bufferSendUp;
-    Real *bufferSendDown;
-    
-    Real *bufferRecUp;
-    Real *bufferRecDown;
-    
-    
-    long bufferSizeY;
-    long bufferSizeZ;
-    
-    
-    int sizeLocal[3];
-    long sizeLocalGross[3];
-    int sizeLocalOne[3];
-    int halo = vel->lattice().halo();
-    
-    for(int i=0;i<3;i++)
-    {
-        sizeLocal[i]=vel->lattice().sizeLocal(i);
-        sizeLocalGross[i] = sizeLocal[i] + 2 * halo;
-        sizeLocalOne[i]=sizeLocal[i]+2;
-    }
-    
-    int distHaloOne = halo - 1;
-
-    int imax;
-    //update from halo data in X;
-    
-    int iref1=sizeLocalGross[0]-halo;
-    int iref2=sizeLocalGross[0]-halo-1;
-    
-    for(int k=distHaloOne;k<sizeLocalOne[2]+distHaloOne;k++)
-    {
-        for(int j=distHaloOne;j<sizeLocalOne[1]+distHaloOne;j++)
-        {
-            for(int comp=0;comp<3;comp++)(*vel)(setIndex(sizeLocalGross,halo,j,k),comp) += (*vel)(setIndex(sizeLocalGross,iref1,j,k),comp);
-            
-            for(int comp=0;comp<3;comp++)(*vel)(setIndex(sizeLocalGross,iref2,j,k),comp) += (*vel)(setIndex(sizeLocalGross,distHaloOne,j,k),comp);
-        }
-    }
-    
-    //communication
-    
-   
-    
-    //build buffer size
-    
-    bufferSizeY = (long)(sizeLocalOne[2]) * sizeLocal[0];
-    bufferSizeZ = sizeLocal[0] * sizeLocal[1];
-    
-    if(bufferSizeY>bufferSizeZ)
-    {
-        bufferSendUp = (Real*)malloc(3*bufferSizeY * sizeof(Real));
-        bufferRecUp = (Real*)malloc(3*bufferSizeY * sizeof(Real));
-        bufferSendDown = (Real*)malloc(3*bufferSizeY * sizeof(Real));
-        bufferRecDown = (Real*)malloc(3*bufferSizeY * sizeof(Real));
-    }
-    else
-    {
-        bufferSendUp = (Real*)malloc(3*bufferSizeZ * sizeof(Real));
-        bufferRecUp = (Real*)malloc(3*bufferSizeZ * sizeof(Real));
-        bufferSendDown = (Real*)malloc(3*bufferSizeZ * sizeof(Real));
-        bufferRecDown = (Real*)malloc(3*bufferSizeZ * sizeof(Real));
-    }
-    
-    
-    //working on Y dimension
-    
-    
-    imax=sizeLocal[0];
-    iref1 = sizeLocalGross[1]- halo;
-    
-    
-    for(int k=0;k<sizeLocalOne[2];k++)
-    {
-        for(int i=0;i<imax;i++)
-        {
-            for(int comp =0;comp<3;comp++)bufferSendUp[comp + 3l * (i+k*imax)]=(*vel)(setIndex(sizeLocalGross,i+halo,iref1,k+distHaloOne),comp);
-        }
-        for(int i=0;i<imax;i++)
-        {
-            for(int comp =0;comp<3;comp++)bufferSendDown[comp + 3l * (i+k*imax)]=(*vel)(setIndex(sizeLocalGross,i+halo,distHaloOne,k+distHaloOne),comp);
-        }
-    }
-    
-    parallel.sendUpDown_dim1(bufferSendUp,bufferRecUp,bufferSizeY * 3l,bufferSendDown,bufferRecDown,bufferSizeY * 3l);
-    
-    //unpack data
-    iref1 = sizeLocalGross[1]- halo - 1;
-    
-    for(int k=0;k<sizeLocalOne[2];k++)
-    {
-        for(int i=0;i<imax;i++)
-        {
-            for(int comp =0;comp<3;comp++)(*vel)(setIndex(sizeLocalGross,i+halo,halo,k+distHaloOne),comp) += bufferRecUp[comp + 3l * (i+k*imax)];
-        }
-        for(int i=0;i<imax;i++)
-        {
-            for(int comp =0;comp<3;comp++)(*vel)(setIndex(sizeLocalGross,i+halo,iref1,k+distHaloOne),comp) += bufferRecDown[comp + 3l * (i+k*imax)];
-            
-        }
-    }
-    
-    //workin on dim z
-    
-    //pack data
-    
-    iref1=sizeLocalGross[2]- halo;
-    
-    for(int j=0;j<(sizeLocalOne[1]-2);j++)
-    {
-        for(int i=0;i<imax;i++)
-        {
-            for(int comp =0;comp<3;comp++)bufferSendUp[comp + 3l * (i+j*imax)]=(*vel)(setIndex(sizeLocalGross,i+halo,j+halo,iref1),comp);
-        }
-        for(int i=0;i<imax;i++)
-        {
-            for(int comp =0;comp<3;comp++)bufferSendDown[comp + 3l * (i+j*imax)]=(*vel)(setIndex(sizeLocalGross,i+halo,j+halo,distHaloOne),comp);
-        }
-        
-    }
-    
-    parallel.sendUpDown_dim0(bufferSendUp,bufferRecUp,bufferSizeY * 3l,bufferSendDown,bufferRecDown,bufferSizeY * 3l);
-    
-    //unpack data
-    
-    iref1 = sizeLocalGross[2]- halo - 1;
-    
-    for(int j=0;j<(sizeLocalOne[1]-2);j++)
-    {
-        for(int i=0;i<imax;i++)
-        {
-            for(int comp =0;comp<3;comp++)(*vel)(setIndex(sizeLocalGross,i+halo,j+halo,halo),comp) += bufferRecUp[comp + 3l * (i+j*imax)];
-        }
-        for(int i=0;i<imax;i++)
-        {
-            for(int comp =0;comp<3;comp++)(*vel)(setIndex(sizeLocalGross,i+halo,j+halo,iref1),comp) += bufferRecDown[comp + 3l * (i+j*imax)];
-        }
-        
-    }
-    
-    
-    free(bufferSendUp);
-    free(bufferSendDown);
-    free(bufferRecUp);
-    free(bufferRecDown);
-
-
-}
 
 //////tensor projection
 
+
+/*! \fn template<typename part, typename part_info, typename part_dataType> void symtensorProjectionCICNGP_project(Particles<part,part_info,part_dataType> * parts,Field<Real> * Tij, size_t * oset = NULL,int flag_where = FROM_INFO)
+ 
+ \brief hybrid cloud-in-cell nearest-grid-point symetric tensor projection.
+ 
+ Perform the projection of a symmetric tensor defined as \f$\tau_{ij}= \rho v_i v_j\f$ where \f$\vec{v}\f$ is a vectorial (individual) property of the particles and \f$\rho\f$ a scalar (global or individual) one.
+ 
+ 
+ 
+ \param Particles<part,part_info,part_dataType> * parts: bla
+ \param Field<Real> * Tij: pointer to the real symmetric tensor field (a field in 3x3 components, and definded a symmetric) on which the property is projected.
+ \param size_t * oset: pointer to array of two elements. First element is the offset of the \f$\rho\f$ property, and second of the \f$\vec{v}\f$ property. If set to NULL, the projection will project the properties "mass" and "vel" of the particles.
+ \param int flag_where: Flag to set if the property \f$\rho\f$ is a global or a individual one, i.e. the specify in which structure the property is. FROM_INFO set the property to be global and FROM_PART set the property to be individual. The property \f$\vec{v}\f$ is always individual
+ 
+ \sa symtensorProjectionCICNGP_comm(Field<Real> * rho)
+ \sa projection_init(Field<Real> * f)
+ */
 template<typename part, typename part_info, typename part_dataType>
-void tensorProjectionCICNGP_project(Particles<part,part_info,part_dataType> * parts,Field<Real> * Tij, size_t * oset = NULL,int flag_where = FROM_INFO)
+void symtensorProjectionCICNGP_project(Particles<part,part_info,part_dataType> * parts,Field<Real> * Tij, size_t * oset = NULL,int flag_where = FROM_INFO)
 {    
     
     Site xPart(parts->lattice() );
@@ -1065,8 +748,13 @@ void tensorProjectionCICNGP_project(Particles<part,part_info,part_dataType> * pa
 
 }
 
-
-void tensorProjectionCICNGP_comm(Field<Real> * Tij)
+/*! \fn symtensorProjectionCICNGP_comm(Field<Real> * vel)
+ \brief communication method associated to the hybrid cloud-in-cell nearest-grid-point projection of symmetric tensor .
+ 
+ 
+ \sa symtensorProjectionCICNGP_project(...)
+ */
+void symtensorProjectionCICNGP_comm(Field<Real> * Tij)
 {
     
     if(Tij->lattice().halo() == 0)
@@ -1187,6 +875,383 @@ void tensorProjectionCICNGP_comm(Field<Real> * Tij)
     
     
 }
+
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+template<typename part, typename part_info, typename part_dataType>
+void vectorProjectionCIC_project(Particles<part,part_info,part_dataType> * parts,Field<Real> * vel, size_t * oset = NULL,int flag_where = FROM_INFO)
+{
+    
+    Site xPart(parts->lattice());
+    Site xVel(vel->lattice());
+    
+    typename std::list<part>::iterator it;
+    
+    double mass;
+    double latresolution = parts->res();
+    double cicVol = latresolution * latresolution * latresolution;
+    
+    double vi[36]; // 3 * 12 v0:0..11 v1:12..23 v2:24..35
+    
+    int gridChoice[3];
+    
+    double weightScalarGridDown[3];
+    double weightScalarGridUp[3];
+    double weightTensorGridDown[3];
+    double weightTensorGridUp[3];
+    
+    double referDistShift;
+    
+    double referPos[3];
+    double referPosShift[3];
+    
+    
+    
+    int sfrom;
+    
+    size_t offset_mass;
+    size_t offset_vel;
+    
+    
+    
+    if(oset == NULL)
+    {
+        sfrom = parts->mass_type();
+        offset_mass = parts->mass_offset();
+        offset_vel = offsetof(part,vel);
+    }
+    else
+    {
+        sfrom =  flag_where;
+        offset_mass = oset[0];
+        offset_vel = oset[1];
+    }
+    
+    if(sfrom == FROM_INFO)
+    {
+        mass = *(double*)((char*)parts->parts_info() + offset_mass);
+        mass /= cicVol;
+        //cout << mass<<endl;
+    }
+    
+    
+    for(xPart.first(),xVel.first();xPart.test();xPart.next(),xVel.next())
+    {
+        if(parts->field()(xPart).size!=0)
+        {
+            for(int i=0;i<3;i++)
+            {
+                referPos[i] = xPart.coord(i)*latresolution;
+                referPosShift[i] = referPos[i] +  latresolution* 0.5 ;
+            }
+            
+            for(int i=0;i<36;i++)vi[i]=0.0;
+            
+            
+            for (it=(parts->field())(xPart).parts.begin(); it != (parts->field())(xPart).parts.end(); ++it)
+            {
+                
+                for(int i =0;i<3;i++)
+                {
+                    weightScalarGridUp[i] = ((*it).pos[i] - referPos[i]) / latresolution;
+                    weightScalarGridDown[i] = 1.0l - weightScalarGridUp[i];
+                    
+                    referDistShift = ((*it).pos[i] - referPosShift[i]) / latresolution;
+                    if(referDistShift<0)
+                    {
+                        gridChoice[i]=0;
+                        weightTensorGridDown[i] = -referDistShift;
+                        weightTensorGridUp[i] = 1.0l - weightTensorGridDown[i];
+                    }
+                    else
+                    {
+                        gridChoice[i]=1;
+                        weightTensorGridUp[i] = referDistShift;
+                        weightTensorGridDown[i] = 1.0l - weightTensorGridUp[i];
+                    }
+                    
+                }
+                
+                Real * v;
+                double massVel;
+                
+                
+                if(sfrom==FROM_PART)
+                {
+                    mass = *(double*)((char*)&(*it)+offset_mass);
+                    mass /= cicVol;
+                }
+                
+                v = (Real*)((char*)&(*it)+offset_vel);
+                
+                //do the projection into the buffer
+                
+                //working on v0
+                massVel = mass*v[0];
+                vi[ CIC_mapv0[gridChoice[0]][0][0][0] ] +=  massVel * weightTensorGridDown[0] * weightScalarGridDown[1] * weightScalarGridDown[2];
+                vi[ CIC_mapv0[gridChoice[0]][0][0][1] ] +=  massVel * weightTensorGridDown[0] * weightScalarGridDown[1] * weightScalarGridUp[2];
+                vi[ CIC_mapv0[gridChoice[0]][0][1][0] ] +=  massVel * weightTensorGridDown[0] * weightScalarGridUp[1]   * weightScalarGridDown[2];
+                vi[ CIC_mapv0[gridChoice[0]][0][1][1] ] +=  massVel * weightTensorGridDown[0] * weightScalarGridUp[1]   * weightScalarGridUp[2];
+                vi[ CIC_mapv0[gridChoice[0]][1][0][0] ] +=  massVel * weightTensorGridUp[0]   * weightScalarGridDown[1] * weightScalarGridDown[2];
+                vi[ CIC_mapv0[gridChoice[0]][1][0][1] ] +=  massVel * weightTensorGridUp[0]   * weightScalarGridDown[1] * weightScalarGridUp[2];
+                vi[ CIC_mapv0[gridChoice[0]][1][1][0] ] +=  massVel * weightTensorGridUp[0]   * weightScalarGridUp[1]   * weightScalarGridDown[2];
+                vi[ CIC_mapv0[gridChoice[0]][1][1][1] ] +=  massVel * weightTensorGridUp[0]   * weightScalarGridUp[1]   * weightScalarGridUp[2];
+                
+                //working on v1
+                massVel = mass*v[1];
+                vi[ CIC_mapv1[gridChoice[1]][0][0][0] ] +=  massVel * weightScalarGridDown[0] * weightTensorGridDown[1] * weightScalarGridDown[2];
+                vi[ CIC_mapv1[gridChoice[1]][0][0][1] ] +=  massVel * weightScalarGridDown[0] * weightTensorGridDown[1] * weightScalarGridUp[2];
+                vi[ CIC_mapv1[gridChoice[1]][0][1][0] ] +=  massVel * weightScalarGridDown[0] * weightTensorGridUp[1]   * weightScalarGridDown[2];
+                vi[ CIC_mapv1[gridChoice[1]][0][1][1] ] +=  massVel * weightScalarGridDown[0] * weightTensorGridUp[1]   * weightScalarGridUp[2];
+                vi[ CIC_mapv1[gridChoice[1]][1][0][0] ] +=  massVel * weightScalarGridUp[0]   * weightTensorGridDown[1] * weightScalarGridDown[2];
+                vi[ CIC_mapv1[gridChoice[1]][1][0][1] ] +=  massVel * weightScalarGridUp[0]   * weightTensorGridDown[1] * weightScalarGridUp[2];
+                vi[ CIC_mapv1[gridChoice[1]][1][1][0] ] +=  massVel * weightScalarGridUp[0]   * weightTensorGridUp[1]   * weightScalarGridDown[2];
+                vi[ CIC_mapv1[gridChoice[1]][1][1][1] ] +=  massVel * weightScalarGridUp[0]   * weightTensorGridUp[1]   * weightScalarGridUp[2];
+                
+                
+                //working on v2
+                massVel = mass*v[2];
+                vi[ CIC_mapv2[gridChoice[2]][0][0][0] ] +=  massVel * weightScalarGridDown[0] * weightScalarGridDown[1] * weightTensorGridDown[2];
+                vi[ CIC_mapv2[gridChoice[2]][0][0][1] ] +=  massVel * weightScalarGridDown[0] * weightScalarGridDown[1] * weightTensorGridUp[2];
+                vi[ CIC_mapv2[gridChoice[2]][0][1][0] ] +=  massVel * weightScalarGridDown[0] * weightScalarGridUp[1]   * weightTensorGridDown[2];
+                vi[ CIC_mapv2[gridChoice[2]][0][1][1] ] +=  massVel * weightScalarGridDown[0] * weightScalarGridUp[1]   * weightTensorGridUp[2];
+                vi[ CIC_mapv2[gridChoice[2]][1][0][0] ] +=  massVel * weightScalarGridUp[0]   * weightScalarGridDown[1] * weightTensorGridDown[2];
+                vi[ CIC_mapv2[gridChoice[2]][1][0][1] ] +=  massVel * weightScalarGridUp[0]   * weightScalarGridDown[1] * weightTensorGridUp[2];
+                vi[ CIC_mapv2[gridChoice[2]][1][1][0] ] +=  massVel * weightScalarGridUp[0]   * weightScalarGridUp[1]   * weightTensorGridDown[2];
+                vi[ CIC_mapv2[gridChoice[2]][1][1][1] ] +=  massVel * weightScalarGridUp[0]   * weightScalarGridUp[1]   * weightTensorGridUp[2];
+                
+            }
+            
+            //copy to field
+            
+            (*vel)(xVel -0       ,0) += vi[0];//v0
+            
+            (*vel)(xVel -0    +2 ,0) += vi[1];//v0
+            
+            (*vel)(xVel -0 +1    ,0) += vi[2];//v0
+            
+            (*vel)(xVel -0 +1 +2 ,0) += vi[3];//v0
+            
+            //--------------------------------------------
+            
+            (*vel)(xVel    -1    ,1) += vi[12];//v1
+            
+            (*vel)(xVel    -1 +2 ,1) += vi[14];//v1
+            
+            (*vel)(xVel       -2 ,2) += vi[24];//v2
+            
+            (*vel)(xVel          ,0) += vi[4];//v0
+            (*vel)(xVel          ,1) += vi[16];//v1
+            (*vel)(xVel          ,2) += vi[28];//v2
+            
+            (*vel)(xVel       +2 ,0) += vi[5];//v0
+            (*vel)(xVel       +2 ,1) += vi[18];//v1
+            (*vel)(xVel       +2 ,2) += vi[32];//v2
+            
+            (*vel)(xVel    +1 -2 ,2) += vi[25];//v2
+            
+            (*vel)(xVel    +1    ,0) += vi[6];//v0
+            (*vel)(xVel    +1    ,1) += vi[20];//v1
+            (*vel)(xVel    +1    ,2) += vi[29];//v2
+            
+            (*vel)(xVel    +1 +2 ,0) += vi[7];//v0
+            (*vel)(xVel    +1 +2 ,1) += vi[22];//v1
+            (*vel)(xVel    +1 +2 ,2) += vi[33];//v2
+            
+            //--------------------------------------------
+            
+            (*vel)(xVel +0 -1    ,1) += vi[13];//v1
+            
+            (*vel)(xVel +0 -1 +2 ,1) += vi[15];//v1
+            
+            (*vel)(xVel +0    -2 ,2) += vi[26];//v2
+            
+            (*vel)(xVel +0       ,0) += vi[8];//v0
+            (*vel)(xVel +0       ,1) += vi[17];//v1
+            (*vel)(xVel +0       ,2) += vi[30];//v2
+            
+            (*vel)(xVel +0    +2 ,0) += vi[9];//v0
+            (*vel)(xVel +0    +2 ,1) += vi[19];//v1
+            (*vel)(xVel +0    +2 ,2) += vi[34];//v2
+            
+            (*vel)(xVel +0 +1 -2 ,2) += vi[27];//v2
+            
+            (*vel)(xVel +0 +1    ,0) += vi[10];//v0
+            (*vel)(xVel +0 +1    ,1) += vi[21];//v1
+            (*vel)(xVel +0 +1    ,2) += vi[31];//v2
+            
+            (*vel)(xVel +0 +1 +2 ,0) += vi[11];//v0
+            (*vel)(xVel +0 +1 +2 ,1) += vi[23];//v1
+            (*vel)(xVel +0 +1 +2 ,2) += vi[35];//v2
+            
+        }
+    }
+    
+    
+}
+
+
+void vectorProjectionCIC_comm(Field<Real> * vel)
+{
+    
+    
+    if(vel->lattice().halo() == 0)
+    {
+        cout<< "LATfield2::scalarProjectionCIC_proj: the field has to have at least a halo of 1" <<endl;
+        cout<< "LATfield2::scalarProjectionCIC_proj: aborting" <<endl;
+        exit(-1);
+    }
+    
+    Real *bufferSendUp;
+    Real *bufferSendDown;
+    
+    Real *bufferRecUp;
+    Real *bufferRecDown;
+    
+    
+    long bufferSizeY;
+    long bufferSizeZ;
+    
+    
+    int sizeLocal[3];
+    long sizeLocalGross[3];
+    int sizeLocalOne[3];
+    int halo = vel->lattice().halo();
+    
+    for(int i=0;i<3;i++)
+    {
+        sizeLocal[i]=vel->lattice().sizeLocal(i);
+        sizeLocalGross[i] = sizeLocal[i] + 2 * halo;
+        sizeLocalOne[i]=sizeLocal[i]+2;
+    }
+    
+    int distHaloOne = halo - 1;
+    
+    int imax;
+    //update from halo data in X;
+    
+    int iref1=sizeLocalGross[0]-halo;
+    int iref2=sizeLocalGross[0]-halo-1;
+    
+    for(int k=distHaloOne;k<sizeLocalOne[2]+distHaloOne;k++)
+    {
+        for(int j=distHaloOne;j<sizeLocalOne[1]+distHaloOne;j++)
+        {
+            for(int comp=0;comp<3;comp++)(*vel)(setIndex(sizeLocalGross,halo,j,k),comp) += (*vel)(setIndex(sizeLocalGross,iref1,j,k),comp);
+            
+            for(int comp=0;comp<3;comp++)(*vel)(setIndex(sizeLocalGross,iref2,j,k),comp) += (*vel)(setIndex(sizeLocalGross,distHaloOne,j,k),comp);
+        }
+    }
+    
+    //communication
+    
+    
+    
+    //build buffer size
+    
+    bufferSizeY = (long)(sizeLocalOne[2]) * sizeLocal[0];
+    bufferSizeZ = sizeLocal[0] * sizeLocal[1];
+    
+    if(bufferSizeY>bufferSizeZ)
+    {
+        bufferSendUp = (Real*)malloc(3*bufferSizeY * sizeof(Real));
+        bufferRecUp = (Real*)malloc(3*bufferSizeY * sizeof(Real));
+        bufferSendDown = (Real*)malloc(3*bufferSizeY * sizeof(Real));
+        bufferRecDown = (Real*)malloc(3*bufferSizeY * sizeof(Real));
+    }
+    else
+    {
+        bufferSendUp = (Real*)malloc(3*bufferSizeZ * sizeof(Real));
+        bufferRecUp = (Real*)malloc(3*bufferSizeZ * sizeof(Real));
+        bufferSendDown = (Real*)malloc(3*bufferSizeZ * sizeof(Real));
+        bufferRecDown = (Real*)malloc(3*bufferSizeZ * sizeof(Real));
+    }
+    
+    
+    //working on Y dimension
+    
+    
+    imax=sizeLocal[0];
+    iref1 = sizeLocalGross[1]- halo;
+    
+    
+    for(int k=0;k<sizeLocalOne[2];k++)
+    {
+        for(int i=0;i<imax;i++)
+        {
+            for(int comp =0;comp<3;comp++)bufferSendUp[comp + 3l * (i+k*imax)]=(*vel)(setIndex(sizeLocalGross,i+halo,iref1,k+distHaloOne),comp);
+        }
+        for(int i=0;i<imax;i++)
+        {
+            for(int comp =0;comp<3;comp++)bufferSendDown[comp + 3l * (i+k*imax)]=(*vel)(setIndex(sizeLocalGross,i+halo,distHaloOne,k+distHaloOne),comp);
+        }
+    }
+    
+    parallel.sendUpDown_dim1(bufferSendUp,bufferRecUp,bufferSizeY * 3l,bufferSendDown,bufferRecDown,bufferSizeY * 3l);
+    
+    //unpack data
+    iref1 = sizeLocalGross[1]- halo - 1;
+    
+    for(int k=0;k<sizeLocalOne[2];k++)
+    {
+        for(int i=0;i<imax;i++)
+        {
+            for(int comp =0;comp<3;comp++)(*vel)(setIndex(sizeLocalGross,i+halo,halo,k+distHaloOne),comp) += bufferRecUp[comp + 3l * (i+k*imax)];
+        }
+        for(int i=0;i<imax;i++)
+        {
+            for(int comp =0;comp<3;comp++)(*vel)(setIndex(sizeLocalGross,i+halo,iref1,k+distHaloOne),comp) += bufferRecDown[comp + 3l * (i+k*imax)];
+            
+        }
+    }
+    
+    //workin on dim z
+    
+    //pack data
+    
+    iref1=sizeLocalGross[2]- halo;
+    
+    for(int j=0;j<(sizeLocalOne[1]-2);j++)
+    {
+        for(int i=0;i<imax;i++)
+        {
+            for(int comp =0;comp<3;comp++)bufferSendUp[comp + 3l * (i+j*imax)]=(*vel)(setIndex(sizeLocalGross,i+halo,j+halo,iref1),comp);
+        }
+        for(int i=0;i<imax;i++)
+        {
+            for(int comp =0;comp<3;comp++)bufferSendDown[comp + 3l * (i+j*imax)]=(*vel)(setIndex(sizeLocalGross,i+halo,j+halo,distHaloOne),comp);
+        }
+        
+    }
+    
+    parallel.sendUpDown_dim0(bufferSendUp,bufferRecUp,bufferSizeY * 3l,bufferSendDown,bufferRecDown,bufferSizeY * 3l);
+    
+    //unpack data
+    
+    iref1 = sizeLocalGross[2]- halo - 1;
+    
+    for(int j=0;j<(sizeLocalOne[1]-2);j++)
+    {
+        for(int i=0;i<imax;i++)
+        {
+            for(int comp =0;comp<3;comp++)(*vel)(setIndex(sizeLocalGross,i+halo,j+halo,halo),comp) += bufferRecUp[comp + 3l * (i+j*imax)];
+        }
+        for(int i=0;i<imax;i++)
+        {
+            for(int comp =0;comp<3;comp++)(*vel)(setIndex(sizeLocalGross,i+halo,j+halo,iref1),comp) += bufferRecDown[comp + 3l * (i+j*imax)];
+        }
+        
+    }
+    
+    
+    free(bufferSendUp);
+    free(bufferSendDown);
+    free(bufferRecUp);
+    free(bufferRecDown);
+    
+    
+}
+
+
 
 template<typename part, typename part_info, typename part_dataType>
 void VecVecProjectionCIC_project(Particles<part,part_info,part_dataType> * parts,Field<Real> * Tij, size_t * oset = NULL,int flag_where = FROM_INFO)
@@ -1649,6 +1714,7 @@ void VecVecProjectionCIC_comm(Field<Real> * Tij)
     free(bufferRecDown);
 }
 
+#endif
 
 /**@}*/
 #endif

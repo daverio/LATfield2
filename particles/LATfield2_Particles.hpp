@@ -1,8 +1,63 @@
 #ifndef LATFIELD2_PARTICLES_HPP
 #define LATFIELD2_PARTICLES_HPP
 
-#include "LATfield2_particle_description.hpp"
+
+
+/**
+ * \defgroup partModule Particles Module
+ * @{
+ */
+
+/*! \brief Projections for scalars vectors and tensors using hybrid cloud-in-cell and nearest-grid-point
+ 
+ 
+ */
+
+/**
+ * \defgroup projections Projections
+ * @{
+ */
+/**@}*/
+
+
+/*! \brief The Particles class maps particles on a Lattice and manages particle displacements.
+
+ 
+ */
+/**
+ * \defgroup prartClass Particles Class
+ * @{
+ */
+/**@}*/
+
+ 
+/*! \brief description of a particle type.
+ 
+ 
+ */
+
+/**
+ * \defgroup partdesc Particles description
+ * @{
+ */
+/**@}*/
+
+
+/**@}*/
+
+
+
+/*! \file LATfield2_Particles.hpp
+ \brief LATfield2_Particles.hpp contain the class Particles definition.
+ \author David Daverio
+ */
+
+
+
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+#include "LATfield2_particle_simple.hpp"
 #include "particles_tools.hpp"
+#endif
 #include "move_function.hpp"
 #include "updateVel_function.hpp"
 
@@ -36,9 +91,7 @@ template <typename part, typename part_info, typename part_dataType>
 class Particles;
 #include "projections.hpp"
 
-/*! \struct partList
- \breif structure which contains the particles lists, template for the particles field.
- */
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 template <typename  part>
 struct  partList{
     int size;
@@ -47,29 +100,102 @@ struct  partList{
     std::list<part>  partsTemp;
     partList() : size(0), parts(), partsTemp(){}
 };
+#endif
+/**
+ * \addtogroup prartClass
+ * @{
+ */
 
+
+
+/*!
+ \brief function to set the name of a particle type.
+ 
+*/
+template<typename pInfo>
+void set_parts_typename(pInfo *info, string type_name)
+{
+    
+    info->type_name_size = type_name.size();
+    strcpy(info->type_name,type_name.c_str());
+    
+}
+
+/*! \class Particles
+ \brief the Particles class aims to map a list of particles of a given type and to manage the displacement of those particles.
+ 
+ The Particles class is a template class. It take as template the 3 structure which describe a particle type. The class maps the particles to a Lattice object and manages the displacement of the particles.
+ 
+ */
 template <typename part, typename part_info, typename part_dataType>
 class Particles
 {
 
 public:
+    //! Constructor.
   Particles(){;};
+    //! destructor.
   ~Particles();
 
+    /*!
+     Initialization.
+     \param part_info part_global_info : structure containing the global properties of the particles.
+     \param part_dataType part_datatype : structure containing the datatype of every particle property.
+     \param Lattice * lat_part : Lattice on which the particles are maped, must be a 3d lattice.
+     \param Real boxSize[3] : size of each dimension of the Lattice in unit used for the particle positions. The resolution boxSize[i]/lat_part.size(i) need to be the same for each i (for each dimension)).
+     */
   void initialize(part_info part_global_info,
 		  part_dataType part_datatype,
 		  Lattice * lat_part,
 		  Real boxSize[3]);
  
-    
+    /*!
+     Method to get the process which store a given particle.
+     \param part pcl: Input: structure containing the individual property of a particle linked to this instance.
+     \param int * ranks:  Output: pointer to an array of two integer. The position of the process containing the particle "part" in the compute process grid.
+     */
   void getPartProcess(part pcl,int * ranks);
+    /*!
+     Method to get the process which store a given particle, but this one does not take into account the fact that the process grid is a torus. (meaning it can return a number smaller than 1 or bigger than grid_size-1). Used for the displacement of the particles.
+     \param part pcl: Input: structure containing the individual property of a particle linked to this instance.
+     \param int * ranks:  Output: pointer to an array of two integer. The position of the process containing the particle "part" in the compute process grid.
+     */
   void getPartNewProcess(part pcl,int * ranks);
+  
+    /*!
+     Method to get the coordinate of the cell containing a given particle.
+     \param part pcl: Input: structure containing the individual property of a particle linked to this instance.
+     \param int * coord:  Output: pointer to an array of 3 integer. The (global) coordinate in the lattice of the cell which contains the particle.
+     */
   void getPartCoord(part pcl,int * coord);
+    /*!
+     Method to get the local coordinate of the cell containing a given particle. (the 0,0,0 is the lowest cells of the local part of the lattice)
+     \param part pcl: Input: structure containing the individual property of a particle linked to this instance.
+     \param int * coord:  Output: pointer to an array of 3 integer. The (global) coordinate in the lattice of the cell which contains the particle.
+     */
   void getPartCoordLocal(part pcl,int * coord);
+    /*!
+     Method to add a particle. Glabal function, each process will call it. The particle will be added only in one process. 
+     
+     \param part newPart: Particle to add (structure containing the individual property).
+     */
   bool addParticle_global(part newPart);
     
     
-    
+    /*!
+     Method to modify the velocity of the particle. This method can be used to modify any individual property of a particles.
+     
+     
+     \param *updateVel_funct
+     \param double dtau: variation of time.
+     \param Field<Real> ** fields=NULL: array of pointer to field class.
+     \param int nfields: size of the array fields.
+     \param double * params: pointer to an array of double, used to pass constants.
+     \param double * output: pointer to an array of double. This array is used to return statistics over the particles properties, The outputs are constructed within the function updateVel_funct, and then reduced over every particles. The reduction can be the sum, the minimum or the maximum over all particles or over the particles stored in this given process.
+     \param int * reduce_type: array with same size of the output array. This array is used to specify the reduction type which can be: SUM,MIN,MAX,SUM_LOCAL,MIN_LOCAL,MAX_LOCAL
+     \param int noutput: size of the arrays output and reduce_type.
+     
+     */
     Real updateVel(Real (*updateVel_funct)(double,double,part*,double *,part_info,Field<Real> **,Site *,int,double*,double*,int),
                    double dtau,
                    Field<Real> ** fields=NULL,
@@ -78,7 +204,6 @@ public:
                    double * output=NULL,
                    int * reduce_type=NULL,
                    int noutput=0);
-                   //Field<Real> * phi, Field<Real> * Bi, double rescaleB, double H_conformal, double dtau, int flag_init);
     
     void moveParticles( void (*move_funct)(double,double,part*,double *,part_info,Field<Real> **,Site *,int,double*,double*,int),
                        double dtau,
@@ -89,21 +214,73 @@ public:
                        int * reduce_type=NULL,
                        int noutput=0);
 
+    /*!
+     Method to save all particles of this instance using HDF5 data format.
+     
+     \param string filename_base: base name of the file. Must contains the complete path to the file. It should not contains any extension (automatically added "_XXX.h5")
+     \param int fileNumber: Number of file which will be written Files written : filename_base_000.h5 to filename_base_fileNumber.h5)
+     */
   void saveHDF5(string filename_base, int fileNumber);
+    /*!
+     Method to load particles to this instance using HDF5 data format. Lattice size has not to be the same than the one used to write the files and the number of processes neither. But the size of the lattice in unit used for the particle positions has to be the same (no possibility to zoom).
+     
+     \param string filename_base: base name of the files. Must contains the complete path to the file. It should not contains any extension (automatically added ".h5") or file number (file : filename_base_XXX.h5).
+     \param int fileNumber: Number of files to read.
+     */
   void loadHDF5(string filename_base, int fileNumber);
     
 #ifdef EXTERNAL_IO
+    /*!
+     Method to open a particle file using the output server. (output only).
+     
+     \param string filename_base: base name of the file. Must contains the complete path to the file. It should not contains any extension (automatically added "_XXX.h5")
+     */
     void saveHDF5_server_open(string filename_base);
+    /*!
+     Method to write data in a particle file using the output server. (output only). The file should have been opened using saveHDF5_server_open(...). But if not already open, the method will open a file with default filename: "defaultfilename".
+     
+     \param string filename_base: base name of the file. Must contains the complete path to the file. It should not contains any extension (automatically added "_XXX.h5")
+     */
     void saveHDF5_server_write(string filename_base  = "defaultfilename");
 #endif
+    /*!
+     Method to "cout" the particle with a given ID, should never be used expect for debbuging as very ineficient!
+     
+     \param long ID: ID of the particle which will be "cout"
+     */
     void coutPart(long ID);
     
+    /*!
+     Method to get the Lattice on which the particles are maped.
+     \return lat_part_
+     */
     Lattice & lattice(){return lat_part_;};
+    /*!
+     Method to get the Field in which the particles lists are strored.
+     \return field_part_
+     */
     Field<partList<part> > & field(){return field_part_;};
+    /*!
+     Method to get the resolution of a cell, in units used for the particle positions.
+     \return field_part_
+     */
     Real res(){return lat_resolution_;};
+    
+    /*!
+     Method to get the global properties of the particles type of this instance of the class Particles.
+     \return part_global_info_: structure containing the global properties of the particles.
+     */
     part_info * parts_info();
     
+    /*!
+     Method to get the mass type. The mass can be a global property (GLOBAL_MASS), a individual property (INDIVIDUAL_MASS) or can be not defined (NO_MASS).
+     \return mass_type_
+     */
     int mass_type(){return mass_type_;};
+    /*!
+     Method to get the offset of the mass property within its respective structure.
+     \return mass_offset_
+     */
     size_t mass_offset(){return mass_offset_;}; 
 
 protected:
@@ -208,7 +385,8 @@ void Particles<part,part_info,part_dataType>::initialize(part_info part_global_i
     {
         COUT<< "Particles have to have a mass!!! In part or in part_info."<<endl;
         COUT<< "no mass detected..."<<endl;
-        mass_type_= GLOBAL_MASS;
+        mass_type_= NO_MASS;
+        mass_offset_=-1;
     }
    
     
@@ -1701,5 +1879,6 @@ void Particles<part,part_info,part_dataType>::saveHDF5_server_write(string filen
     
 }
 #endif
+/**@}*/
 
 #endif

@@ -368,11 +368,11 @@ Lattice& Site::lattice() { return *lattice_ ; }
 #ifdef FFT3D
 
 /*! \class cKSite  
- \brief A child of Site, built to work with the Fourier space lattices for complex to complex transforms.
+ \brief A child of Site, built to work with the Fourier space Lattice for complex to complex transforms.
  
  A class which simplify the map of the field data array index. This class allow to get coordinate on the lattice, loop over each site of the lattice and perform displacment on the lattice. 
  
- WARNING: this site class must be used only on lattices initialized using initializeComplexFFT() method of the Lattice class.
+ WARNING: this site class must be used only on lattice initialized using initializeComplexFFT() method of the Lattice class.
  
  This class have same binding that the Site class, so one can refer to the Site class for the documentation.
  
@@ -504,11 +504,11 @@ bool cKSite::setCoord(int x, int y=0, int z=0)
 }   
 
 /*! \class rKSite  
- \brief A child of Site, built to work with the Fourier space lattices for real to complex transforms.
+ \brief A child of Site, built to work with the Fourier space Lattice for real to complex transforms.
  
- A class which simplifies the map of the field data array index. This class allow to get coordinate on the lattice, loop over each site of the lattice and access neighboring lattices sites
+ A class which simplifies the map of the field data array index. This class allow to get coordinate on the Lattice, loop over each site of the Lattice and access neighboring lattices sites
  
- WARNING: the rKSite class must be used only on lattices initialized using initializeRealFFT() method of the Lattice class.
+ WARNING: the rKSite class must be used only on Lattice initialized using initializeRealFFT() method of the Lattice class.
  
  This class has same binding as the Site class, please refer to the Site class for the documentation.
  
