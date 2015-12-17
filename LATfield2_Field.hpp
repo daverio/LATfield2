@@ -68,7 +68,19 @@ class Field
          \param matrixCols : matrix number of colomn. 
          \param symmetry   : symmetry of the matrix, default is unsymmetric. LATfield2d::symmetric can be passed to specify the symmetry, reducing memory usage. 
          */ 
-		Field(Lattice& lattice, int matrixRows, int matrixCols, int symmetry=unsymmetric);
+		Field(Lattice& lattice, int rows, int cols, int symmetry=unsymmetric);
+        
+        /*!
+         Constructor of a vector of "matrix" field with initialization and allocation.
+         \sa initialize(Lattice& lattice, int rows, int cols, int symmetry=unsymmetric)
+         \sa alloc()
+         \param lattice    : lattice on which the field is defined
+         \param nMatrix    : number of matrix.
+         \param matrixRows : matrix number of row .
+         \param matrixCols : matrix number of colomn.
+         \param symmetry   : symmetry of the matrix, default is unsymmetric. LATfield2d::symmetric can be passed to specify the symmetry, reducing memory usage.
+         */
+        Field(Lattice& lattice, int nMatrix, int rows, int cols, int symmetry);
 		
         //!Destructor.
 		~Field();
@@ -89,6 +101,16 @@ class Field
          \param symmetry   : symmetry of the matrix, default is unsymmetric. LATfield2d::symmetric  can be pass to specify the symmetry. 
          */ 
 		void initialize(Lattice& lattice, int rows, int cols, int symmetry=unsymmetric);
+        
+        /*!
+         Initialization of a vector of "matrix" field. Without allocation.
+         \param lattice    : lattice on which the field is defined
+         \param nMatrix    : number of matrix.
+         \param matrixRows : matrix number of row .
+         \param matrixCols : matrix number of colomn.
+         \param symmetry   : symmetry of the matrix, default is unsymmetric. LATfield2d::symmetric  can be pass to specify the symmetry.
+         */
+        void initialize(Lattice& lattice,int nMatrix ,int rows, int cols, int symmetry);
 		
         /*!
          Memory allocation. Allocate the data_ array of this field. It allocated "components_*lattice_->sitesLocalGross()*sizeof(FieldType)" bytes. This method use malloc() to allocate the memory, in case the pointer is not allocated it will return a error message but not exiting the executable.
@@ -131,6 +153,11 @@ class Field
          \param j     : index of the column
          */
 		FieldType& operator()(long index, int i, int j);
+        
+        
+        
+        
+        FieldType& operator()(long index, int k, int i, int j);
 		
         
         /*!
@@ -164,6 +191,8 @@ class Field
          */
 		FieldType& operator()(const Site& site, int i, int j);
 
+        FieldType& operator()(const Site& site, int k, int i, int j);
+        
 #ifdef FFT3D
         
         /*!
@@ -180,6 +209,8 @@ class Field
          Equivalent to FieldType& operator()(const Site& site, int i, int j) for cKsite
          */
 		FieldType& operator()(const cKSite& site, int i, int j);
+        
+        FieldType& operator()(const cKSite& site,int k, int i, int j);
 
         /*!
          Equivalent to FieldType& operator()(const Site& site) for rKsite
@@ -196,6 +227,8 @@ class Field
          Equivalent to FieldType& operator()(const Site& site, int i, int j) for rKsite
          */
 		FieldType& operator()(const rKSite& site, int i, int j);
+        
+        FieldType& operator()(const rKSite& site,int k, int i, int j);
 #endif
 		
 		//BOUNDARY UPDATE
@@ -342,6 +375,8 @@ class Field
 		int        components_;
 		int        rows_;
 		int        cols_;
+        int        nMatrix_;
+        int        matrixSize_;
 		int        symmetry_;
 		unsigned int sizeof_fieldType_;
 		
@@ -399,6 +434,20 @@ Field<FieldType>::Field(Lattice& lattice, int rows, int cols, int symmetry)
 #endif
 	
 }
+
+template <class FieldType>
+Field<FieldType>::Field(Lattice& lattice, int nMatrix, int rows, int cols, int symmetry)
+{
+    status_=0;
+    this->initialize(lattice,nMatrix, rows, cols, symmetry);
+    this->alloc();
+#ifdef HDF5
+    this->get_h5type();
+#endif
+    
+}
+
+
 #ifdef HDF5
 template <class FieldType>
 void Field<FieldType>::get_h5type()
@@ -551,7 +600,9 @@ void Field<FieldType>::initialize(Lattice& lattice, int components)
 	components_=components;
 	rows_=components_;
 	cols_=1;
+    nMatrix_ = 1;
 	symmetry_=LATfield2::unsymmetric;
+    matrixSize_ = components;
 	
 	
 }
@@ -568,12 +619,35 @@ void Field<FieldType>::initialize(Lattice& lattice, int rows, int cols, int symm
 	lattice_=&lattice;
 	rows_=rows;
 	cols_=cols;
+    nMatrix_ =1;
 	symmetry_=symmetry;
 	if(symmetry_==LATfield2::symmetric) { components = ( rows_ * (rows_+1) ) / 2; }
 	else { components = rows*cols; }
 	components_=components;
+    matrixSize_ = components;
 	
 	
+}
+template <class FieldType>
+void Field<FieldType>::initialize(Lattice& lattice,int nMatrix, int rows, int cols, int symmetry)
+{
+    int components;
+    
+    if(status_ == allocated) { this->dealloc(); }
+    
+    sizeof_fieldType_ = sizeof(FieldType);
+    status_= initialized;
+    lattice_=&lattice;
+    rows_=rows;
+    cols_=cols;
+    nMatrix_ = nMatrix;
+    symmetry_=symmetry;
+    if(symmetry_==LATfield2::symmetric) { components = ( rows_ * (rows_+1) ) / 2; }
+    else { components = rows*cols; }
+    matrixSize_ = components;
+    components_=components * nMatrix;
+    
+    
 }
 
 template <class FieldType>
@@ -663,6 +737,21 @@ inline FieldType& Field<FieldType>::operator()(long index, int i, int j)
 	return data_[index*components_ + component];
 }
 
+
+template <class FieldType>
+inline FieldType& Field<FieldType>::operator()(long index, int k, int i, int j)
+{
+    int component;
+    if(symmetry_==LATfield2::symmetric)
+    {
+        if (i>j) component = i + j * rows_ - (j * (1 + j)) / 2;
+        else component = j + i * rows_ - (i * (1 + i)) / 2;
+    }
+    else { component = j*rows_ + i; }
+    component += matrixSize_ * k;
+    return data_[index*components_ + component];
+}
+
 template <class FieldType>
 inline FieldType& Field<FieldType>::operator()(const Site& site)
 {
@@ -679,6 +768,12 @@ template <class FieldType>
 inline FieldType& Field<FieldType>::operator()(const Site& site, int i, int j)
 {
 	return this->operator()(site.index(),i,j);
+}
+
+template <class FieldType>
+inline FieldType& Field<FieldType>::operator()(const Site& site,int k, int i, int j)
+{
+    return this->operator()(site.index(),k,i,j);
 }
 
 #ifdef FFT3D
@@ -702,6 +797,12 @@ inline FieldType& Field<FieldType>::operator()(const cKSite& site, int i, int j)
 }
 
 template <class FieldType>
+inline FieldType& Field<FieldType>::operator()(const cKSite& site, int k, int i, int j)
+{
+    return this->operator()(site.index(),k,i,j);
+}
+
+template <class FieldType>
 inline FieldType& Field<FieldType>::operator()(const rKSite& site)
 {
 	return this->operator()(site.index());
@@ -717,6 +818,12 @@ template <class FieldType>
 inline FieldType& Field<FieldType>::operator()(const rKSite& site, int i, int j)
 {
 	return this->operator()(site.index(),i,j);
+}
+
+template <class FieldType>
+inline FieldType& Field<FieldType>::operator()(const rKSite& site, int k, int i, int j)
+{
+    return this->operator()(site.index(),k,i,j);
 }
 
 #endif
