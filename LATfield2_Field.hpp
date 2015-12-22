@@ -585,7 +585,7 @@ void Field<FieldType>::get_h5type()
 template <class FieldType>
 Field<FieldType>::~Field()
 {
-	if(status_ & allocated) this->dealloc();
+  if(status_ & allocated) this->dealloc();
 	
 }
 

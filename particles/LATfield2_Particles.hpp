@@ -214,6 +214,7 @@ public:
                        int * reduce_type=NULL,
                        int noutput=0);
 
+#ifdef HDF5
     /*!
      Method to save all particles of this instance using HDF5 data format.
      
@@ -228,7 +229,7 @@ public:
      \param int fileNumber: Number of files to read.
      */
   void loadHDF5(string filename_base, int fileNumber);
-    
+#endif
 #ifdef EXTERNAL_IO
     /*!
      Method to open a particle file using the output server. (output only).
@@ -1507,6 +1508,8 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
 }
 
 
+
+#ifdef HDF5
 template <typename part, typename part_info, typename part_dataType>
 void Particles<part,part_info,part_dataType>::saveHDF5(string filename_base, int fileNumber)
 {
@@ -1763,6 +1766,7 @@ void Particles<part,part_info,part_dataType>::loadHDF5(string filename_base, int
     
     
 }
+#endif
 
 #ifdef EXTERNAL_IO
 template <typename part, typename part_info, typename part_dataType>
