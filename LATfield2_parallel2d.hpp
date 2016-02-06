@@ -10,7 +10,7 @@
 /*! \file LATfield2_parallel2d.hpp
  \brief LATfield2_parallel2d.hpp contains the class Parallel2d definition.
  \author David Daverio
- */ 
+ */
 
 #include <cstdlib>
 
@@ -27,32 +27,32 @@
 
 /*! \class Parallel2d
  \brief LATfield2d underliying class for paralleization
- 
+
     The parallel2d class is the handler of the parallelization of LATfield2d.
     LATfield2d distribute n-dimensional lattices into a 2-dimensional cartesian grid of MPI processes, a rod decomposition. The last dimension of the lattice is scattered into the first dimension of the process grid and the last-but-one dimension of the lattice is scattered into the second dimension of the process grid. This choice have been made to increase data locality of the ghost cells (halo), increases the efficiency of method to update them. Due to his scheme of parallelization, LATfield2d is only able to work with lattice of dimension bigger or equal to two.
- 
+
  The geometry of the process grid (the size of the 2 dimensions), two layers of MPI communicator and simple communication methods are enbended in the "parallel" object, which is an instance of the class Parallel. This object is instantiated but not initialized within the library header, hence the users should never declare an instance of the Parallel class. but rather use directly its pre/defined instance "parallel".
- 
+
  */
 
 class Parallel2d{
 	public :
-	
+
 	//CONSTRUCTOR AND DESTRUCTOR================
 	Parallel2d();
 	//Parallel2d(int proc_size0, int proc_size1);
-	
+
 	~Parallel2d();
-	
+
 	//Communicators initialization (grid initialization)===================
-	
+
 
 
 
 
     /*!
      Overall LATfield2 initialization when the output server is used. Should be the first call in any LATfield2 based application, as it initialize MPI (preprocessor define: -DEXTERNAL_IO)
-     
+
      \param proc_size0    : size of the first dimension of the MPI process grid.
      \param proc_size1    : size of the second dimension of the MPI process grid.
      \param IO_total_size : number of MPI process reserved for the IO server.
@@ -61,15 +61,15 @@ class Parallel2d{
     void initialize(int proc_size0, int proc_size1,int IO_total_size, int IO_node_size);
 
     /*!
-     Overall LATfield2 initialization used when the output server is not used. Should be the first call in any LATfield2 based application, as it initialize MPI. 
-     
+     Overall LATfield2 initialization used when the output server is not used. Should be the first call in any LATfield2 based application, as it initialize MPI.
+
      \param proc_size0 : size of the first dimension of the MPI process grid.
      \param proc_size1 : size of the second dimension of the MPI process grid.
      */
     void initialize(int proc_size0, int proc_size1);
-	
+
     //ABORT AND BARRIER===============================
-	
+
     /*!
      Method to kill by force the executable. If one MPI process call this method the executable will be killed.
      */
@@ -82,10 +82,10 @@ class Parallel2d{
      Method to call MPI_Barrier. This barrier is only applied on the compute processes. Every compute process have to perform the call, otherwise the executable will not continue.
      */
 	void barrier();
-	
+
 	//GLOBAL and DIRECTIONAL COMPUTE PROCESSES COMMUNICATIONS
-	
-    
+
+
     /*!
      Method to broadcast to every compute process a variable. Performed in lat_world_comm_ (compute processes world communicator).
      \param message: variable to send. the receivers will receive the value in that variable.
@@ -125,10 +125,10 @@ class Parallel2d{
      \param from    : grid_rank_[1] of the sender.
      */
 	template<class Type> void broadcast_dim1(Type* array, int len, int from);
-	
-    
-    
-    
+
+
+
+
 	/*!
      Method to sum a number over all the compute processes. Each process will have the result assigned in the input variable.
      \param number : variable to sum.
@@ -140,7 +140,7 @@ class Parallel2d{
      \param len    : size of the array.
      */
 	template<class Type> void sum(Type* array, int len);
-    
+
     /*!
      Method to perform a sum of a number over all the compute processes with same grid_rank_[1]. Each process will have the result assigned in the input variable.
      \param number : variable to sum.
@@ -164,7 +164,7 @@ class Parallel2d{
      */
 	template<class Type> void sum_dim1(Type* array, int len);
 	/////////////////
-	
+
     /*!
      Method to find the maximum value of a variable across all the compute processes.
      \param number : number to compare, the max value will be assignent to this variable.
@@ -198,7 +198,7 @@ class Parallel2d{
      \param len   : size of the array.
      */
 	template<class Type> void max_dim1(Type* array, int len);
-    
+
     /*!
      Method to find the minimal value of a variable across all the compute processes.
      \param number : number to compare, the max value will be assignent to this variable.
@@ -232,10 +232,10 @@ class Parallel2d{
      \param len   : size of the array.
      */
     template<class Type> void min_dim1(Type* array, int len);
-	
-    
+
+
     /*!
-     MPI send method on the compute processes. The method calls MPI_Send in the lat_world_comm communicator. 
+     MPI send method on the compute processes. The method calls MPI_Send in the lat_world_comm communicator.
      \param message : variable to send.
      \param to      : rank of the receiver. (in lat_world_comm)
      */
@@ -273,16 +273,16 @@ class Parallel2d{
      \param to    : rank of the receiver. (grid_rank_[1])
      */
 	template<class Type> void send_dim1(Type* array, int len, int to);
-	
-    
+
+
     /*!
-     MPI receive method on the compute processes. The method calls MPI_Recv in the lat_world_comm communicator. 
+     MPI receive method on the compute processes. The method calls MPI_Recv in the lat_world_comm communicator.
      \param message : variable which will be assigned to the receive message.
      \param from    : rank of the sender. (in lat_world_comm_)
      */
 	template<class Type> void receive(Type& message, int from);
     /*!
-     MPI receive method on the compute processes. The method call MPI_Recv in the lat_world_comm communicator. 
+     MPI receive method on the compute processes. The method call MPI_Recv in the lat_world_comm communicator.
      \param message : variable which will be assigned to the receive message.
      \param len     : size of the array to be received.
      \param from    : rank of the sender. (in lat_world_comm_)
@@ -308,13 +308,13 @@ class Parallel2d{
      */
 	template<class Type> void receive_dim1(Type& message, int from);
     /*!
-     MPI receive method on the compute processes. The method call MPI_Recv in the directional communicator associated with the process caller. (direction=1) 
+     MPI receive method on the compute processes. The method call MPI_Recv in the directional communicator associated with the process caller. (direction=1)
      \param message : variable which will be assigned to the receive message.
      \param len     : size of the array to be received.
      \param from    : rank of the sender. (grid_rank_[1])
      */
 	template<class Type> void receive_dim1(Type* array, int len, int from);
-	
+
     /*!
      Method to send a message through dim0 of the process grid. Processes of grid_rank_[0]=N will send the message to the grid_rank_[0]=N+1, with a torus topology. Therefore each process will send and receive data.
      \param bufferSend : pointer to the data which will be sent.
@@ -363,9 +363,9 @@ class Parallel2d{
      \param lenDown        : size of the array bufferSendUp.
      */
 	template<class Type> void sendUpDown_dim1(Type& bufferSendUp,Type& bufferRecUp, long lenUp, Type& bufferSendDown,Type& bufferRecDown, long lenDown );
-	
 
-    
+
+
 	//MISCELLANEOUS===================
 	/*!
      \return lat_world_size_  the number of MPI process (compute processes)
@@ -427,14 +427,14 @@ class Parallel2d{
      \return dim1_comm_  MPI_Group array, array of directional group (dim 1, compute processes)
      */
 	MPI_Group *dim1_group() {return dim1_group_;}
-    
+
     /*!
      \return int, the rank in lat_world_comm_ for a given process in grid.
      \param n : rank in dim0_comm_
      \param m : rank in dim1_comm_
      */
     int grid2world(int n,int m) {return n + grid_size_[0]*m;}
-	
+
 #ifdef EXTERNAL_IO
     /*!
      \return isIO_  true if the process is reserved to the IO server, false if the process is a compute process.
@@ -443,10 +443,10 @@ class Parallel2d{
     MPI_Comm IOcomm(){return IO_comm_;}
     MPI_Group IOgroup(){return IO_group_;}
 #endif
-	
+
 private:
 	//MEMBER VARIABLES================
-	
+
 	int lat_world_size_;//Number of processes
 	int grid_size_[2]; //Number of processes for dim 0 and dim 1
 	int lat_world_rank_; //Process ID
@@ -455,34 +455,34 @@ private:
    	int root_;
     bool isRoot_;
 	bool last_proc_[2];
-    
+
     int world_rank_;
     int world_size_;
-	
+
 	MPI_Comm world_comm_,lat_world_comm_, *dim0_comm_, *dim1_comm_;
 	MPI_Group world_group_,lat_world_group_, *dim0_group_,*dim1_group_ ;
-    
-    
+
+
 #ifdef EXTERNAL_IO
     MPI_Comm IO_comm_;
     MPI_Group IO_group_;
 #endif
-    
+
 #ifdef EXTERNAL_IO
     bool isIO_;
 #endif
-    
-	
+
+
 };
 
 Parallel2d::Parallel2d()
 {
-    
+
 
 	int argc=1;
 	char** argv = new char*[argc];
 	for(int i=0; i<argc; i++) { argv[i]=new char[20]; }
-#ifndef EXTERNAL_IO	
+#ifndef EXTERNAL_IO
 	lat_world_comm_ = MPI_COMM_WORLD;
     world_comm_ = MPI_COMM_WORLD;
 	MPI_Init( &argc, &argv );
@@ -495,9 +495,9 @@ Parallel2d::Parallel2d()
 	MPI_Init( &argc, &argv );
     MPI_Comm_rank( world_comm_, &world_rank_ );
 	MPI_Comm_size( world_comm_, &world_size_ );
-    
+
 #endif
-	
+
 }
 
 void Parallel2d::initialize(int proc_size0, int proc_size1)
@@ -508,20 +508,20 @@ void Parallel2d::initialize(int proc_size0, int proc_size1)
 
 void Parallel2d::initialize(int proc_size0, int proc_size1,int IO_total_size, int IO_node_size)
 {
-    
+
     grid_size_[0]=proc_size0;
 	grid_size_[1]=proc_size1;
-	
+
 	dim0_comm_ = (MPI_Comm *)malloc(grid_size_[1]*sizeof(MPI_Comm));
 	dim1_comm_ = (MPI_Comm *)malloc(grid_size_[0]*sizeof(MPI_Comm));
-	
+
 	dim0_group_ = (MPI_Group *)malloc(grid_size_[1]*sizeof(MPI_Group));
 	dim1_group_ = (MPI_Group *)malloc(grid_size_[0]*sizeof(MPI_Group));
-	
+
 	int rang[3],i,j,comm_rank;
-    
-    
- 
+
+
+
 #ifdef EXTERNAL_IO
 
     if(world_rank_==0)
@@ -533,67 +533,67 @@ void Parallel2d::initialize(int proc_size0, int proc_size1,int IO_total_size, in
 			cerr<<"Latfield::Parallel2d::initialization - Within the call : Parallel2d(int proc_size0, int proc_size1, int IO_total_size)"<<endl;
 			this->abortForce();
 		}
-        
-        
-        
+
+
+
 	}
-    
+
     MPI_Comm_group(world_comm_,&world_group_);
-    
+
     rang[0]=0;
     rang[1]=proc_size0*proc_size1-1;
     rang[2]=1;
-    
+
     MPI_Group_range_incl(world_group_,1,&rang,&lat_world_group_);
     MPI_Comm_create(world_comm_,lat_world_group_ , &lat_world_comm_);
-    
+
     rang[0]=proc_size0*proc_size1;
     rang[1]=proc_size0*proc_size1 + IO_total_size - 1;
     rang[2]=1;
-    
+
     MPI_Group_range_incl(world_group_,1,&rang,&IO_group_);
     MPI_Comm_create(world_comm_,IO_group_ , &IO_comm_);
-    
-    
+
+
     MPI_Group_rank(lat_world_group_, &comm_rank);
     if(comm_rank!=MPI_UNDEFINED)
     {
         lat_world_rank_=comm_rank;
         MPI_Comm_size( lat_world_comm_, &lat_world_size_ );
-        
+
         rang[2]=1;
         for(j=0;j<grid_size_[1];j++)
         {
             rang[0] = j * grid_size_[0];
             rang[1] = grid_size_[0] - 1 + j*grid_size_[0];
             MPI_Group_range_incl(lat_world_group_,1,&rang,&dim0_group_[j]);
-            MPI_Comm_create(lat_world_comm_, dim0_group_[j], &dim0_comm_[j]); 
+            MPI_Comm_create(lat_world_comm_, dim0_group_[j], &dim0_comm_[j]);
         }
-        
-        
+
+
         rang[2]=grid_size_[0];
         for(i=0;i<grid_size_[0];i++)
         {
             rang[0]=i;
             rang[1]=i+(grid_size_[1]-1)*grid_size_[0];
             MPI_Group_range_incl(lat_world_group_,1,&rang,&dim1_group_[i]);
-            MPI_Comm_create(lat_world_comm_, dim1_group_[i], &dim1_comm_[i]); 
+            MPI_Comm_create(lat_world_comm_, dim1_group_[i], &dim1_comm_[i]);
         }
-        
-        
+
+
         for(i=0;i<grid_size_[0];i++)
         {
             MPI_Group_rank(dim1_group_[i], &comm_rank);
             if(comm_rank!=MPI_UNDEFINED)grid_rank_[1]=comm_rank;
         }
-        
+
         for(j=0;j<grid_size_[1];j++)
         {
             MPI_Group_rank(dim0_group_[j], &comm_rank);
             if(comm_rank!=MPI_UNDEFINED)grid_rank_[0]=comm_rank;
         }
-        
-        
+
+
         root_=0;
         isIO_=false;
     }
@@ -605,19 +605,19 @@ void Parallel2d::initialize(int proc_size0, int proc_size1,int IO_total_size, in
         grid_rank_[0]=-1;
         isIO_=true;
     }
-    
+
     if(grid_rank_[0]==grid_size_[0]-1)last_proc_[0]=true;
     else last_proc_[0]=false;
     if(grid_rank_[1]==grid_size_[1]-1)last_proc_[1]=true;
     else last_proc_[1]=false;
-    
-   
-    
-    
+
+
+
+
     ioserver.initialize(proc_size0,proc_size1,IO_total_size,IO_node_size);
-    
+
 #else
-    
+
 	if(lat_world_rank_==0)
 	{
 		if(proc_size0*proc_size1!=lat_world_size_)
@@ -628,79 +628,75 @@ void Parallel2d::initialize(int proc_size0, int proc_size1,int IO_total_size, in
 			this->abortForce();
 		}
 	}
-    
+
     MPI_Comm_group(lat_world_comm_,&lat_world_group_);
-    
-    
-    
-    
+
+
+
+
 	rang[2]=1;
 	for(j=0;j<grid_size_[1];j++)
 	{
 		rang[0] = j * grid_size_[0];
 		rang[1] = grid_size_[0] - 1 + j*grid_size_[0];
 		MPI_Group_range_incl(lat_world_group_,1,&rang,&dim0_group_[j]);
-		MPI_Comm_create(lat_world_comm_, dim0_group_[j], &dim0_comm_[j]); 
+		MPI_Comm_create(lat_world_comm_, dim0_group_[j], &dim0_comm_[j]);
 	}
-    
-	
+
+
 	rang[2]=grid_size_[0];
 	for(i=0;i<grid_size_[0];i++)
 	{
 		rang[0]=i;
 		rang[1]=i+(grid_size_[1]-1)*grid_size_[0];
 		MPI_Group_range_incl(lat_world_group_,1,&rang,&dim1_group_[i]);
-		MPI_Comm_create(lat_world_comm_, dim1_group_[i], &dim1_comm_[i]); 
+		MPI_Comm_create(lat_world_comm_, dim1_group_[i], &dim1_comm_[i]);
 	}
-    
-	
-    
+
+
+
 	for(i=0;i<grid_size_[0];i++)
 	{
 		MPI_Group_rank(dim1_group_[i], &comm_rank);
 		if(comm_rank!=MPI_UNDEFINED)grid_rank_[1]=comm_rank;
 	}
-	
+
 	for(j=0;j<grid_size_[1];j++)
 	{
 		MPI_Group_rank(dim0_group_[j], &comm_rank);
 		if(comm_rank!=MPI_UNDEFINED)grid_rank_[0]=comm_rank;
 	}
-	
-	
+
+
 	root_=0;
-	
+
     if(grid_rank_[0]==grid_size_[0]-1)last_proc_[0]=true;
 	else last_proc_[0]=false;
 	if(grid_rank_[1]==grid_size_[1]-1)last_proc_[1]=true;
 	else last_proc_[1]=false;
-    
-    
-    
+
+
+
 #endif
-	
+
 	if(root_ == lat_world_rank_)isRoot_=true;
     else isRoot_=false;
 
 
 }
 
-Parallel2d::~Parallel2d() 
-{ 
-  //  for(int i=0;i<grid_size_[0];i++)MPI_Comm_free(&(dim0_comm_[i]));
-  //  for(int i=0;i<grid_size_[1];i++)MPI_Comm_free(&(dim1_comm_[i]));
 
-  int finalized;
+Parallel2d::~Parallel2d()
+{
+	int finalized;
   MPI_Finalized(&finalized);
-	
   if(!finalized) { MPI_Finalize(); }
-	
 }
 
 //ABORT AND BARRIER===============================
 
-void Parallel2d::abortForce() 
-{ 
+void Parallel2d::abortForce()
+{
 	MPI_Abort( world_comm_, EXIT_FAILURE);
 }
 
@@ -723,7 +719,7 @@ void Parallel2d::abortRequest()
 
 void Parallel2d::barrier()
 {
-	
+
     MPI_Barrier( lat_world_comm_ );
 }
 
@@ -738,9 +734,9 @@ template<class Type> void Parallel2d::sum(Type* array, int len)
 	//Gather numbers at root
 	Type* gather;
 	if( rank() == root() ) gather = new Type[len*size()];
-	MPI_Gather( array, len*sizeof(Type), MPI_BYTE, 
+	MPI_Gather( array, len*sizeof(Type), MPI_BYTE,
 			   gather, len*sizeof(Type), MPI_BYTE, this->root(), lat_world_comm_);
-	
+
 	//Sum on root
 	if( isRoot() )
 	{
@@ -748,12 +744,12 @@ template<class Type> void Parallel2d::sum(Type* array, int len)
 		for(i=0; i<size(); i++)
 		{
 			if( i!=root() ) for(j=0; j<len; j++)
-			{ 
-				array[j] = array[j] + gather[len*i+j]; 
-			} 
+			{
+				array[j] = array[j] + gather[len*i+j];
+			}
 		}
 	}
-	
+
 	//Broadcast result
 	MPI_Bcast( array, len*sizeof(Type), MPI_BYTE, this->root(), lat_world_comm_);
 	// Tidy up (bug found by MDP 12/4/06)
@@ -768,29 +764,29 @@ template<class Type> void Parallel2d::sum_dim0(Type& number)
 template<class Type> void Parallel2d::sum_dim0(Type* array, int len)
 {
 	int i,j,comm_rank;
-	
+
 	//Gather numbers at root
 	Type* gather;
 	if( grid_rank()[0] == 0 ) gather = new Type[len*grid_size_[0]];
-	
+
     MPI_Gather( array, len*sizeof(Type), MPI_BYTE,gather, len*sizeof(Type), MPI_BYTE, 0,dim0_comm_[grid_rank_[1]]);
-    
+
 	//Sum on root
 	if( grid_rank()[0] == 0)
 	{
 		for(i=0; i<grid_size()[0]; i++)
 		{
 			if( i!=0 ) for(j=0; j<len; j++)
-			{ 
-				array[j] = array[j] + gather[len*i+j]; 
-			} 
+			{
+				array[j] = array[j] + gather[len*i+j];
+			}
 		}
 	}
-	
+
 	//Broadcast result
-	
+
     MPI_Bcast( array, len*sizeof(Type), MPI_BYTE, 0, dim0_comm_[grid_rank_[1]]);
-    
+
 	// Tidy up (bug found by MDP 12/4/06)
 	if( grid_rank()[0] == 0 ) delete[] gather;
 }
@@ -802,29 +798,29 @@ template<class Type> void Parallel2d::sum_dim1(Type& number)
 template<class Type> void Parallel2d::sum_dim1(Type* array, int len)
 {
 	int i,j,comm_rank;
-	
+
 	//Gather numbers at root
 	Type* gather;
 	if( grid_rank_[1] == 0 ) gather = new Type[len*grid_size_[1]];
-	
-    
+
+
     MPI_Gather( array, len*sizeof(Type), MPI_BYTE,gather, len*sizeof(Type), MPI_BYTE, 0,dim1_comm_[grid_rank_[0]]);
-	
+
 	//Sum on root
 	if( grid_rank()[1] == 0)
 	{
 		for(i=0; i<grid_size()[1]; i++)
 		{
 			if( i!=0 ) for(j=0; j<len; j++)
-			{ 
-				array[j] = array[j] + gather[len*i+j]; 
-			} 
+			{
+				array[j] = array[j] + gather[len*i+j];
+			}
 		}
 	}
-	
-    
+
+
     MPI_Bcast( array, len*sizeof(Type), MPI_BYTE, 0, dim1_comm_[grid_rank_[0]]);
-	
+
 	if( grid_rank()[1] == 0 ) delete[] gather;
 }
 
@@ -838,9 +834,9 @@ template<class Type> void Parallel2d::max(Type* array, int len)
     //Gather numbers at root
     Type* gather;
     if( rank() == root() ) gather = new Type[len*size()];
-    MPI_Gather( array, len*sizeof(Type), MPI_BYTE, 
+    MPI_Gather( array, len*sizeof(Type), MPI_BYTE,
                gather, len*sizeof(Type), MPI_BYTE, this->root(), lat_world_comm_);
-    
+
     //Find max on root
     if( isRoot() )
     {
@@ -848,12 +844,12 @@ template<class Type> void Parallel2d::max(Type* array, int len)
         for(i=0; i<size(); i++)
         {
             if( i!=root() ) for(j=0; j<len; j++)
-            { 
+            {
                 if( gather[len*i+j] > array[j] ) array[j] = gather[len*i+j];
-            } 
+            }
         }
     }
-    
+
     //Broadcast result
     MPI_Bcast( array, len*sizeof(Type), MPI_BYTE, this->root(), lat_world_comm_);
     // Tidy up (bug found by MDP 12/4/06)
@@ -869,9 +865,9 @@ template<class Type> void Parallel2d::max_dim0(Type* array, int len)
     //Gather numbers at root
     Type* gather;
     if( grid_rank_[0] == 0 ) gather = new Type[len*grid_size_[0]];
-    MPI_Gather( array, len*sizeof(Type), MPI_BYTE, 
+    MPI_Gather( array, len*sizeof(Type), MPI_BYTE,
                gather, len*sizeof(Type), MPI_BYTE, 0,dim0_comm_[grid_rank_[1]]);
-    
+
     //Find max on root
     if( grid_rank_[0] == 0  )
     {
@@ -879,12 +875,12 @@ template<class Type> void Parallel2d::max_dim0(Type* array, int len)
         for(i=0; i<grid_size_[0]; i++)
         {
             if( i!=0 ) for(j=0; j<len; j++)
-            { 
+            {
                 if( gather[len*i+j] > array[j] ) array[j] = gather[len*i+j];
-            } 
+            }
         }
     }
-    
+
     //Broadcast result
     MPI_Bcast( array, len*sizeof(Type), MPI_BYTE, 0,dim0_comm_[grid_rank_[1]]);
     // Tidy up (bug found by MDP 12/4/06)
@@ -900,9 +896,9 @@ template<class Type> void Parallel2d::max_dim1(Type* array, int len)
     //Gather numbers at root
     Type* gather;
     if( grid_rank_[1] == 0 ) gather = new Type[len*grid_size_[1]];
-    MPI_Gather( array, len*sizeof(Type), MPI_BYTE, 
+    MPI_Gather( array, len*sizeof(Type), MPI_BYTE,
                gather, len*sizeof(Type), MPI_BYTE, 0,dim1_comm_[grid_rank_[0]]);
-    
+
     //Find max on root
     if( grid_rank_[1] == 0  )
     {
@@ -910,12 +906,12 @@ template<class Type> void Parallel2d::max_dim1(Type* array, int len)
         for(i=0; i<grid_size_[1]; i++)
         {
             if( i!=0 ) for(j=0; j<len; j++)
-            { 
+            {
                 if( gather[len*i+j] > array[j] ) array[j] = gather[len*i+j];
-            } 
+            }
         }
     }
-    
+
     //Broadcast result
     MPI_Bcast( array, len*sizeof(Type), MPI_BYTE, 0,dim1_comm_[grid_rank_[0]]);
     // Tidy up (bug found by MDP 12/4/06)
@@ -932,9 +928,9 @@ template<class Type> void Parallel2d::min(Type* array, int len)
     //Gather numbers at root
     Type* gather;
     if( rank() == root() ) gather = new Type[len*size()];
-    MPI_Gather( array, len*sizeof(Type), MPI_BYTE, 
+    MPI_Gather( array, len*sizeof(Type), MPI_BYTE,
                gather, len*sizeof(Type), MPI_BYTE, this->root(), lat_world_comm_);
-    
+
     //Find min on root
     if( isRoot() )
     {
@@ -942,18 +938,18 @@ template<class Type> void Parallel2d::min(Type* array, int len)
         for(i=0; i<size(); i++)
         {
             if( i!=root() ) for(j=0; j<len; j++)
-            { 
+            {
                 if( gather[len*i+j] < array[j] ) array[j] = gather[len*i+j];
-            } 
+            }
         }
     }
-    
+
     //Broadcast result
     MPI_Bcast( array, len*sizeof(Type), MPI_BYTE, this->root(), lat_world_comm_);
     // Tidy up (bug found by MDP 12/4/06)
     if( rank() == root() ) delete[] gather;
-    
-    
+
+
 }
 
 template<class Type> void Parallel2d::min_dim0(Type& number)
@@ -965,9 +961,9 @@ template<class Type> void Parallel2d::min_dim0(Type* array, int len)
     //Gather numbers at root
     Type* gather;
     if( grid_rank_[0] == 0 ) gather = new Type[len*grid_size_[0]];
-    MPI_Gather( array, len*sizeof(Type), MPI_BYTE, 
+    MPI_Gather( array, len*sizeof(Type), MPI_BYTE,
                gather, len*sizeof(Type), MPI_BYTE, 0,dim0_comm_[grid_rank_[1]]);
-    
+
     //Find min on root
     if( grid_rank_[0] == 0  )
     {
@@ -975,12 +971,12 @@ template<class Type> void Parallel2d::min_dim0(Type* array, int len)
         for(i=0; i<grid_size_[0]; i++)
         {
             if( i!=0 ) for(j=0; j<len; j++)
-            { 
+            {
                 if( gather[len*i+j] < array[j] ) array[j] = gather[len*i+j];
-            } 
+            }
         }
     }
-    
+
     //Broadcast result
     MPI_Bcast( array, len*sizeof(Type), MPI_BYTE, 0,dim0_comm_[grid_rank_[1]]);
     // Tidy up (bug found by MDP 12/4/06)
@@ -996,9 +992,9 @@ template<class Type> void Parallel2d::min_dim1(Type* array, int len)
     //Gather numbers at root
     Type* gather;
     if( grid_rank_[1] == 0 ) gather = new Type[len*grid_size_[1]];
-    MPI_Gather( array, len*sizeof(Type), MPI_BYTE, 
+    MPI_Gather( array, len*sizeof(Type), MPI_BYTE,
                gather, len*sizeof(Type), MPI_BYTE, 0,dim1_comm_[grid_rank_[0]]);
-    
+
     //Find min on root
     if( grid_rank_[1] == 0  )
     {
@@ -1006,12 +1002,12 @@ template<class Type> void Parallel2d::min_dim1(Type* array, int len)
         for(i=0; i<grid_size_[1]; i++)
         {
             if( i!=0 ) for(j=0; j<len; j++)
-            { 
+            {
                 if( gather[len*i+j] < array[j] ) array[j] = gather[len*i+j];
-            } 
+            }
         }
     }
-    
+
     //Broadcast result
     MPI_Bcast( array, len*sizeof(Type), MPI_BYTE, 0,dim1_comm_[grid_rank_[0]]);
     // Tidy up (bug found by MDP 12/4/06)
@@ -1019,8 +1015,8 @@ template<class Type> void Parallel2d::min_dim1(Type* array, int len)
 }
 
 
-template<class Type> void Parallel2d::broadcast(Type& message, int from) 
-{ 
+template<class Type> void Parallel2d::broadcast(Type& message, int from)
+{
 	broadcast( &message, 1, from);
 };
 
@@ -1029,8 +1025,8 @@ template<class Type> void Parallel2d::broadcast(Type* array, int len, int from)
 	MPI_Bcast( array, len*sizeof(Type), MPI_BYTE, from, lat_world_comm_);
 }
 
-template<class Type> void Parallel2d::broadcast_dim0(Type& message, int from) 
-{ 
+template<class Type> void Parallel2d::broadcast_dim0(Type& message, int from)
+{
 	broadcast_dim0( &message, 1, from);
 };
 
@@ -1039,8 +1035,8 @@ template<class Type> void Parallel2d::broadcast_dim0(Type* array, int len, int f
     MPI_Bcast( array, len*sizeof(Type), MPI_BYTE, from, dim0_comm_[grid_rank_[1]]);
 }
 
-template<class Type> void Parallel2d::broadcast_dim1(Type& message, int from) 
-{ 
+template<class Type> void Parallel2d::broadcast_dim1(Type& message, int from)
+{
 	broadcast_dim1( &message, 1, from);
 };
 
@@ -1113,14 +1109,14 @@ template<class Type> void Parallel2d::receive_dim0(Type* array, int len, int fro
 }
 
 template<class Type> void Parallel2d::receive_dim1(Type& message, int from)
-{	
+{
 
     MPI_Status  status;
     MPI_Recv( &message, sizeof(Type), MPI_BYTE, from, 0,  dim1_comm_[grid_rank_[0]], &status);
 }
 
 template<class Type> void Parallel2d::receive_dim1(Type* array, int len, int from)
-{	
+{
 
     MPI_Status  status;
     MPI_Recv( array, len*sizeof(Type), MPI_BYTE, from, 0, dim1_comm_[grid_rank_[0]], &status);
@@ -1135,7 +1131,7 @@ template<class Type> void Parallel2d::sendUp_dim0(Type& bufferSend,Type& bufferR
         {
             this->send_dim0( bufferSend, len , this->grid_rank()[0]+1);
         }
-        
+
         if(this->grid_rank()[0] != 0)     // si pas le premier alors recois du -1
         {
             this->receive_dim0( bufferRec, len , this->grid_rank()[0]-1);
@@ -1144,13 +1140,13 @@ template<class Type> void Parallel2d::sendUp_dim0(Type& bufferSend,Type& bufferR
         {
             this->receive_dim0( bufferRec, len , this->grid_size()[0]-1);
         }
-        
+
     }
     else
     {
         //tous recoivent du -1
         this->receive_dim0( bufferRec, len , this->grid_rank()[0]-1);
-        
+
         if(this->grid_rank()[0]!=this->grid_size()[0]-1)//si pas dernier alors envoie au +1
         {
             this->send_dim0( bufferSend, len , this->grid_rank()[0]+1);
@@ -1159,13 +1155,13 @@ template<class Type> void Parallel2d::sendUp_dim0(Type& bufferSend,Type& bufferR
         {
             this->send_dim0( bufferSend, len , 0);
         }
-        
+
     }
-    
-    
+
+
     if(this->grid_size()[0]%2!=0)
     {
-        
+
         if(this->grid_rank()[0]==this->grid_size()[0]-1)//dernier envoie au 0
         {
             this->send_dim0( bufferSend, len , 0);
@@ -1175,7 +1171,7 @@ template<class Type> void Parallel2d::sendUp_dim0(Type& bufferSend,Type& bufferR
             this->receive_dim0( bufferRec, len , this->grid_size()[0]-1);
         }
     }
-    
+
 }
 template<class Type> void Parallel2d::sendDown_dim0(Type& bufferSend,Type& bufferRec, long len)
 {
@@ -1185,7 +1181,7 @@ template<class Type> void Parallel2d::sendDown_dim0(Type& bufferSend,Type& buffe
         {
             this->receive_dim0( bufferRec, len , this->grid_rank()[0]+1);
         }
-        
+
         if(this->grid_rank()[0] != 0)     //si pas le premier alors recois du -1
         {
             this->send_dim0( bufferSend, len , this->grid_rank()[0]-1);
@@ -1194,13 +1190,13 @@ template<class Type> void Parallel2d::sendDown_dim0(Type& bufferSend,Type& buffe
         {
             this->send_dim0( bufferSend, len , this->grid_size()[0]-1);
         }
-        
+
     }
     else
     {
         //tous recoivent du -1
         this->send_dim0( bufferSend, len , this->grid_rank()[0]-1);
-        
+
         if(this->grid_rank()[0]!=this->grid_size()[0]-1)//si pas dernier alors envoie au +1
         {
             this->receive_dim0( bufferRec, len , this->grid_rank()[0]+1);
@@ -1209,13 +1205,13 @@ template<class Type> void Parallel2d::sendDown_dim0(Type& bufferSend,Type& buffe
         {
             this->receive_dim0( bufferRec, len , 0);
         }
-        
+
     }
-    
-    
+
+
     if(this->grid_size()[0]%2!=0)
     {
-        
+
         if(this->grid_rank()[0]==this->grid_size()[0]-1)//dernier envoie au 0
         {
             this->receive_dim0( bufferRec, len , 0);
@@ -1225,7 +1221,7 @@ template<class Type> void Parallel2d::sendDown_dim0(Type& bufferSend,Type& buffe
             this->send_dim0( bufferSend, len , this->grid_size()[0]-1);
         }
     }
-    
+
 }
 
 template<class Type> void Parallel2d::sendUpDown_dim0(Type& bufferSendUp,Type& bufferRecUp, long lenUp, Type& bufferSendDown,Type& bufferRecDown, long lenDown )
@@ -1237,7 +1233,7 @@ template<class Type> void Parallel2d::sendUpDown_dim0(Type& bufferSendUp,Type& b
             this->send_dim0( bufferSendUp, lenUp , this->grid_rank()[0]+1);
             this->receive_dim0( bufferRecDown, lenDown , this->grid_rank()[0]+1);
         }
-        
+
         if(this->grid_rank()[0] != 0)     // si pas le premier alors recois du -1
         {
             this->receive_dim0( bufferRecUp, lenUp , this->grid_rank()[0]-1);
@@ -1248,14 +1244,14 @@ template<class Type> void Parallel2d::sendUpDown_dim0(Type& bufferSendUp,Type& b
             this->receive_dim0( bufferRecUp, lenUp , this->grid_size()[0]-1);
             this->send_dim0( bufferSendDown, lenDown , this->grid_size()[0]-1);
         }
-        
+
     }
     else
     {
         //tous recoivent du -1
         this->receive_dim0( bufferRecUp, lenUp , this->grid_rank()[0]-1);
         this->send_dim0( bufferSendDown, lenDown , this->grid_rank()[0]-1);
-        
+
         if(this->grid_rank()[0]!=this->grid_size()[0]-1)//si pas dernier alors envoie au +1
         {
             this->send_dim0( bufferSendUp, lenUp , this->grid_rank()[0]+1);
@@ -1266,13 +1262,13 @@ template<class Type> void Parallel2d::sendUpDown_dim0(Type& bufferSendUp,Type& b
             this->send_dim0( bufferSendUp, lenUp , 0);
             this->receive_dim0( bufferRecDown, lenDown , 0);
         }
-        
+
     }
-    
-    
+
+
     if(this->grid_size()[0]%2!=0)
     {
-        
+
         if(this->grid_rank()[0]==this->grid_size()[0]-1)//dernier envoie au 0
         {
             this->send_dim0( bufferSendUp, lenUp , 0);
@@ -1284,7 +1280,7 @@ template<class Type> void Parallel2d::sendUpDown_dim0(Type& bufferSendUp,Type& b
             this->send_dim0( bufferSendDown, lenDown , this->grid_size()[0]-1);
         }
     }
-    
+
 }
 
 template<class Type> void Parallel2d::sendUp_dim1(Type& bufferSend,Type& bufferRec, long len)
@@ -1295,7 +1291,7 @@ template<class Type> void Parallel2d::sendUp_dim1(Type& bufferSend,Type& bufferR
         {
             this->send_dim1( bufferSend, len , this->grid_rank()[1]+1);
         }
-        
+
         if(this->grid_rank()[1] != 0)     // si pas le premier alors recois du -1
         {
             this->receive_dim1( bufferRec, len , this->grid_rank()[1]-1);
@@ -1304,13 +1300,13 @@ template<class Type> void Parallel2d::sendUp_dim1(Type& bufferSend,Type& bufferR
         {
             this->receive_dim1( bufferRec, len , this->grid_size()[1]-1);
         }
-        
+
     }
     else
     {
         //tous recoivent du -1
         this->receive_dim1( bufferRec, len , this->grid_rank()[1]-1);
-        
+
         if(this->grid_rank()[1]!=this->grid_size()[1]-1)//si pas dernier alors envoie au +1
         {
             this->send_dim1( bufferSend, len , this->grid_rank()[1]+1);
@@ -1319,13 +1315,13 @@ template<class Type> void Parallel2d::sendUp_dim1(Type& bufferSend,Type& bufferR
         {
             this->send_dim1( bufferSend, len , 0);
         }
-        
+
     }
-    
-    
+
+
     if(this->grid_size()[1]%2!=0)
     {
-        
+
         if(this->grid_rank()[1]==this->grid_size()[1]-1)//dernier envoie au 0
         {
             this->send_dim1( bufferSend, len , 0);
@@ -1335,7 +1331,7 @@ template<class Type> void Parallel2d::sendUp_dim1(Type& bufferSend,Type& bufferR
             this->receive_dim1( bufferRec, len , this->grid_size()[1]-1);
         }
     }
-    
+
 }
 template<class Type> void Parallel2d::sendDown_dim1(Type& bufferSend,Type& bufferRec, long len)
 {
@@ -1345,7 +1341,7 @@ template<class Type> void Parallel2d::sendDown_dim1(Type& bufferSend,Type& buffe
         {
             this->receive_dim1( bufferRec, len , this->grid_rank()[1]+1);
         }
-        
+
         if(this->grid_rank()[1] != 0)     // si pas le premier alors recois du -1
         {
             this->send_dim1( bufferSend, len , this->grid_rank()[1]-1);
@@ -1354,13 +1350,13 @@ template<class Type> void Parallel2d::sendDown_dim1(Type& bufferSend,Type& buffe
         {
             this->send_dim1( bufferSend, len , this->grid_size()[1]-1);
         }
-        
+
     }
     else
     {
         //tous recoivent du -1
         this->send_dim1( bufferSend, len , this->grid_rank()[1]-1);
-        
+
         if(this->grid_rank()[1]!=this->grid_size()[1]-1)//si pas dernier alors envoie au +1
         {
             this->receive_dim1( bufferRec, len , this->grid_rank()[1]+1);
@@ -1369,13 +1365,13 @@ template<class Type> void Parallel2d::sendDown_dim1(Type& bufferSend,Type& buffe
         {
             this->receive_dim1( bufferRec, len , 0);
         }
-        
+
     }
-    
-    
+
+
     if(this->grid_size()[1]%2!=0)
     {
-        
+
         if(this->grid_rank()[1]==this->grid_size()[1]-1)//dernier envoie au 0
         {
             this->receive_dim1( bufferRec, len , 0);
@@ -1385,7 +1381,7 @@ template<class Type> void Parallel2d::sendDown_dim1(Type& bufferSend,Type& buffe
             this->send_dim1( bufferSend, len , this->grid_size()[1]-1);
         }
     }
-    
+
 }
 
 template<class Type> void Parallel2d::sendUpDown_dim1(Type& bufferSendUp,Type& bufferRecUp, long lenUp, Type& bufferSendDown,Type& bufferRecDown, long lenDown )
@@ -1396,9 +1392,9 @@ template<class Type> void Parallel2d::sendUpDown_dim1(Type& bufferSendUp,Type& b
         {
             this->send_dim1( bufferSendUp, lenUp , this->grid_rank()[1]+1);
             this->receive_dim1 (bufferRecDown, lenDown  , this->grid_rank()[1]+1);
-            
+
         }
-        
+
         if(this->grid_rank()[1] != 0)     // si pas le premier alors recois du -1
         {
             this->receive_dim1( bufferRecUp, lenUp  , this->grid_rank()[1]-1);
@@ -1409,14 +1405,14 @@ template<class Type> void Parallel2d::sendUpDown_dim1(Type& bufferSendUp,Type& b
             this->receive_dim1( bufferRecUp, lenUp  , this->grid_size()[1]-1);
             this->send_dim1( bufferSendDown, lenDown  , this->grid_size()[1]-1);
         }
-        
+
     }
     else
     {
         //tous recoivent du -1
         this->receive_dim1( bufferRecUp, lenUp  , this->grid_rank()[1]-1);
         this->send_dim1( bufferSendDown, lenDown  , this->grid_rank()[1]-1);
-        
+
         if(this->grid_rank()[1]!=this->grid_size()[1]-1)//si pas dernier alors envoie au +1
         {
             this->send_dim1( bufferSendUp, lenUp , this->grid_rank()[1]+1);
@@ -1427,13 +1423,13 @@ template<class Type> void Parallel2d::sendUpDown_dim1(Type& bufferSendUp,Type& b
             this->send_dim1( bufferSendUp, lenUp , 0);
             this->receive_dim1 (bufferRecDown, lenDown  , 0);
         }
-        
+
     }
-    
-    
+
+
     if(this->grid_size()[1]%2!=0)
     {
-        
+
         if(this->grid_rank()[1]==this->grid_size()[1]-1)//dernier envoie au 0
         {
             this->send_dim1( bufferSendUp, lenUp , 0 );
