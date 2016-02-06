@@ -687,8 +687,8 @@ void Parallel2d::initialize(int proc_size0, int proc_size1,int IO_total_size, in
 
 Parallel2d::~Parallel2d() 
 { 
-   for(int i=0;i<grid_size_[0];i++)MPI_Comm_free(&(dim0_comm_[i]));
-  for(int i=0;i<grid_size_[1];i++)MPI_Comm_free(&(dim1_comm_[i]));
+  //  for(int i=0;i<grid_size_[0];i++)MPI_Comm_free(&(dim0_comm_[i]));
+  //  for(int i=0;i<grid_size_[1];i++)MPI_Comm_free(&(dim1_comm_[i]));
 
   int finalized;
   MPI_Finalized(&finalized);
