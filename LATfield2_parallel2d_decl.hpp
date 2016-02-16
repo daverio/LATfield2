@@ -438,6 +438,9 @@ class Parallel2d{
   MPI_Comm IOcomm(){return IO_comm_;}
   MPI_Group IOgroup(){return IO_group_;}
 #endif
+
+  /* for compatibility with OS X, when this library is linked in e.g. FalconIC */
+  void PleaseNeverFinalizeMPI() { neverFinalizeMPI = true; };
   
 private:
   //MEMBER VARIABLES================
@@ -466,6 +469,9 @@ private:
 #ifdef EXTERNAL_IO
   bool isIO_;
 #endif
+  
+  /* for compatibility with OS X, when this library is linked in e.g. FalconIC */
+  bool neverFinalizeMPI;
   
   
 };

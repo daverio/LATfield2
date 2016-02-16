@@ -14,7 +14,7 @@
  */
 
 
-Parallel2d::Parallel2d()
+Parallel2d::Parallel2d() : neverFinalizeMPI(false)
 {
 
 
@@ -231,7 +231,7 @@ Parallel2d::~Parallel2d()
 
   int finalized;
   MPI_Finalized(&finalized);
-  if(!finalized) { MPI_Finalize(); }
+  if((!finalized) && (!neverFinalizeMPI)) { MPI_Finalize(); }
 }
 
 //ABORT AND BARRIER===============================
