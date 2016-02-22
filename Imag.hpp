@@ -95,6 +95,17 @@ class Imag
   //I/O STREAM OPERATORS
   friend std::ostream& operator<<(ostream& os, Imag z) { os<<z.data[0]<<" "<<z.data[1]; return os; }
   friend std::istream& operator>>(istream& is, Imag& z) { is>>z.data[0]>>z.data[1]; return is; }
+
+  /* WV added conversion operators to oldschool double[2] */
+#ifdef FFT
+#ifdef SINGLE
+  operator fftwf_complex& () { return data };
+#endif
+#ifndef SINGLE
+  operator fftw_complex& () { return data };
+#endif
+#endif
+
 };
 
 

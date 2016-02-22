@@ -212,7 +212,13 @@ void Lattice::initialize(int dim, const int* size, int halo)
 	//Free memory
 	delete[] sizes_dim0;
 	delete[] sizes_dim1;
-	
+  
+  // WV: Free more memory!
+  delete[] sizes1;
+  delete[] sizes0;
+  delete[] offset1;
+  delete[] offset0;
+
 	
 }
 #ifdef FFT3D

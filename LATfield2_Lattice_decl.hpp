@@ -1,3 +1,6 @@
+#ifndef LATFIELD2_LATTICE_DECL_HPP
+#define LATFIELD2_LATTICE_DECL_HPP
+
 /*! \class Lattice
  
  \brief The Lattice class describe a cartesian mesh (with 2 or more dimensions). The updateHalo method of the Field class generate the periodicity.
@@ -213,3 +216,5 @@ private:
     int arch_saved_;
     
 };
+
+#endif
