@@ -6,7 +6,7 @@
  LATfield2_PlanFFT.hpp contain the class PlanFFT definition.
  */
 
-#include "LATField2_PlanFFT_decl.hpp"
+#include "LATfield2_PlanFFT_decl.hpp"
 
 
 
