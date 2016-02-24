@@ -6,7 +6,7 @@
   
  */ 
 
-#include "LATField2_Site_decl.hpp"
+#include "LATfield2_Site_decl.hpp"
 
 //CONSTRUCTORS===================
 
