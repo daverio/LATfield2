@@ -1,12 +1,12 @@
 #ifndef LATFIELD2_FIELD_HPP
 #define LATFIELD2_FIELD_HPP
 
-#include "LATField2_Field_decl.hpp"
+#include "LATfield2_Field_decl.hpp"
 
 /*! \file LATfield2_Field.hpp
  \brief LATfield2_Field.hpp contain the class Field definition.
  \author David Daverio, Neil Bevis
- */ 
+ */
 
 
 
@@ -18,6 +18,3 @@ int unsymmetric = 0;
 
 
 #endif
-
-
-
