@@ -4,8 +4,8 @@
 /*! \file LATfield2.hpp
  \brief LATfield2 header
  \author David Daverio,Neil Bevis
- 
- */ 
+
+ */
 
 #include <cstdlib>
 #include <cmath>
@@ -101,11 +101,13 @@ namespace LATfield2
             #include "LATfield2_PlanFFT.hpp"
         #endif
         #include "particles/LATfield2_Particles.hpp"
-    
+
+//macros
+        #include  "looping_macro.hpp"
+
+
 }
 
 
 
 #endif
-
-
