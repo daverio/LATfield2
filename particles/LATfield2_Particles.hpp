@@ -882,10 +882,11 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
         }
     }
     delete[] output_temp;
-    if(nfields!=0) {
-      if(sites) delete[] sites;
-      else { std::cerr << "WTF, nfields != 0, but sites is not initialized.\n"; exit(-1); }
-    }
+    /* this is wrong: sites gets deleted again later */
+    //    if(nfields!=0) {
+    //      if(sites) delete[] sites;
+    //      else { std::cerr << "WTF, nfields != 0, but sites is not initialized.\n"; exit(-1); }
+    //    }
 
     //remove the number of part...
     for(int i=0;i<8;i++)
@@ -1506,7 +1507,7 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
     delete[] sendBuffer;
     delete[] recBuffer;
     
-    if(nfields!=0) delete[] sites;
+  if(nfields!=0 && sites) { delete[] sites; sites = NULL; };
     
 }
 
