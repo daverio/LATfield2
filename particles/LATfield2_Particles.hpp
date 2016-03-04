@@ -628,7 +628,7 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
     
     //LATfield2::Site xB;
     
-    LATfield2::Site * sites;
+    LATfield2::Site * sites = NULL;
     
     typename std::list<part>::iterator it,itTemp;
     //Real b[3];
@@ -882,7 +882,10 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
         }
     }
     delete[] output_temp;
-    if(nfields!=0)delete[] sites;
+    if(nfields!=0) {
+      if(sites) delete[] sites;
+      else { std::cerr << "WTF, nfields != 0, but sites is not initialized.\n"; exit(-1); }
+    }
 
     //remove the number of part...
     for(int i=0;i<8;i++)
