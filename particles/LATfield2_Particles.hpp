@@ -1235,19 +1235,19 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
     {
         //cout<<"okokok 222 arg  "<< bufferSize[2] <<endl;
         sendBuffer[2] = new part[bufferSize[2]];
+        for(it=part_moveProc[6].begin(),p=0; it != part_moveProc[6].end();++it,p++)sendBuffer[2][p]=(*it);
+        part_moveProc[6].clear();
     }
     //cout<<"okokok  "<< bufferSize[2] <<endl;
-    for(it=part_moveProc[6].begin(),p=0; it != part_moveProc[6].end();++it,p++)sendBuffer[2][p]=(*it);
-       // part_moveProc[6].clear();
     
     //else sendBuffer[2] = new part[10];
     
     bufferSize[5]=part_moveProc[7].size();
     if( bufferSize[5]!=0 )
     {
-        //sendBuffer[5] = new part[bufferSize[5]];
-        //for(it=part_moveProc[7].begin(),p=0; it != part_moveProc[7].end();++it,p++)sendBuffer[5][p]=(*it);
-        //part_moveProc[7].clear();
+        sendBuffer[5] = new part[bufferSize[5]];
+        for(it=part_moveProc[7].begin(),p=0; it != part_moveProc[7].end();++it,p++)sendBuffer[5][p]=(*it);
+        part_moveProc[7].clear();
     }
     //else sendBuffer[2] = new part[10];
    //send z
