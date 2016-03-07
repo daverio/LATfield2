@@ -46,29 +46,32 @@ int main(int argc, char **argv)
     Field<Real> rho(lat);
     Site x(lat);
 
-    for(x.first();x.test();x.next())rho(x)=0;
+    for(x.first();x.test();x.next())
+    {
+	rho(x)=0;
+    }
     rho.updateHalo();
 
     forallboundary_start(lat,xb)
-    rho(xb)=1;
+	rho(xb)=1;
     forallboundary_stop
 
-    for(int i=0; i<lat.sitesLocalGross();i++)if(rho(i)==1)
+    for(int i=0; i<lat.sitesLocalGross();i++)if(rho(i)!=0)
     {
       x.setIndex(i);
       if(x.coord(0)<lat.size(0) && x.coord(0)>=0 && x.coord(1)<lat.size(1) && x.coord(1)>=0 && x.coord(2)<lat.size(2) && x.coord(2)>=0)
       {
         //cout<<rho(i)<<endl;
-       cout<< "wrong boundary points:" << x.coord(0)<<" , "<< x.coord(1)<<" , "<< x.coord(2)<<endl;
+	  cout<< "wrong boundary points:" << x.coord(0)<<" , "<< x.coord(1)<<" , "<< x.coord(2)<<endl;
       }
     }
 
-    for(int i=0; i<lat.sitesLocalGross();i++)if(rho(i)==0)
+    for(int i=0; i<lat.sitesLocalGross();i++)if(rho(i)!=1)
     {
       x.setIndex(i);
       if(x.coord(0)>=lat.size(0) || x.coord(0)<0 || x.coord(1)>=lat.size(1) || x.coord(1)<0 || x.coord(2)>=lat.size(2) || x.coord(2)<0)
       {
-        cout<< "boundary points not taken into acount:" << x.coord(0)<<" , "<< x.coord(1)<<" , "<< x.coord(2)<<endl;
+	  cout<< "boundary points not taken into acount:" << x.coord(0)<<" , "<< x.coord(1)<<" , "<< x.coord(2)<<endl;
       }
     }
 

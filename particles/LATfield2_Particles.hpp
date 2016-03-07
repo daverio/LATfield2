@@ -488,13 +488,17 @@ Real Particles<part,part_info,part_dataType>::updateVel(Real (*updateVel_funct)(
 {
     
     Site  xPart(lat_part_);
+    Site * sites = NULL;
     
-    
-    Site * sites;
-    
-    if(nfields>0)sites = new Site[nfields];
-    for(int i=0;i<nfields;i++) sites[i].initialize(fields[i]->lattice());
-    
+    if(nfields!=0)
+    {
+        sites = new LATfield2::Site[nfields];
+        for(int i = 0;i<nfields;i++)
+        {
+            sites[i].initialize(fields[i]->lattice());
+            sites[i].first();
+        }
+    }
     
     typename std::list<part>::iterator it;
     double frac[3];
@@ -529,7 +533,6 @@ Real Particles<part,part_info,part_dataType>::updateVel(Real (*updateVel_funct)(
         }
     }
    
-    for(int i=0;i<nfields;i++) sites[i].first();
     for(xPart.first() ; xPart.test(); xPart.next())
     {
         if(field_part_(xPart).size!=0)
@@ -624,10 +627,6 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
     
     LATfield2::Site x(lat_part_);
     LATfield2::Site xNew(lat_part_);
-    
-    
-    //LATfield2::Site xB;
-    
     LATfield2::Site * sites = NULL;
     
     typename std::list<part>::iterator it,itTemp;
@@ -1233,14 +1232,11 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
     bufferSize[2]=part_moveProc[6].size();
     if( bufferSize[2]!=0 )
     {
-        //cout<<"okokok 222 arg  "<< bufferSize[2] <<endl;
         sendBuffer[2] = new part[bufferSize[2]];
         for(it=part_moveProc[6].begin(),p=0; it != part_moveProc[6].end();++it,p++)sendBuffer[2][p]=(*it);
         part_moveProc[6].clear();
     }
-    //cout<<"okokok  "<< bufferSize[2] <<endl;
-    
-    //else sendBuffer[2] = new part[10];
+
     
     bufferSize[5]=part_moveProc[7].size();
     if( bufferSize[5]!=0 )
@@ -1249,7 +1245,6 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
         for(it=part_moveProc[7].begin(),p=0; it != part_moveProc[7].end();++it,p++)sendBuffer[5][p]=(*it);
         part_moveProc[7].clear();
     }
-    //else sendBuffer[2] = new part[10];
    //send z
     
     if(parallel.grid_rank()[0]%2==0)
@@ -1548,17 +1543,7 @@ void Particles<part,part_info,part_dataType>::saveHDF5(string filename_base, int
     rang[2]=1;
     MPI_Group_range_incl(parallel.lat_world_group(),1,&rang,&fileGroup);
     MPI_Comm_create(parallel.lat_world_comm(),fileGroup , &fileComm);
-    
-    
-
-  /*  
-  numParts[rankInFile] = numParticles_;
-  for(int i=0;i<numProcPerFile;i++)
-    {
-      MPI_Bcast(&numParts[i],1,MPI_LONG,i,fileComm);
-    }
-  */
-
+   
   index=0;
   for(x.first();x.test();x.next())
     {
@@ -1598,17 +1583,13 @@ void Particles<part,part_info,part_dataType>::saveHDF5(string filename_base, int
     fileBoxSize[whichFile]=fd.localBoxSize[1];
     parallel.sum_dim1(fileBoxSize,fileNumber);
     
-    //cout<<fileBoxSize[whichFile] <<"  ///"<<endl;
+   
     
     Real fileBoxOffset[fileNumber];
     for(int i=0;i<fileNumber;i++)fileBoxOffset[i]=boxSize_[1]+1.;
     fileBoxOffset[whichFile]=fd.localBoxOffset[1];
     parallel.min_dim1(fileBoxOffset,fileNumber);
-    
-    
-    
-    //for(int i=0;i<fileNumber;i++)cout<<fileBoxOffset[i]<<" ... "<<endl;
-    
+       
     fd.fileBoxSize = fileBoxSize[whichFile];
     fd.fileBoxOffset = fileBoxOffset[whichFile];
     
@@ -1731,9 +1712,7 @@ void Particles<part,part_info,part_dataType>::loadHDF5(string filename_base, int
                 !(localBoxOffset_file[3*i+2] >= localBoxOffset[2] + localBoxSize[2])  && 
                !(localBoxOffset[1] >= localBoxOffset_file[3*i+1] + localBoxSize_file[3*i+1]) &&
                !(localBoxOffset_file[3*i+1] >= localBoxOffset[1] + localBoxSize[1])  ){
-                
-                //cout<< parallel.grid_rank()[0]<<";"<< parallel.grid_rank()[1] <<"ok:" <<*it<<" , "<< i <<endl;
-                
+                                
                 //load the particles list...
                 partList_size = numParts_file[i];
                 partList_offset=0;
@@ -1751,8 +1730,6 @@ void Particles<part,part_info,part_dataType>::loadHDF5(string filename_base, int
                 for(int p=0;p<partList_size;p++)
                 {
                     this->addParticle_global(partList[p]);
-                    
-                    //cout<< "adding part: "<<partList[p].ID<<endl;
                 }
                 
                 

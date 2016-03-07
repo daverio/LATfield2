@@ -56,8 +56,8 @@ void get_fileDsc_global(string filename,fileDsc &fd)
 {
     
     
-    if(parallel.rank()==0)
-    {
+    //if(parallel.rank()==0)
+    //{
         hid_t plist_id,file_id,attr_id,root_id;
         
         plist_id = H5Pcreate(H5P_FILE_ACCESS);
@@ -65,49 +65,38 @@ void get_fileDsc_global(string filename,fileDsc &fd)
         H5Pclose(plist_id);
         
         root_id = H5Gopen(file_id, "/", H5P_DEFAULT);
-        
-               
-        H5Gclose(root_id);
-        
-        
-        
-        
-        H5Fclose(file_id);
-        
-        
-        /*
-         plist_id = H5Pcreate(H5P_FILE_ACCESS);
-         file_id = H5Fopen(filename.c_str(),H5F_ACC_RDONLY,plist_id);
-         H5Pclose(plist_id);
-    
-    
-         root_id = H5Gopen(file_id, "/", H5P_DEFAULT);
-    
-         attr_id = H5Aopen_name(root_id, "fileNumber");
-         H5Aread(attr_id, H5T_NATIVE_INT, &(fd.fileNumber));
-         H5Aclose(attr_id);
-         attr_id = H5Aopen_name(root_id, "numProcPerFile");
-         H5Aread(attr_id, H5T_NATIVE_INT, &(fd.numProcPerFile));
-         H5Aclose(attr_id);
-         attr_id = H5Aopen_name(root_id, "world_size");
-    H5Aread(attr_id, H5T_NATIVE_INT, &(fd.world_size));
-    H5Aclose(attr_id);
-    attr_id = H5Aopen_name(root_id, "grid_size");
-    H5Aread(attr_id, H5T_NATIVE_INT, fd.grid_size);
-    H5Aclose(attr_id);
-    attr_id = H5Aopen_name(root_id, "boxSize");
-    H5Aread(attr_id, REAL_TYPE, fd.boxSize);
-    H5Aclose(attr_id);
-    attr_id = H5Aopen_name(root_id, "fileBoxSize");
-    H5Aread(attr_id, REAL_TYPE, &(fd.fileBoxSize));
-    H5Aclose(attr_id);
-    attr_id = H5Aopen_name(root_id, "fileBoxOffset");
-    H5Aread(attr_id, REAL_TYPE, &(fd.fileBoxOffset));
-    H5Aclose(attr_id);
-    H5Gclose(root_id);
-    H5Fclose(file_id);
-         */
-    }
+  
+
+	attr_id = H5Aopen_name(root_id, "fileNumber");
+	H5Aread(attr_id, H5T_NATIVE_INT, &(fd.fileNumber));                                                                       
+	H5Aclose(attr_id);
+        attr_id = H5Aopen_name(root_id, "numProcPerFile");                                                                        
+	H5Aread(attr_id, H5T_NATIVE_INT, &(fd.numProcPerFile));                                                                   
+	H5Aclose(attr_id);                                                                                                        
+	attr_id = H5Aopen_name(root_id, "world_size");                                                                            
+	H5Aread(attr_id, H5T_NATIVE_INT, &(fd.world_size));
+	H5Aclose(attr_id);
+	attr_id = H5Aopen_name(root_id, "grid_size");
+	H5Aread(attr_id, H5T_NATIVE_INT, fd.grid_size);
+	H5Aclose(attr_id);
+	attr_id = H5Aopen_name(root_id, "boxSize");
+	H5Aread(attr_id, REAL_TYPE, fd.boxSize);
+	H5Aclose(attr_id);
+	attr_id = H5Aopen_name(root_id, "fileBoxSize");
+	H5Aread(attr_id, REAL_TYPE, &(fd.fileBoxSize));
+	H5Aclose(attr_id);
+	attr_id = H5Aopen_name(root_id, "fileBoxOffset"); 
+	H5Aread(attr_id, REAL_TYPE, &(fd.fileBoxOffset));
+	H5Aclose(attr_id);
+
+	//cout<<"bosize loaded is "<< fd.boxSize[0] <<endl;
+	
+	H5Gclose(root_id);
+	H5Fclose(file_id);
+
+
+
+	//}
 }
 void get_fileDsc_local(string filename,long * numParts, RealC * localBoxOffset, RealC * localBoxSize)
 {
@@ -230,8 +219,6 @@ int save_hdf5_particles(string filename,
  
 
 #ifdef H5_HAVE_PARALLEL
-
-    cout<<"arg parallel"<<endl;
   
   plist_id_file = H5Pcreate(H5P_FILE_ACCESS);
   H5Pset_fapl_mpio(plist_id_file,comm,info);
@@ -259,7 +246,7 @@ int save_hdf5_particles(string filename,
   H5Fclose(file_id);
   
   if(mpi_rank==0){
-      cout<< "atribute part adds"<<endl;
+      //cout<< "atribute part adds"<<endl;
       plist_id = H5Pcreate(H5P_FILE_ACCESS);
       file_id = H5Fopen(filename.c_str(),H5F_ACC_RDWR,plist_id);
       H5Pclose(plist_id);

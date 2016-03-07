@@ -710,10 +710,10 @@ template <class FieldType>
 void Field<FieldType>::dealloc()
 {
 	if((status_ & allocated) > 0) 
-    {
-      std::cerr << "Going to deallocate, size: " << data_memSize_ << "\n";
+    { 
+	//std::cerr << "Going to deallocate, size: " << data_memSize_ << "\n";// Commented out to descrease outputs.... 
       delete[] data_;
-      std::cerr << "Finished deallocate, size: " << data_memSize_ << "\n";
+      //std::cerr << "Finished deallocate, size: " << data_memSize_ << "\n";// Commented out to descrease outputs....
     data_memSize_ = 0;
 		status_= status_ ^ allocated;
     }

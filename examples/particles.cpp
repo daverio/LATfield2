@@ -10,8 +10,8 @@ int main(int argc, char **argv)
     int n,m;
     int io_groupe_size,io_size;
     string str_filename;
-    int npts = 512;
-    int numparts = 512;
+    int npts = 64;
+    int numparts = 64;
     Real  latresolution =0.1;
     
     
@@ -126,7 +126,7 @@ int main(int argc, char **argv)
         }
         */
         int ratio = numparts/npts;
-        ratio;
+        //ratio;
         
         Site xp(lat_part);
         for(xp.first();xp.test();xp.next())
@@ -157,19 +157,19 @@ int main(int argc, char **argv)
         
         
         timerRef = MPI_Wtime();
-        //parts.saveHDF5("data/bench_part",4);
+        parts.saveHDF5("data/bench_part",2);
         timerWrite = MPI_Wtime() - timerRef;
         
         
         timerRef = MPI_Wtime();
-        //parts.loadHDF5("data/bench_part",4);
+        parts.loadHDF5("data/bench_part",2);
         timerLoad = MPI_Wtime() - timerRef;
         
         
         
 #ifdef EXTERNAL_IO
         timerRef = MPI_Wtime();
-        //parts.saveHDF5_server_write();
+        parts.saveHDF5_server_write();
         timerWriteServer = MPI_Wtime() - timerRef;
         
         ioserver.closeOstream();
@@ -212,14 +212,14 @@ int main(int argc, char **argv)
         //cout<<"vector comm done"<<endl;
         
         timerRef = MPI_Wtime();
-        tensorProjectionCICNGP_project(&parts,&Tij);
+        symtensorProjectionCICNGP_project(&parts,&Tij);
         timerProjTensor = MPI_Wtime() - timerRef;
         
         
         //cout<<"tensor proj done"<<endl;
         
         timerRef = MPI_Wtime();
-        tensorProjectionCICNGP_comm(&Tij);
+        symtensorProjectionCICNGP_comm(&Tij);
         timerCommTensor = MPI_Wtime() - timerRef;
 
         //cout<<"tensor comm done"<<endl;
