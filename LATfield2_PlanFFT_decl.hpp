@@ -10,7 +10,12 @@
 #endif
 
 #ifndef NULLFFTWPLAN
+#ifndef SINGLE
 #define NULLFFTWPLAN static_cast<fftw_plan>(NULL)
+#else
+#define NULLFFTWPLAN static_cast<fftwf_plan>(NULL)
+#endif
+
 #endif
 
 
@@ -148,6 +153,7 @@ public:
 
 private:
   void PrintPlans() {
+#ifndef SINGLE
     std::cout << fPlan_i_ << " "; fftw_print_plan(fPlan_i_); std::cout << std::endl;
     std::cout << fPlan_j_ << " "; fftw_print_plan(fPlan_j_); std::cout << std::endl;
     std::cout << fPlan_k_ << " "; fftw_print_plan(fPlan_k_); std::cout << std::endl;
@@ -156,7 +162,19 @@ private:
     std::cout << bPlan_j_ << " "; fftw_print_plan(bPlan_j_); std::cout << std::endl;
     std::cout << bPlan_j_real_ << " "; fftw_print_plan(bPlan_j_real_); std::cout << std::endl;
     std::cout << bPlan_i_ << " "; fftw_print_plan(bPlan_i_); std::cout << std::endl;
-  }
+#else
+    std::cout << fPlan_i_ << " "; fftwf_print_plan(fPlan_i_); std::cout << std::endl;
+    std::cout << fPlan_j_ << " "; fftwf_print_plan(fPlan_j_); std::cout << std::endl;
+    std::cout << fPlan_k_ << " "; fftwf_print_plan(fPlan_k_); std::cout << std::endl;
+    std::cout << fPlan_k_real_ << " "; fftwf_print_plan(fPlan_k_real_); std::cout << std::endl;
+    std::cout << bPlan_k_ << " "; fftwf_print_plan(bPlan_k_); std::cout << std::endl;
+    std::cout << bPlan_j_ << " "; fftwf_print_plan(bPlan_j_); std::cout << std::endl;
+    std::cout << bPlan_j_real_ << " "; fftwf_print_plan(bPlan_j_real_); std::cout << std::endl;
+    std::cout << bPlan_i_ << " "; fftwf_print_plan(bPlan_i_); std::cout << std::endl;
+#endif  
+
+
+}
 
 private:
   bool status_;
@@ -276,6 +294,7 @@ bool PlanFFT<compType>::C2C=true;
 
 template<class compType>
 PlanFFT<compType>::~PlanFFT() {
+#ifndef SINGLE
   if (fPlan_i_ != NULLFFTWPLAN) { fftw_destroy_plan(fPlan_i_); }
   if (fPlan_j_ != NULLFFTWPLAN) { fftw_destroy_plan(fPlan_j_); }
   if (fPlan_k_ != NULLFFTWPLAN) { fftw_destroy_plan(fPlan_k_); }
@@ -284,6 +303,19 @@ PlanFFT<compType>::~PlanFFT() {
   if (bPlan_j_ != NULLFFTWPLAN) { fftw_destroy_plan(bPlan_j_); }
   if (bPlan_j_real_ != NULLFFTWPLAN) { fftw_destroy_plan(bPlan_j_real_); }
   if (bPlan_i_ != NULLFFTWPLAN) { fftw_destroy_plan(bPlan_i_); }
+#else
+  if (fPlan_i_ != NULLFFTWPLAN) { fftwf_destroy_plan(fPlan_i_); }
+  if (fPlan_j_ != NULLFFTWPLAN) { fftwf_destroy_plan(fPlan_j_); }
+  if (fPlan_k_ != NULLFFTWPLAN) { fftwf_destroy_plan(fPlan_k_); }
+  if (fPlan_k_real_ != NULLFFTWPLAN) { fftwf_destroy_plan(fPlan_k_real_); }
+  if (bPlan_k_ != NULLFFTWPLAN) { fftwf_destroy_plan(bPlan_k_); }
+  if (bPlan_j_ != NULLFFTWPLAN) { fftwf_destroy_plan(bPlan_j_); }
+  if (bPlan_j_real_ != NULLFFTWPLAN) { fftwf_destroy_plan(bPlan_j_real_); }
+  if (bPlan_i_ != NULLFFTWPLAN) { fftwf_destroy_plan(bPlan_i_); }
+#endif
+
+
+
 }
 
 
