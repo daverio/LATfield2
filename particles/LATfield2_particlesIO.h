@@ -36,17 +36,17 @@ void get_partInfo(string filename, part_info &partInfo, parts_datatype partdatat
     
     if(parallel.rank()==0)
     {
-    hid_t plist_id,file_id,dataset_id;
+	hid_t plist_id,file_id,dataset_id;
     
-    plist_id = H5Pcreate(H5P_FILE_ACCESS);
-    file_id = H5Fopen(filename.c_str(),H5F_ACC_RDONLY,plist_id);
-    H5Pclose(plist_id);
-    
-    dataset_id = H5Dopen(file_id, "/part_info", H5P_DEFAULT);
-    
-    H5Dread(dataset_id, partdatatype.part_info_memType, H5S_ALL, H5S_ALL, H5P_DEFAULT,&partInfo);
-    H5Dclose(dataset_id);
-    H5Fclose(file_id);
+	plist_id = H5Pcreate(H5P_FILE_ACCESS);
+	file_id = H5Fopen(filename.c_str(),H5F_ACC_RDONLY,plist_id);
+	H5Pclose(plist_id);
+	
+	dataset_id = H5Dopen(file_id, "/part_info", H5P_DEFAULT);
+	
+	H5Dread(dataset_id, partdatatype.part_info_memType, H5S_ALL, H5S_ALL, H5P_DEFAULT,&partInfo);
+	H5Dclose(dataset_id);
+	H5Fclose(file_id);
     }
     parallel.broadcast<part_info>(partInfo,0);
      
@@ -56,65 +56,71 @@ void get_fileDsc_global(string filename,fileDsc &fd)
 {
     
     
-    //if(parallel.rank()==0)
-    //{
+    if(parallel.rank()==0)
+    {
         hid_t plist_id,file_id,attr_id,root_id;
         
         plist_id = H5Pcreate(H5P_FILE_ACCESS);
-        file_id = H5Fopen(filename.c_str(),H5F_ACC_RDWR,plist_id);
-        H5Pclose(plist_id);
-        
-        root_id = H5Gopen(file_id, "/", H5P_DEFAULT);
+        file_id = H5Fopen(filename.c_str(),H5F_ACC_RDONLY,plist_id);
   
-
-	attr_id = H5Aopen_name(root_id, "fileNumber");
+	attr_id = H5Aopen_name(file_id, "fileNumber");
 	H5Aread(attr_id, H5T_NATIVE_INT, &(fd.fileNumber));                                                                       
 	H5Aclose(attr_id);
-        attr_id = H5Aopen_name(root_id, "numProcPerFile");                                                                        
+   
+        attr_id = H5Aopen_name(file_id, "numProcPerFile");                                                                        
 	H5Aread(attr_id, H5T_NATIVE_INT, &(fd.numProcPerFile));                                                                   
 	H5Aclose(attr_id);                                                                                                        
-	attr_id = H5Aopen_name(root_id, "world_size");                                                                            
+	
+	attr_id = H5Aopen_name(file_id, "world_size");                                                                            
 	H5Aread(attr_id, H5T_NATIVE_INT, &(fd.world_size));
 	H5Aclose(attr_id);
-	attr_id = H5Aopen_name(root_id, "grid_size");
+
+	attr_id = H5Aopen_name(file_id, "grid_size");
 	H5Aread(attr_id, H5T_NATIVE_INT, fd.grid_size);
 	H5Aclose(attr_id);
-	attr_id = H5Aopen_name(root_id, "boxSize");
+
+	attr_id = H5Aopen_name(file_id, "boxSize");
 	H5Aread(attr_id, REAL_TYPE, fd.boxSize);
 	H5Aclose(attr_id);
-	attr_id = H5Aopen_name(root_id, "fileBoxSize");
+
+	attr_id = H5Aopen_name(file_id, "fileBoxSize");
 	H5Aread(attr_id, REAL_TYPE, &(fd.fileBoxSize));
 	H5Aclose(attr_id);
-	attr_id = H5Aopen_name(root_id, "fileBoxOffset"); 
+
+	attr_id = H5Aopen_name(file_id, "fileBoxOffset"); 
 	H5Aread(attr_id, REAL_TYPE, &(fd.fileBoxOffset));
 	H5Aclose(attr_id);
-
 	//cout<<"bosize loaded is "<< fd.boxSize[0] <<endl;
-	
-	H5Gclose(root_id);
+	H5Pclose(plist_id); 
 	H5Fclose(file_id);
-
-
-
-	//}
+    }
+    parallel.broadcast<fileDsc>(fd,0);
 }
-void get_fileDsc_local(string filename,long * numParts, RealC * localBoxOffset, RealC * localBoxSize)
+void get_fileDsc_local(string filename,long * numParts, RealC * localBoxOffset, RealC * localBoxSize, int numProcPerfile)
 {
-    hid_t plist_id,file_id,dataset_id;
+    if(parallel.rank()==0)
+    {
+	hid_t plist_id,file_id,dataset_id;
     
-    plist_id = H5Pcreate(H5P_FILE_ACCESS);
-	file_id = H5Fopen(filename.c_str(),H5F_ACC_RDWR,plist_id);
-	H5Pclose(plist_id);
-    dataset_id = H5Dopen(file_id, "/numParts", H5P_DEFAULT);
-    H5Dread(dataset_id,H5T_NATIVE_LONG , H5S_ALL, H5S_ALL, H5P_DEFAULT,numParts);
-    H5Dclose(dataset_id);
-    dataset_id = H5Dopen(file_id, "/localBoxOffset", H5P_DEFAULT);
-    H5Dread(dataset_id,REAL_TYPE , H5S_ALL, H5S_ALL, H5P_DEFAULT,localBoxOffset);
-    H5Dclose(dataset_id);
-    dataset_id = H5Dopen(file_id, "/localBoxSize", H5P_DEFAULT);
-    H5Dread(dataset_id,REAL_TYPE , H5S_ALL, H5S_ALL, H5P_DEFAULT,localBoxSize);
-    H5Dclose(dataset_id);
-    H5Fclose(file_id);
+	plist_id = H5Pcreate(H5P_FILE_ACCESS);
+	file_id = H5Fopen(filename.c_str(),H5F_ACC_RDONLY,plist_id);
+
+	dataset_id = H5Dopen(file_id, "/numParts", H5P_DEFAULT);
+	H5Dread(dataset_id,H5T_NATIVE_LONG , H5S_ALL, H5S_ALL, H5P_DEFAULT,numParts);
+	H5Dclose(dataset_id);
+	dataset_id = H5Dopen(file_id, "/localBoxOffset", H5P_DEFAULT);
+	H5Dread(dataset_id,REAL_TYPE , H5S_ALL, H5S_ALL, H5P_DEFAULT,localBoxOffset);
+	H5Dclose(dataset_id);
+	dataset_id = H5Dopen(file_id, "/localBoxSize", H5P_DEFAULT);
+	H5Dread(dataset_id,REAL_TYPE , H5S_ALL, H5S_ALL, H5P_DEFAULT,localBoxSize);
+	H5Dclose(dataset_id);
+	H5Pclose(plist_id);	
+	H5Fclose(file_id);
+    }
+    parallel.broadcast(numParts,numProcPerfile,0);
+    parallel.broadcast(localBoxOffset,3*numProcPerfile,0);
+    parallel.broadcast(localBoxSize,3*numProcPerfile,0);
+    
 }
 template<typename parts,typename parts_datatype>
 void get_part_sublist(string filename, long offset, long nparts, parts * parList, parts_datatype partdatatype )
