@@ -1538,7 +1538,7 @@ void  Field<FieldType>::saveHDF5(string filename, string dataset_name)
 {
 #ifdef HDF5
 
-	save_hdf5(data_,type_id,array_size,lattice_->coordSkip(),lattice_->size(),lattice_->sizeLocal(),lattice_->halo(),lattice_->dim(),components_,filename,dataset_name));
+	save_hdf5(data_,type_id,array_size,lattice_->coordSkip(),lattice_->size(),lattice_->sizeLocal(),lattice_->halo(),lattice_->dim(),components_,filename,dataset_name);
 #else
     COUT<<"LATfield2d must be compiled with HDF5 (flag HDF5 turn on!)"<<endl;
     COUT<<"to be able to use hdf5 data format!!!)"<<endl;

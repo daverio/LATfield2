@@ -78,6 +78,8 @@ int main(int argc, char **argv)
         Particles<part_simple,part_simple_info,part_simple_dataType> parts;
         parts.initialize(particles_global_info,particles_dataType,&lat_part,boxSize);
 
+	part_simple part;
+        long index =0;
         int ratio = numparts/npts;
         //ratio;
         

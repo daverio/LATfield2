@@ -39,8 +39,8 @@ void get_partInfo(string filename, part_info &partInfo, parts_datatype partdatat
     hid_t plist_id,file_id,dataset_id;
     
     plist_id = H5Pcreate(H5P_FILE_ACCESS);
-	file_id = H5Fopen(filename.c_str(),H5F_ACC_RDONLY,plist_id);
-	H5Pclose(plist_id);
+    file_id = H5Fopen(filename.c_str(),H5F_ACC_RDONLY,plist_id);
+    H5Pclose(plist_id);
     
     dataset_id = H5Dopen(file_id, "/part_info", H5P_DEFAULT);
     
