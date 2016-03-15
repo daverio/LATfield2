@@ -171,7 +171,7 @@ private:
     std::cout << bPlan_j_ << " "; fftwf_print_plan(bPlan_j_); std::cout << std::endl;
     std::cout << bPlan_j_real_ << " "; fftwf_print_plan(bPlan_j_real_); std::cout << std::endl;
     std::cout << bPlan_i_ << " "; fftwf_print_plan(bPlan_i_); std::cout << std::endl;
-#endif  
+#endif
 
 
 }
@@ -377,8 +377,86 @@ void PlanFFT<compType>::initialize(Field<compType>*  rfield,Field<compType>*  kf
   rHalo_ = rfield->lattice().halo();
   kHalo_ = kfield->lattice().halo();
 
-  //Pointer to data
+  /////from latfield2d_IO
+  tempMemory.setTemp((long)(rSize_[0])  * (long)(rSizeLocal_[1]) * (long)(rSizeLocal_[2]));
 
+  	temp_  = tempMemory.temp1();
+  	temp1_ = tempMemory.temp2();
+
+  	if(rfield->lattice().dim()!=3)
+  	{
+  		if(parallel.isRoot())
+  		{
+  			cerr<<"Latfield2d::PlanFFT::initialize : fft curently work only for 3d cubic lattice"<<endl;
+  			cerr<<"Latfield2d::PlanFFT::initialize : real lattice have not 3 dimensions"<<endl;
+  			cerr<<"Latfield2d : Abort Process Requested"<<endl;
+
+  		}
+  		parallel.abortForce();
+  	}
+
+
+  	if(rSize_[0]!=rSize_[1] | rSize_[1]!=rSize_[2])
+  	{
+  		if(parallel.isRoot())
+  		{
+  			cerr<<"Latfield2d::PlanFFT::initialize : fft curently work only for 3d cubic lattice"<<endl;
+  			cerr<<"Latfield2d::PlanFFT::initialize : real lattice is not cubic"<<endl;
+  			cerr<<"Latfield2d : Abort Process Requested"<<endl;
+
+   		}
+  		parallel.abortForce();
+  	}
+
+  	//initialization of fftw plan
+
+
+  	//Forward plan
+  	fPlan_i_ = fftwf_plan_many_dft(1,&rSize_[0],rSizeLocal_[1] ,cData_,NULL,components_, rJump_[1]*components_,temp_,NULL,rSizeLocal_[1]*rSizeLocal_[2],1,FFTW_FORWARD,FFTW_ESTIMATE | FFTW_PRESERVE_INPUT);
+  	fPlan_j_ = fftwf_plan_many_dft(1,&rSize_[0],rSizeLocal_[1]*rSizeLocal_[2],temp_,NULL,rSizeLocal_[1]*rSizeLocal_[2],1,temp_,NULL,rSizeLocal_[1]*rSizeLocal_[2],1,FFTW_FORWARD,FFTW_ESTIMATE);
+  	fPlan_k_ = fftwf_plan_many_dft(1,&rSize_[0],rSizeLocal_[1] ,temp_,NULL,rSizeLocal_[1]*rSizeLocal_[2],1,kData_,NULL,components_, rJump_[1]*components_,FFTW_FORWARD,FFTW_ESTIMATE);
+  	//Backward plan
+
+  	bPlan_k_ = fftwf_plan_many_dft(1,&rSize_[0],rSizeLocal_[1] ,kData_,NULL,components_, rJump_[1]*components_,temp_,NULL,rSizeLocal_[1]*rSizeLocal_[2],1,FFTW_BACKWARD,FFTW_ESTIMATE | FFTW_PRESERVE_INPUT);
+  	bPlan_j_ = fftwf_plan_many_dft(1,&rSize_[0],rSizeLocal_[1]*rSizeLocal_[2],temp_,NULL,rSizeLocal_[1]*rSizeLocal_[2],1,temp_,NULL,rSizeLocal_[1]*rSizeLocal_[2],1,FFTW_BACKWARD,FFTW_ESTIMATE);
+  	bPlan_i_ = fftwf_plan_many_dft(1,&rSize_[0],rSizeLocal_[1] ,temp_,NULL,rSizeLocal_[1]*rSizeLocal_[2],1,kData_,NULL,components_, rJump_[1]*components_,FFTW_BACKWARD,FFTW_ESTIMATE);
+
+  	//allocation of field
+
+  	long rfield_size = rfield->lattice().sitesLocalGross();
+  	long kfield_size = kfield->lattice().sitesLocalGross();
+
+  	if(mem_type_ == FFT_IN_PLACE)
+  	{
+  		if(rfield_size>=kfield_size)
+  		{
+  			rfield->alloc();
+  			kfield->data() = (Imag*)rfield->data();
+  		}
+  		else
+  		{
+  			kfield->alloc();
+  			rfield->data() = (Imag*)kfield->data();
+  		}
+  	}
+  	if(mem_type_ == FFT_OUT_OF_PLACE)
+  	{
+  		rfield->alloc();
+  		kfield->alloc();
+  	}
+
+  	//Pointer to data
+
+  	rData_ = (float*)rfield->data(); //to be sure that rData is instantiate !
+  	cData_ = (fftwf_complex*)rfield->data();
+  	cData_ += rfield->lattice().siteFirst()*components_;
+  	kData_ = (fftwf_complex*)kfield->data();
+  	kData_ += kfield->lattice().siteFirst()*components_;
+
+
+  ///end of from latfield2d_IO
+  //Pointer to data
+/*
   rData_ = new float[1]; //to be sure that rData is instantiate
   cData_ = (fftwf_complex*)rfield->data();
   cData_ += rfield->lattice().siteFirst(); //usefull point !!
@@ -421,6 +499,11 @@ void PlanFFT<compType>::initialize(Field<compType>*  rfield,Field<compType>*  kf
     }
     parallel.abortForce();
   }
+
+
+  */
+
+
 }
 
 template<class compType>
@@ -556,6 +639,119 @@ void PlanFFT<compType>::initialize(Field<float>*  rfield,Field<compType>*   kfie
 #endif
 
 #ifndef SINGLE
+
+template<class compType>
+PlanFFT<compType>::PlanFFT(Field<compType>*  rfield,Field<compType>* kfield,const int mem_type)
+{
+	status_ = false;
+	initialize(rfield,kfield,mem_type);
+}
+
+template<class compType>
+void PlanFFT<compType>::initialize(Field<compType>*  rfield,Field<compType>*  kfield,const int mem_type )
+{
+	type_ = C2C;
+	mem_type_=mem_type;
+
+	//general variable
+	if(rfield->components() != kfield->components())
+	{
+		cerr<<"Latfield2d::PlanFFT::initialize : fft curently work only for fields with same number of components"<<endl;
+		cerr<<"Latfield2d::PlanFFT::initialize : coordinate and fourier space fields have not the same number of components"<<endl;
+		cerr<<"Latfield2d : Abort Process Requested"<<endl;
+
+	}
+	else components_ = rfield->components();
+
+	for(int i = 0; i<3; i++)
+	{
+		rSize_[i]=rfield->lattice().size(i);
+		kSize_[i]=kfield->lattice().size(i);
+		rSizeLocal_[i]=rfield->lattice().sizeLocal(i);
+		kSizeLocal_[i]=kfield->lattice().sizeLocal(i);
+		rJump_[i]=rfield->lattice().jump(i);
+		kJump_[i]=kfield->lattice().jump(i);
+	}
+
+	rHalo_ = rfield->lattice().halo();
+	kHalo_ = kfield->lattice().halo();
+
+	tempMemory.setTemp((long)(rSize_[0])  * (long)(rSizeLocal_[1]) * (long)(rSizeLocal_[2]));
+
+	temp_  = tempMemory.temp1();
+	temp1_ = tempMemory.temp2();
+
+	if(rfield->lattice().dim()!=3)
+	{
+		if(parallel.isRoot())
+		{
+			cerr<<"Latfield2d::PlanFFT::initialize : fft curently work only for 3d cubic lattice"<<endl;
+			cerr<<"Latfield2d::PlanFFT::initialize : real lattice have not 3 dimensions"<<endl;
+			cerr<<"Latfield2d : Abort Process Requested"<<endl;
+
+		}
+		parallel.abortForce();
+	}
+
+
+	if(rSize_[0]!=rSize_[1] | rSize_[1]!=rSize_[2])
+	{
+		if(parallel.isRoot())
+		{
+			cerr<<"Latfield2d::PlanFFT::initialize : fft curently work only for 3d cubic lattice"<<endl;
+			cerr<<"Latfield2d::PlanFFT::initialize : real lattice is not cubic"<<endl;
+			cerr<<"Latfield2d : Abort Process Requested"<<endl;
+
+ 		}
+		parallel.abortForce();
+	}
+
+	//initialization of fftw plan
+
+
+	//Forward plan
+	fPlan_i_ = fftw_plan_many_dft(1,&rSize_[0],rSizeLocal_[1] ,cData_,NULL,components_, rJump_[1]*components_,temp_,NULL,rSizeLocal_[1]*rSizeLocal_[2],1,FFTW_FORWARD,FFTW_ESTIMATE | FFTW_PRESERVE_INPUT);
+	fPlan_j_ = fftw_plan_many_dft(1,&rSize_[0],rSizeLocal_[1]*rSizeLocal_[2],temp_,NULL,rSizeLocal_[1]*rSizeLocal_[2],1,temp_,NULL,rSizeLocal_[1]*rSizeLocal_[2],1,FFTW_FORWARD,FFTW_ESTIMATE);
+	fPlan_k_ = fftw_plan_many_dft(1,&rSize_[0],rSizeLocal_[1] ,temp_,NULL,rSizeLocal_[1]*rSizeLocal_[2],1,kData_,NULL,components_, rJump_[1]*components_,FFTW_FORWARD,FFTW_ESTIMATE);
+	//Backward plan
+
+	bPlan_k_ = fftw_plan_many_dft(1,&rSize_[0],rSizeLocal_[1] ,kData_,NULL,components_, rJump_[1]*components_,temp_,NULL,rSizeLocal_[1]*rSizeLocal_[2],1,FFTW_BACKWARD,FFTW_ESTIMATE | FFTW_PRESERVE_INPUT);
+	bPlan_j_ = fftw_plan_many_dft(1,&rSize_[0],rSizeLocal_[1]*rSizeLocal_[2],temp_,NULL,rSizeLocal_[1]*rSizeLocal_[2],1,temp_,NULL,rSizeLocal_[1]*rSizeLocal_[2],1,FFTW_BACKWARD,FFTW_ESTIMATE);
+	bPlan_i_ = fftw_plan_many_dft(1,&rSize_[0],rSizeLocal_[1] ,temp_,NULL,rSizeLocal_[1]*rSizeLocal_[2],1,kData_,NULL,components_, rJump_[1]*components_,FFTW_BACKWARD,FFTW_ESTIMATE);
+
+	//allocation of field
+
+	long rfield_size = rfield->lattice().sitesLocalGross();
+	long kfield_size = kfield->lattice().sitesLocalGross();
+
+	if(mem_type_ == FFT_IN_PLACE)
+	{
+		if(rfield_size>=kfield_size)
+		{
+			rfield->alloc();
+			kfield->data() = (Imag*)rfield->data();
+		}
+		else
+		{
+			kfield->alloc();
+			rfield->data() = (Imag*)kfield->data();
+		}
+	}
+	if(mem_type_ == FFT_OUT_OF_PLACE)
+	{
+		rfield->alloc();
+		kfield->alloc();
+	}
+
+	//Pointer to data
+
+	rData_ = (double*)rfield->data(); //to be sure that rData is instantiate !
+	cData_ = (fftwf_complex*)rfield->data();
+	cData_ += rfield->lattice().siteFirst()*components_;
+	kData_ = (fftwf_complex*)kfield->data();
+	kData_ += kfield->lattice().siteFirst()*components_;
+
+}
 
 template<class compType>
 PlanFFT<compType>::PlanFFT(Field<double>* rfield, Field<compType>*  kfield,const int mem_type )  : PlanFFT()
