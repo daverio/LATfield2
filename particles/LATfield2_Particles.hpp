@@ -1695,14 +1695,15 @@ void Particles<part,part_info,part_dataType>::loadHDF5(string filename_base, int
     {
 
         //load the file block list.
-        numParts_file = new long[fd[(*it)].numProcPerFile];
-        localBoxOffset_file = new Real[3 * fd[(*it)].numProcPerFile];
-        localBoxSize_file = new Real[3 * fd[(*it)].numProcPerFile];
+	int nPP = fd[(*it)].numProcPerFile;
+        numParts_file = new long[nPP];
+        localBoxOffset_file = new Real[3*nPP];
+        localBoxSize_file = new Real[3*nPP];
         
         if(fileNumber ==1)get_fileDsc_local(filename_base + ".h5",numParts_file,
-                                            localBoxOffset_file,localBoxSize_file);
+                                            localBoxOffset_file,localBoxSize_file,nPP);
         else get_fileDsc_local(filename_base + "_" + int2string((*it),999)+".h5",
-                               numParts_file,localBoxOffset_file,localBoxSize_file);
+                               numParts_file,localBoxOffset_file,localBoxSize_file,nPP);
             
         
         //look if need to reed a block, if yes read it and add particles...
