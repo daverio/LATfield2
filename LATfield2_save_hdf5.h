@@ -22,12 +22,12 @@ extern "C"{
 
 		 char * filename = new char[filename_str.size()];
  	  for(int i = 0;i<filename_str.size();i++)filename[i]=filename_str[i];
- 		filename[filename_str.size()] = '\0';
+ 		filename[filename_str.size()-1] = '\0';
 
 
  		char * dataset_name = new char[dataset_name_str.size()];
  		for(int i = 0;i<filename_str.size();i++)dataset_name[i]=dataset_name_str[i];
- 		dataset_name[dataset_name_str.size()] = '\0';
+ 		dataset_name[dataset_name_str.size()-1] = '\0';
 
 	   herr_t status;
 
@@ -239,12 +239,12 @@ extern "C"{
 
 		char * filename = new char[filename_str.size()];
 		for(int i = 0;i<filename_str.size();i++)filename[i]=filename_str[i];
-		filename[filename_str.size()] = '\0';
+		filename[filename_str.size()-1] = '\0';
 
 
 		char * dataset_name = new char[dataset_name_str.size()];
 		for(int i = 0;i<filename_str.size();i++)dataset_name[i]=dataset_name_str[i];
-		dataset_name[dataset_name_str.size()] = '\0';
+		dataset_name[dataset_name_str.size()-1] = '\0';
 
 		herr_t status;
 
