@@ -293,8 +293,8 @@ class Field
 
          \param filename : path to the file, from the executable folder.
          */
-	    void saveHDF5(string filename, string dataset_name="data");
-
+	    void saveHDF5(string filename, string dataset_name);
+	    void saveHDF5(string filename){saveHDF5(filename, "data");}
 	    /*!
          Method to load a field with HDF5. To be able to use this method the flag HDF5 need to be set at compilation (-DHDF5). This method use serial HDF5 by default. For parallel HDF5 the flag -DH5_HAVE_PARALLEL must be set at compilation.
 
@@ -302,8 +302,8 @@ class Field
 
          \param filename : path to the file, from the executable folder.
          */
-        void loadHDF5(string filename,string dataset_name="data");
-
+        void loadHDF5(string filename,string dataset_name);
+	    void loadHDF5(string filename){;}
         /*!
          A way to save coarse grained version of the fields. To be able to use this method the flag HDF5 need to be set at compilation (-DHDF5). Work only for 3D lattice!!!
 
@@ -312,8 +312,8 @@ class Field
          \param filename : path to the file, from the executable folder.
          \param ration   : ration of the coarse graining. Must be an integer divider of the size of each dimension of this->lattice()
          */
-        void saveHDF5_coarseGrain3D(string filename,int ratio,string dataset_name="data");
-
+	    void saveHDF5_coarseGrain3D(string filename,string dataset_name ,int ratio);
+	    void saveHDF5_coarseGrain3D(string filename,int ratio){;}
         /*!
          Save a slice perpendicular to the first coordinate, at xcoord. To be able to use this method the flag HDF5 need to be set at compilation (-DHDF5).
 
@@ -323,13 +323,9 @@ class Field
          \param xcoord   : coordinate of the slice on the first dimension of the lattice.
          \param thickness: thickness of the slice, the default is 1.
          */
-        void saveSliceHDF5(string filename, int xcoord, int thickness = 1,string dataset_name="data");
-
-		//MISCELLANEOUS
-        /*!
-         Returns a pointer to the lattice on which the field is defined.
-         */
-
+	    void saveSliceHDF5(string filename,string dataset_name , int xcoord, int thickness = 1);
+	    void saveSliceHDF5(string filename, int xcoord, int thickness = 1){;}
+		
 
 
 #ifdef EXTERNAL_IO
@@ -337,7 +333,10 @@ class Field
         void saveHDF5_server_write(int number_of_message = 4, string filename_base = "defaultfilename",int offset=-1,int thickness=-1);
 #endif
 
-
+	    //MISCELLANEOUS                                                                                      
+	    /*!                                                                                                          
+         Returns a pointer to the lattice on which the field is defined.                                             
+	    */
 		Lattice& lattice();
         /*!
          Returns the number of components of the field at each sites.
@@ -1559,7 +1558,7 @@ void  Field<FieldType>::loadHDF5(string filename, string dataset_name)
 }
 
 template <class FieldType>
-void  Field<FieldType>::saveSliceHDF5(string filename,int xcoord, int thickness, string dataset_name)
+void  Field<FieldType>::saveSliceHDF5(string filename, string dataset_name,int xcoord, int thickness)
 {
 //write a slice which is in the y-z (done to insure same amount of data from each proc)
 
@@ -1630,7 +1629,7 @@ void  Field<FieldType>::saveSliceHDF5(string filename,int xcoord, int thickness,
 }
 
 template <class FieldType>
-void  Field<FieldType>::saveHDF5_coarseGrain3D(string filename,int ratio, string dataset_name)
+void  Field<FieldType>::saveHDF5_coarseGrain3D(string filename, string dataset_name, int ratio)
 {
 #ifdef HDF5
     Lattice slat;

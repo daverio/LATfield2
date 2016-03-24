@@ -19,7 +19,7 @@ extern "C"{
 #include <string.h>
 #include "int2string.hpp"
 
-int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,int halo, int lat_dim,int comp,hid_t array_type,int array_size,string  filename_str, string dataset_name_str)
+int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,int halo, int lat_dim,int comp,hid_t array_type,int array_size,string  filename_str)
 {
 
 
@@ -29,9 +29,12 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
 	   hid_t file_id, plist_id,filespace,memspace,dset_id,dtype_id,dtbase_id;
 	   hsize_t  components;
 
-	   char * filename = new char[filename_str.size()];
-	   for(int i = 0;i<filename_str.size();i++)filename[i]=filename_str[i];
-	   filename[filename_str.size()] = '\0';
+	   char * filename;
+           filename = (char*)malloc((filename_str.size()+1)*sizeof(char));
+           for(int i = 0;i<filename_str.size();i++)filename[i]=filename_str[i];
+           filename[filename_str.size()] = '\0';
+
+
 
 	   herr_t status;
 
@@ -294,14 +297,15 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
    }
 
 
-	int load_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,int comp,int halo, int lat_dim,string  filename_str, string dataset_name_str)
+	int load_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,int comp,int halo, int lat_dim,string  filename_str)
 	{
 
         hid_t file_id, plist_id,filespace,memspace,dset_id,dtype_id,dtbase_id;
 
-		char * filename = new char[filename_str.size()];
-		for(int i = 0;i<filename_str.size();i++)filename[i]=filename_str[i];
-		filename[filename_str.size()] = '\0';
+	char * filename;
+	filename = (char*)malloc((filename_str.size()+1)*sizeof(char));
+	for(int i = 0;i<filename_str.size();i++)filename[i]=filename_str[i];
+	filename[filename_str.size()] = '\0';
 
         hsize_t * sizeGlobal;
         sizeGlobal = new hsize_t[lat_dim+1];
@@ -521,10 +525,10 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
 template<class fieldType>
 int save_hdf5(fieldType *data,hid_t type_id,int array_size,long file_offset[2],int *size,int * sizeLocal,int halo, int lat_dim,int comp,string  filename_str, string dataset_name_str)
 {
-	return save_hdf5_externC((char*)data, file_offset, size, sizeLocal, halo, lat_dim, comp, type_id, array_size, filename_str, string dataset_name_str);
+	return save_hdf5_externC((char*)data, file_offset, size, sizeLocal, halo, lat_dim, comp, type_id, array_size, filename_str);
 }
 template<class fieldType>
 int load_hdf5(fieldType *data,long file_offset[2],int *size,int * sizeLocal,int halo, int lat_dim,int comp,string  filename_str, string dataset_name_str)
 {
-    return load_hdf5_externC( (char*) data, file_offset, size, sizeLocal, comp, halo, lat_dim,  filename_str, string dataset_name_str);
+    return load_hdf5_externC( (char*) data, file_offset, size, sizeLocal, comp, halo, lat_dim,  filename_str);
 }

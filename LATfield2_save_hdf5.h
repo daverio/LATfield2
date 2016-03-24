@@ -20,17 +20,16 @@ extern "C"{
 	   hid_t file_id, plist_id,filespace,memspace,dset_id,dtype_id,dtbase_id,root_id;
 	   hsize_t * components;
 
-		 char * filename = new char[filename_str.size()];
- 	  for(int i = 0;i<filename_str.size();i++)filename[i]=filename_str[i];
- 		filename[filename_str.size()-1] = '\0';
+	   char * filename;
+	   filename = (char*)malloc((filename_str.size()+1)*sizeof(char));
+           for(int i = 0;i<filename_str.size();i++)filename[i]=filename_str[i];
+           filename[filename_str.size()] = '\0';  
 
-
- 		char * dataset_name = new char[dataset_name_str.size()];
- 		for(int i = 0;i<filename_str.size();i++)dataset_name[i]=dataset_name_str[i];
- 		dataset_name[dataset_name_str.size()-1] = '\0';
+	   char  dataset_name[128];
+	   for(int i = 0;i<filename_str.size();i++)dataset_name[i]=dataset_name_str[i];
+	   dataset_name[dataset_name_str.size()] = '\0';
 
 	   herr_t status;
-
 	   hsize_t * sizeGlobal;
 	   sizeGlobal = new hsize_t[lat_dim];
 	   hsize_t * localSize;
@@ -92,7 +91,7 @@ extern "C"{
 	   }
 	   ///////////////////////////////
 	   ///////////////////////////////
-
+	  
 
 #ifdef H5_HAVE_PARALLEL //Parallel version, H5_HAVE_PARALLEL definition is needed by hdf5 to run in parallel too !
 
@@ -136,24 +135,14 @@ extern "C"{
 	   H5Pclose(plist_id);
 	   H5Fclose(file_id);
 
-	   delete[] components;
-//	   delete[] filename;
-
-	   free(filename);
-
-
+	   free(filename);  
 	   return 1;
 
 #else // serial version, without H5_HAVE_PARALLEL definition hdf5 will run in serial !
 
 	   int mpi_size,mpi_rank,p;
-	   //MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
-	   //MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
 	   mpi_size = parallel.size();
 	   mpi_rank = parallel.rank();
-
-
-	   //create the file
 
 	   if(mpi_rank==0)
 	   {
@@ -216,11 +205,7 @@ extern "C"{
 
 	   }
 
-
-	   delete[] components;
-//	   delete[] filename;
-
-//	   free(filename);
+	   free(filename);
 	   return 1;
 #endif
 
@@ -237,17 +222,16 @@ extern "C"{
 
 	    hid_t file_id, plist_id,filespace,memspace,dset_id,dtype_id,dtbase_id,group_id,root_id;
 
-		char * filename = new char[filename_str.size()];
+		char * filename;
+		filename = (char*)malloc((filename_str.size()+1)*sizeof(char));
 		for(int i = 0;i<filename_str.size();i++)filename[i]=filename_str[i];
-		filename[filename_str.size()-1] = '\0';
+		filename[filename_str.size()] = '\0';
 
-
-		char * dataset_name = new char[dataset_name_str.size()];
+		char  dataset_name[128];
 		for(int i = 0;i<filename_str.size();i++)dataset_name[i]=dataset_name_str[i];
-		dataset_name[dataset_name_str.size()-1] = '\0';
+		dataset_name[dataset_name_str.size()] = '\0';
 
 		herr_t status;
-
 		hsize_t * sizeGlobal;
 		sizeGlobal = new hsize_t[lat_dim];
 		hsize_t * localSize;
