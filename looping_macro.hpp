@@ -3,7 +3,7 @@
 
 /*! \file looping_macro.hpp
  \brief looping over the lattice site macro
- \author David Daverio,Neil Bevis
+ \author David Daverio
 
  */
 

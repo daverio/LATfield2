@@ -177,6 +177,22 @@ bool Site::setCoordLocal(int *r)
 Lattice& Site::lattice() { return *lattice_ ; }
 
 
+ostream& operator<<(ostream& os,  Site& x)
+{
+    os << " (";
+    int i=0;
+    for(;i < (x.lattice().dim()-1); )
+    {
+	os << x.coord(i) << " , ";
+	i++;
+    }
+    os << x.coord(i) << ") ";
+    return os;
+}
+
+
+
+
 #ifdef FFT3D
 
 /* ckSite implmentation */

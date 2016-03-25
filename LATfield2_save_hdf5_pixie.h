@@ -19,6 +19,7 @@ extern "C"{
 #include <string.h>
 #include "int2string.hpp"
 
+
 int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,int halo, int lat_dim,int comp,hid_t array_type,int array_size,string  filename_str)
 {
 
@@ -29,12 +30,11 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
 	   hid_t file_id, plist_id,filespace,memspace,dset_id,dtype_id,dtbase_id;
 	   hsize_t  components;
 
+
 	   char * filename;
            filename = (char*)malloc((filename_str.size()+1)*sizeof(char));
            for(int i = 0;i<filename_str.size();i++)filename[i]=filename_str[i];
            filename[filename_str.size()] = '\0';
-
-
 
 	   herr_t status;
 
@@ -179,8 +179,8 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
 
         H5Fclose(file_id);
 
-        delete[] filename;
 
+        free(filename);
 
 	   return 1;
 
@@ -289,7 +289,16 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
 
     }
 
-   	   delete[] filename;
+
+           delete[] filename;
+
+
+           delete[] sizeGlobal;
+           delete[] localSize;
+           delete[] offset;
+           delete[] offsetf;
+           delete[] count;
+
 	   return 1;
 
 #endif
@@ -297,15 +306,18 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
    }
 
 
+
 	int load_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,int comp,int halo, int lat_dim,string  filename_str)
 	{
 
         hid_t file_id, plist_id,filespace,memspace,dset_id,dtype_id,dtbase_id;
 
+
 	char * filename;
 	filename = (char*)malloc((filename_str.size()+1)*sizeof(char));
 	for(int i = 0;i<filename_str.size();i++)filename[i]=filename_str[i];
 	filename[filename_str.size()] = '\0';
+
 
         hsize_t * sizeGlobal;
         sizeGlobal = new hsize_t[lat_dim+1];
@@ -412,9 +424,16 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
             }
 
         }
+		delete[] filename;
+		delete[] sizeGlobal;
+		delete[] localSize;
+		delete[] offset;
+		delete[] offsetf;
+		delete[] count;
 
 
-		delete []filename;
+
+		free(filename);
 
 		return 1;
 
@@ -507,6 +526,7 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
         }
 
 
+		free(filename);
 		return 1;
 
 

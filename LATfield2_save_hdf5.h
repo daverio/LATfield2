@@ -3,11 +3,7 @@
  \brief LATfield2_save_hdf5.h contains the definition of the function used for hdf5 i/o.
  \author David Daverio
  */
-
-
 extern "C"{
-
-
 
 #include <math.h>
 #include <hdf5.h>
@@ -17,6 +13,7 @@ extern "C"{
 
    int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,int halo, int lat_dim,int comp,hid_t array_type,int array_size,string  filename_str, string dataset_name_str)
    {
+
 	   hid_t file_id, plist_id,filespace,memspace,dset_id,dtype_id,dtbase_id,root_id;
 	   hsize_t * components;
 
@@ -30,6 +27,8 @@ extern "C"{
 	   dataset_name[dataset_name_str.size()] = '\0';
 
 	   herr_t status;
+
+
 	   hsize_t * sizeGlobal;
 	   sizeGlobal = new hsize_t[lat_dim];
 	   hsize_t * localSize;
@@ -91,7 +90,6 @@ extern "C"{
 	   }
 	   ///////////////////////////////
 	   ///////////////////////////////
-	  
 
 #ifdef H5_HAVE_PARALLEL //Parallel version, H5_HAVE_PARALLEL definition is needed by hdf5 to run in parallel too !
 
@@ -134,8 +132,8 @@ extern "C"{
 	   H5Sclose(memspace);
 	   H5Pclose(plist_id);
 	   H5Fclose(file_id);
-
 	   free(filename);  
+
 	   return 1;
 
 #else // serial version, without H5_HAVE_PARALLEL definition hdf5 will run in serial !
@@ -222,6 +220,7 @@ extern "C"{
 
 	    hid_t file_id, plist_id,filespace,memspace,dset_id,dtype_id,dtbase_id,group_id,root_id;
 
+
 		char * filename;
 		filename = (char*)malloc((filename_str.size()+1)*sizeof(char));
 		for(int i = 0;i<filename_str.size();i++)filename[i]=filename_str[i];
@@ -232,6 +231,7 @@ extern "C"{
 		dataset_name[dataset_name_str.size()] = '\0';
 
 		herr_t status;
+
 		hsize_t * sizeGlobal;
 		sizeGlobal = new hsize_t[lat_dim];
 		hsize_t * localSize;
@@ -294,7 +294,6 @@ extern "C"{
 		H5Pclose(plist_id);
 		H5Fclose(file_id);
 
-//		delete []filename;
 
 		return 1;
 
@@ -348,10 +347,10 @@ extern "C"{
 
 }
 
-
 template<class fieldType>
 int save_hdf5(fieldType *data,hid_t type_id,int array_size,long file_offset[2],int *size,int * sizeLocal,int halo, int lat_dim,int comp,string  filename_str, string dataset_name_str)
 {
+
 	return save_hdf5_externC((char*)data, file_offset, size, sizeLocal, halo, lat_dim, comp, type_id, array_size, filename_str, dataset_name_str);
 }
 template<class fieldType>
