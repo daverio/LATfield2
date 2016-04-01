@@ -754,7 +754,7 @@ void PlanFFT<compType>::initialize(Field<compType>*  rfield,Field<compType>*  kf
 }
 
 template<class compType>
-PlanFFT<compType>::PlanFFT(Field<double>* rfield, Field<compType>*  kfield,const int mem_type )  : PlanFFT()
+PlanFFT<compType>::PlanFFT(Field<double>* rfield, Field<compType>*  kfield,const int mem_type )
 {
   status_ = false;
   initialize(rfield,kfield,mem_type);
