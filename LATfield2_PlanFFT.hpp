@@ -24,17 +24,16 @@ temporaryMemFFT::temporaryMemFFT()
 {
     allocated_=0;
 #pragma acc enter data create(this)
-    
+
 }
 temporaryMemFFT::~temporaryMemFFT()
 {
-  
+
     freeTemp();
-    
     freeTempReal();
-  
+
 #pragma acc exit data delete(this)
-    
+
 }
 
 temporaryMemFFT::temporaryMemFFT(long size)
@@ -48,10 +47,10 @@ temporaryMemFFT::temporaryMemFFT(long size)
 
 void temporaryMemFFT::freeTemp() {
   if(allocated_!=0){
-    
+
 #pragma acc exit data delete(temp1_)
 #pragma acc exit data delete(temp2_)
-    
+
 #ifndef FFT3D_ACC
 #ifdef SINGLE
     fftwf_free(temp1_);
@@ -74,7 +73,7 @@ void temporaryMemFFT::freeTempReal() {
   if(allocatedReal_!=0)
   {
 #pragma acc exit data delete(tempReal_)
-    
+
     free(tempReal_);
   }
   allocatedReal_ = 0;
@@ -84,18 +83,18 @@ int temporaryMemFFT::setTempReal(long size)
 {
     if(size>allocatedReal_)
     {
-      
+
         long alocSize;
         alocSize = 2*size;
-        
+
 #ifdef SINGLE
         tempReal_ = (float*)malloc(alocSize * sizeof(float));
 #else
         tempReal_ = (double*)malloc(alocSize * sizeof(double));
 #endif
-        
+
 #pragma acc enter data create(tempReal_[0:alocSize])
-        
+
     }
 }
 int temporaryMemFFT::setTemp(long size)
@@ -103,16 +102,16 @@ int temporaryMemFFT::setTemp(long size)
     if(size>allocated_)
     {
         freeTemp();
-      
+
         long alocSize;
-        alocSize = 2*size;
-        
+        alocSize = 2*size; //WTF!!!
+
 #ifndef FFT3D_ACC
 #ifdef SINGLE
         temp1_ = (fftwf_complex *)fftwf_malloc(alocSize*sizeof(fftwf_complex));
         temp2_ = (fftwf_complex *)fftwf_malloc(alocSize*sizeof(fftwf_complex));
 #endif
-        
+
 #ifndef SINGLE
         temp1_ = (fftw_complex *)fftw_malloc(alocSize*sizeof(fftw_complex));
         temp2_ = (fftw_complex *)fftw_malloc(alocSize*sizeof(fftw_complex));
@@ -122,7 +121,7 @@ int temporaryMemFFT::setTemp(long size)
         temp1_ = (fftwf_complex *)malloc(alocSize*sizeof(fftwf_complex));
         temp2_ = (fftwf_complex *)malloc(alocSize*sizeof(fftwf_complex));
 #endif
-        
+
 #ifndef SINGLE
         temp1_ = (fftw_complex *)malloc(alocSize*sizeof(fftw_complex));
         temp2_ = (fftw_complex *)malloc(alocSize*sizeof(fftw_complex));
