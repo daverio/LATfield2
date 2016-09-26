@@ -306,7 +306,7 @@ class Field
          */
 
         void loadHDF5(string filename,string dataset_name);
-	    void loadHDF5(string filename){;}
+	    	void loadHDF5(string filename){loadHDF5(filename, "data");}
 
         /*!
          A way to save coarse grained version of the fields. To be able to use this method the flag HDF5 need to be set at compilation (-DHDF5). Work only for 3D lattice!!!
@@ -1699,7 +1699,6 @@ void  Field<FieldType>::saveHDF5_coarseGrain3D(string filename, string dataset_n
         {
             for(int i=0;i<slocalsize[0];i++)
             {
-		//for(int i_block=0;i_block<blocksize;i_block++)sfield.data()[sindex*blocksize+i_block] = 0;
                 for(int i_block=0;i_block<blocksize;i_block++)sfield.data()[sindex*blocksize+i_block] = data_[index*blocksize + i_block];
 								for(int s=1;s<number_cg;s++)
                 {
