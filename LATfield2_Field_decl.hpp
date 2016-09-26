@@ -318,7 +318,7 @@ class Field
          */
 
 	    void saveHDF5_coarseGrain3D(string filename,string dataset_name ,int ratio);
-	    void saveHDF5_coarseGrain3D(string filename,int ratio){;}
+	    void saveHDF5_coarseGrain3D(string filename,int ratio){this->saveHDF5_coarseGrain3D(filename,"data",ratio);}
 
         /*!
          Save a slice perpendicular to the first coordinate, at xcoord. To be able to use this method the flag HDF5 need to be set at compilation (-DHDF5).
@@ -332,7 +332,7 @@ class Field
 
 	    void saveSliceHDF5(string filename,string dataset_name , int xcoord, int thickness = 1);
 	    void saveSliceHDF5(string filename, int xcoord, int thickness = 1){;}
-		
+
 
 
 
@@ -342,9 +342,9 @@ class Field
 #endif
 
 
-	    //MISCELLANEOUS                                                                                      
-	    /*!                                                                                                          
-         Returns a pointer to the lattice on which the field is defined.                                             
+	    //MISCELLANEOUS
+	    /*!
+         Returns a pointer to the lattice on which the field is defined.
 	    */
 		Lattice& lattice();
         /*!
@@ -1701,14 +1701,11 @@ void  Field<FieldType>::saveHDF5_coarseGrain3D(string filename, string dataset_n
             {
 		//for(int i_block=0;i_block<blocksize;i_block++)sfield.data()[sindex*blocksize+i_block] = 0;
                 for(int i_block=0;i_block<blocksize;i_block++)sfield.data()[sindex*blocksize+i_block] = data_[index*blocksize + i_block];
-		for(int s=0;s<number_cg;s++)
+								for(int s=1;s<number_cg;s++)
                 {
                     for(int i_block=0;i_block<blocksize;i_block++)sfield.data()[sindex*blocksize+i_block] += data_[index*blocksize + index_cg[s] + i_block];
                 }
                 for(int i_block=0;i_block<blocksize;i_block++)sfield.data()[sindex*blocksize+i_block]/=number_cg;
-
-
-
 
                 index+=ratio;
                 sindex+=1;
