@@ -9,8 +9,8 @@
  */
 
 /*! \brief Projections for scalars vectors and tensors using hybrid cloud-in-cell and nearest-grid-point
- 
- 
+
+
  */
 
 /**
@@ -22,7 +22,7 @@
 
 /*! \brief The Particles class maps particles on a Lattice and manages particle displacements.
 
- 
+
  */
 /**
  * \defgroup prartClass Particles Class
@@ -30,10 +30,10 @@
  */
 /**@}*/
 
- 
+
 /*! \brief description of a particle type.
- 
- 
+
+
  */
 
 /**
@@ -95,7 +95,6 @@ class Particles;
 template <typename  part>
 struct  partList{
     int size;
-    part parti;
     std::list<part>  parts;
     std::list<part>  partsTemp;
     partList() : size(0), parts(), partsTemp(){}
@@ -110,22 +109,22 @@ struct  partList{
 
 /*!
  \brief function to set the name of a particle type.
- 
+
 */
 template<typename pInfo>
 void set_parts_typename(pInfo *info, string type_name)
 {
-    
+
     info->type_name_size = type_name.size();
     strcpy(info->type_name,type_name.c_str());
-    
+
 }
 
 /*! \class Particles
  \brief the Particles class aims to map a list of particles of a given type and to manage the displacement of those particles.
- 
+
  The Particles class is a template class. It take as template the 3 structure which describe a particle type. The class maps the particles to a Lattice object and manages the displacement of the particles.
- 
+
  */
 template <typename part, typename part_info, typename part_dataType>
 class Particles
@@ -148,7 +147,7 @@ public:
 		  part_dataType part_datatype,
 		  Lattice * lat_part,
 		  Real boxSize[3]);
- 
+
     /*!
      Method to get the process which store a given particle.
      \param part pcl: Input: structure containing the individual property of a particle linked to this instance.
@@ -161,7 +160,7 @@ public:
      \param int * ranks:  Output: pointer to an array of two integer. The position of the process containing the particle "part" in the compute process grid.
      */
   void getPartNewProcess(part pcl,int * ranks);
-  
+
     /*!
      Method to get the coordinate of the cell containing a given particle.
      \param part pcl: Input: structure containing the individual property of a particle linked to this instance.
@@ -175,17 +174,17 @@ public:
      */
   void getPartCoordLocal(part pcl,int * coord);
     /*!
-     Method to add a particle. Glabal function, each process will call it. The particle will be added only in one process. 
-     
+     Method to add a particle. Glabal function, each process will call it. The particle will be added only in one process.
+
      \param part newPart: Particle to add (structure containing the individual property).
      */
   bool addParticle_global(part newPart);
-    
-    
+
+
     /*!
      Method to modify the velocity of the particle. This method can be used to modify any individual property of a particles.
-     
-     
+
+
      \param *updateVel_funct
      \param double dtau: variation of time.
      \param Field<Real> ** fields=NULL: array of pointer to field class.
@@ -194,7 +193,7 @@ public:
      \param double * output: pointer to an array of double. This array is used to return statistics over the particles properties, The outputs are constructed within the function updateVel_funct, and then reduced over every particles. The reduction can be the sum, the minimum or the maximum over all particles or over the particles stored in this given process.
      \param int * reduce_type: array with same size of the output array. This array is used to specify the reduction type which can be: SUM,MIN,MAX,SUM_LOCAL,MIN_LOCAL,MAX_LOCAL
      \param int noutput: size of the arrays output and reduce_type.
-     
+
      */
     Real updateVel(Real (*updateVel_funct)(double,double,part*,double *,part_info,Field<Real> **,Site *,int,double*,double*,int),
                    double dtau,
@@ -204,7 +203,7 @@ public:
                    double * output=NULL,
                    int * reduce_type=NULL,
                    int noutput=0);
-    
+
     void moveParticles( void (*move_funct)(double,double,part*,double *,part_info,Field<Real> **,Site *,int,double*,double*,int),
                        double dtau,
                        Field<Real> ** fields=NULL,
@@ -217,14 +216,14 @@ public:
 #ifdef HDF5
     /*!
      Method to save all particles of this instance using HDF5 data format.
-     
+
      \param string filename_base: base name of the file. Must contains the complete path to the file. It should not contains any extension (automatically added "_XXX.h5")
      \param int fileNumber: Number of file which will be written Files written : filename_base_000.h5 to filename_base_fileNumber.h5)
      */
   void saveHDF5(string filename_base, int fileNumber);
     /*!
      Method to load particles to this instance using HDF5 data format. Lattice size has not to be the same than the one used to write the files and the number of processes neither. But the size of the lattice in unit used for the particle positions has to be the same (no possibility to zoom).
-     
+
      \param string filename_base: base name of the files. Must contains the complete path to the file. It should not contains any extension (automatically added ".h5") or file number (file : filename_base_XXX.h5).
      \param int fileNumber: Number of files to read.
      */
@@ -233,24 +232,24 @@ public:
 #ifdef EXTERNAL_IO
     /*!
      Method to open a particle file using the output server. (output only).
-     
+
      \param string filename_base: base name of the file. Must contains the complete path to the file. It should not contains any extension (automatically added "_XXX.h5")
      */
     void saveHDF5_server_open(string filename_base);
     /*!
      Method to write data in a particle file using the output server. (output only). The file should have been opened using saveHDF5_server_open(...). But if not already open, the method will open a file with default filename: "defaultfilename".
-     
+
      \param string filename_base: base name of the file. Must contains the complete path to the file. It should not contains any extension (automatically added "_XXX.h5")
      */
     void saveHDF5_server_write(string filename_base  = "defaultfilename");
 #endif
     /*!
      Method to "cout" the particle with a given ID, should never be used expect for debbuging as very ineficient!
-     
+
      \param long ID: ID of the particle which will be "cout"
      */
     void coutPart(long ID);
-    
+
     /*!
      Method to get the Lattice on which the particles are maped.
      \return lat_part_
@@ -266,13 +265,13 @@ public:
      \return field_part_
      */
     Real res(){return lat_resolution_;};
-    
+
     /*!
      Method to get the global properties of the particles type of this instance of the class Particles.
      \return part_global_info_: structure containing the global properties of the particles.
      */
     part_info * parts_info();
-    
+
     /*!
      Method to get the mass type. The mass can be a global property (GLOBAL_MASS), a individual property (INDIVIDUAL_MASS) or can be not defined (NO_MASS).
      \return mass_type_
@@ -282,7 +281,7 @@ public:
      Method to get the offset of the mass property within its respective structure.
      \return mass_offset_
      */
-    size_t mass_offset(){return mass_offset_;}; 
+    size_t mass_offset(){return mass_offset_;};
 
 protected:
 
@@ -293,7 +292,7 @@ protected:
   Real  lat_resolution_;
   Real boxSize_[3];
 
-    
+
 
   Field<partList<part> > field_part_;
 
@@ -306,7 +305,7 @@ protected:
 #ifdef EXTERNAL_IO
     ioserver_file io_file_;
 #endif
-    
+
 };
 
 template <typename part, typename part_info, typename part_dataType>
@@ -320,13 +319,13 @@ Particles<part,part_info,part_dataType>::~Particles()
 {
     field_part_.dealloc();
 }
-template <typename part, typename part_info, typename part_dataType> 
+template <typename part, typename part_info, typename part_dataType>
 void Particles<part,part_info,part_dataType>::initialize(part_info part_global_info,
 							 part_dataType part_datatype,
 							 Lattice * lat_part,
 							 Real  boxSize[3])
 {
-    
+
   part_global_info_ = part_global_info;
   COUT << "Initialization of the particles: "<< part_global_info_.type_name <<endl;
 
@@ -364,12 +363,12 @@ void Particles<part,part_info,part_dataType>::initialize(part_info part_global_i
 
 
   //does the mass is global or individual
-    
+
     has_maxi_mass<part> part_has_mass;
     has_maxi_mass<part_info> info_has_mass;
 
-    
-    
+
+
     if(part_has_mass.gos() != -1)
     {
         mass_offset_ = part_has_mass.gos();
@@ -389,8 +388,8 @@ void Particles<part,part_info,part_dataType>::initialize(part_info part_global_i
         mass_type_= NO_MASS;
         mass_offset_=-1;
     }
-   
-    
+
+
 }
 
 
@@ -406,12 +405,12 @@ template <typename part, typename part_info, typename part_dataType>
 void Particles<part,part_info,part_dataType>::getPartNewProcess(part pcl,int * ranks)
 {
     int coord[3];
-    for(int i=0;i<3;i++)coord[i] = (int)(floor(pcl.pos[i]/lat_resolution_)) %lat_part_.size(i); 
-    
+    for(int i=0;i<3;i++)coord[i] = (int)(floor(pcl.pos[i]/lat_resolution_)) %lat_part_.size(i);
+
     if(pcl.pos[2] >=boxSize_[2]) ranks[0] = parallel.grid_size()[0];
     else if (pcl.pos[2] < 0.) ranks[0] = -1;
     else ranks[0] = lat_part_.getRankDim0(coord[2]);
-    
+
     if(pcl.pos[1] >=boxSize_[1]) ranks[1] = parallel.grid_size()[1];
     else if (pcl.pos[1] < 0.) ranks[1] = -1;
     else ranks[1] = lat_part_.getRankDim1(coord[1]);
@@ -421,7 +420,7 @@ void Particles<part,part_info,part_dataType>::getPartNewProcess(part pcl,int * r
 template <typename part, typename part_info, typename part_dataType>
 void Particles<part,part_info,part_dataType>::getPartCoord(part pcl,int * coord)
 {
-    for(int i=0;i<3;i++)coord[i] = (int)(floor(pcl.pos[i]/lat_resolution_)) %lat_part_.size(i); 
+    for(int i=0;i<3;i++)coord[i] = (int)(floor(pcl.pos[i]/lat_resolution_)) %lat_part_.size(i);
 }
 
 
@@ -439,7 +438,7 @@ void Particles<part,part_info,part_dataType>::coutPart(long ID)
 {
     Site x(lat_part_);
     typename std::list<part>::iterator it;
-    
+
     for(x.first();x.test();x.next())
     {
         if((field_part_)(x).size!=0)
@@ -449,9 +448,9 @@ void Particles<part,part_info,part_dataType>::coutPart(long ID)
                 if((*it).ID==ID)cout<< "Parallel ranks: ("<<parallel.grid_rank()[1]<<","<<parallel.grid_rank()[0]<<") ; "<< part_global_info_.type_name<<": "<<*it<<endl;
             }
         }
-        
+
     }
-    
+
 }
 
 
@@ -462,7 +461,7 @@ bool Particles<part,part_info,part_dataType>::addParticle_global(part newPart)
   int coord[3];
 
   this->getPartCoord(newPart,coord);
-    
+
   if(x.setCoord(coord))
     {
       field_part_(x).size += 1;
@@ -486,10 +485,10 @@ Real Particles<part,part_info,part_dataType>::updateVel(Real (*updateVel_funct)(
                int * reduce_type,
                int noutput)
 {
-    
+
     Site  xPart(lat_part_);
     Site * sites = NULL;
-    
+
     if(nfields!=0)
     {
         sites = new LATfield2::Site[nfields];
@@ -499,26 +498,26 @@ Real Particles<part,part_info,part_dataType>::updateVel(Real (*updateVel_funct)(
             sites[i].first();
         }
     }
-    
+
     typename std::list<part>::iterator it;
     double frac[3];
     double x0;
     Real maxvel = 0.;
     Real v2;
-    
+
     //cout<<"arg"<<endl;
 
-    
+
     double * output_temp;
     output_temp =new double[noutput];
-    
+
     if(noutput>0)for(int i=0;i<noutput;i++)
     {
         //COUT<<reduce_type[i]<<endl;
         if(reduce_type[i] & (SUM | SUM_LOCAL))
         {
             output[i]=0;
-            
+
             //COUT<< "sum" <<endl;
         }
         else if(reduce_type[i] & (MIN | MIN_LOCAL))
@@ -532,7 +531,7 @@ Real Particles<part,part_info,part_dataType>::updateVel(Real (*updateVel_funct)(
             //COUT<<"max"<<endl;
         }
     }
-   
+
     for(xPart.first() ; xPart.test(); xPart.next())
     {
         if(field_part_(xPart).size!=0)
@@ -541,8 +540,8 @@ Real Particles<part,part_info,part_dataType>::updateVel(Real (*updateVel_funct)(
             {
                 for (int l=0; l<3; l++)
                     frac[l] = modf( (*it).pos[l] / lat_resolution_, &x0);
-                
-                
+
+
                 v2 = updateVel_funct(dtau,
                            lat_resolution_,
                            &(*it),
@@ -554,9 +553,9 @@ Real Particles<part,part_info,part_dataType>::updateVel(Real (*updateVel_funct)(
                            params,
                            output_temp,
                            noutput);
-                 
+
                 if(v2>maxvel)maxvel=v2;
-                
+
                 if(noutput>0)for(int i=0;i<noutput;i++)
                 {
                     //COUT<<reduce_type[i]<<endl;
@@ -574,8 +573,8 @@ Real Particles<part,part_info,part_dataType>::updateVel(Real (*updateVel_funct)(
                     }
                 }
 
-                
-                
+
+
             }
         }
         for(int i=0;i<nfields;i++) sites[i].next();
@@ -600,7 +599,7 @@ Real Particles<part,part_info,part_dataType>::updateVel(Real (*updateVel_funct)(
 
     delete[] output_temp;
     if(nfields>0) delete[] sites;
-    
+
     return sqrt(maxvel);
 
 
@@ -617,44 +616,44 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                                                             int * reduce_type,
                                                             int noutput)
 {
-    
+
 
 #ifdef DEBUG_MOVE
     cout<<parallel.rank()<<"; move start"<<endl;
 #endif
-    
+
     parallel.barrier();
-    
+
     LATfield2::Site x(lat_part_);
     LATfield2::Site xNew(lat_part_);
     LATfield2::Site * sites = NULL;
-    
+
     typename std::list<part>::iterator it,itTemp;
     //Real b[3];
     double frac[3];
     double x0;
     int localCoord[3];
     int newLocalCoord[3];
-    
+
     bool flag[4];
-    
-        
+
+
     part **sendBuffer;
     part **recBuffer;
-    
-    
+
+
     sendBuffer = new part*[6];
     recBuffer = new part*[6];
-    
+
     part * pTemp;
-    
+
     long p;
     long bufferSize[6];
     long bufferSizeRec[6];
-        
+
     std::list<part>  part_moveProc[8];
-    
-    
+
+
     if(nfields!=0)
     {
         sites = new LATfield2::Site[nfields];
@@ -664,18 +663,18 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
             sites[i].first();
         }
     }
-    
-    
+
+
     double * output_temp;
     output_temp =new double[noutput];
-    
+
     if(noutput>0)for(int i=0;i<noutput;i++)
     {
         //COUT<<reduce_type[i]<<endl;
         if(reduce_type[i] & (SUM | SUM_LOCAL))
         {
             output[i]=0;
-            
+
             //COUT<< "sum" <<endl;
         }
         else if(reduce_type[i] & (MIN | MIN_LOCAL))
@@ -690,19 +689,19 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
         }
     }
 
-    
-    
+
+
     for(x.first();x.test();x.next())
     {
         if(field_part_(x).size!=0)
         {
             for(int i=0;i<3;i++)localCoord[i] = x.coordLocal(i);
-            
+
             for(it=field_part_(x).parts.begin(); it != field_part_(x).parts.end();)
             {
                 itTemp = it;
                 ++it;
-                
+
 #ifdef DEBUG_CONTROLSPEED
                 double sizeTest[3]={boxSize_[0], boxSize_[1]/parallel.grid_size()[1], boxSize_[2]/parallel.grid_size()[0]};
                 for(int l=0;l<3;l++)
@@ -717,7 +716,7 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
 #endif
                 for (int l=0; l<3; l++)
                     frac[l] = modf( (*itTemp).pos[l] / lat_resolution_, &x0);
-                
+
                 move_funct(dtau,
                            lat_resolution_,
                            &(*itTemp),
@@ -729,8 +728,8 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                            params,
                            output_temp,
                            noutput);
-                
-                
+
+
                 if(noutput>0)for(int i=0;i<noutput;i++)
                 {
                     //COUT<<reduce_type[i]<<endl;
@@ -748,21 +747,21 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                     }
                 }
 
-            
-                
+
+
                 int partRanks[2];
                 int thisRanks[2];
-                getPartNewProcess((*itTemp),partRanks); 
+                getPartNewProcess((*itTemp),partRanks);
                 thisRanks[0] = parallel.grid_rank()[0];
                 thisRanks[1] = parallel.grid_rank()[1];
-                
+
                 for(int i=0;i<3;i++)
                 {
                     if((*itTemp).pos[i]<0)itTemp->pos[i] +=  boxSize_[i];
                     if((*itTemp).pos[i]>=boxSize_[i])itTemp->pos[i]-=boxSize_[i];
                 }
-                
-               
+
+
                 if(partRanks[0]==thisRanks[0] && partRanks[1]==thisRanks[1])
                 {
                     int r[3];
@@ -771,7 +770,7 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                     {
                         cout<<"arg"<< *itTemp <<" ; "<< partRanks[0]<< " , " << thisRanks[0] <<endl;
                     }
-                    
+
                     getPartCoordLocal(*itTemp, newLocalCoord);
                     if(localCoord[0]!=newLocalCoord[0] || localCoord[1]!=newLocalCoord[1] || localCoord[2]!=newLocalCoord[2] )
                     {
@@ -780,7 +779,7 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                         field_part_(xNew).size += 1;
                         field_part_(x).size -= 1;
                     }
-                    
+
                 }
                 else if(partRanks[1]==thisRanks[1]-1)
                 {
@@ -790,12 +789,12 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                         field_part_(x).size -= 1;
                     }
                     else if(partRanks[0]==thisRanks[0]-1)
-                    { 
+                    {
                         part_moveProc[0].splice(part_moveProc[0].end(),field_part_(x).parts,itTemp);
                         field_part_(x).size -= 1;
                     }
                     else if(partRanks[0]==thisRanks[0]+1)
-                    { 
+                    {
                         part_moveProc[1].splice(part_moveProc[1].end(),field_part_(x).parts,itTemp);
                         field_part_(x).size -= 1;
                     }
@@ -847,23 +846,23 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                 {
                     cout<< "particle : "<<(*itTemp).ID<<" have move to far away (more than 1 proc)."<<endl;
                 }
-                
+
             }
         }
-        
+
         if(nfields!=0) for(int i=0;i<nfields;i++) sites[i].next();
-        
+
     }
-     
-    
-    
-     
+
+
+
+
     for(x.first();x.test();x.next())if((field_part_)(x).size!=0)(field_part_)(x).parts.splice((field_part_)(x).parts.end(), (field_part_)(x).partsTemp );
-    
-     
+
+
      //cout<<"starting first dim"<<endl;
-     
-     
+
+
     if(noutput>0)for(int i=0;i<noutput;i++)
     {
         //COUT<<reduce_type[i]<<endl;
@@ -892,13 +891,13 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
     {
         numParticles_ -=  part_moveProc[i].size();
     }
-    
-    
-   
+
+
+
     ////////////////////////////////////////////////////////////////
     //First send Y direction
-    
-    
+
+
     //cout<<"okokok  move firs statrt pack"<<endl;
     //pack data
     for(int i=0;i<6;i++)
@@ -910,30 +909,30 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
             for(it=part_moveProc[i].begin(),p=0; it != part_moveProc[i].end();++it,p++)sendBuffer[i][p] = (*it);
             part_moveProc[i].clear();
         }
-    
+
     }
-    
-    
+
+
      //cout<<"okokok  move firs statrt comm"<<endl;
-    
+
     if(parallel.grid_rank()[1]%2==0)
 	{
 		////////////////////////////////
 		///send/rec to/from higher rank
 		////////////////////////////////
-		
+
         if(parallel.grid_rank()[1]!=parallel.grid_size()[1]-1)/// si pas le dernier alors envoie au +1
 	    {
             //send
             parallel.send_dim1( &bufferSize[3], 3, parallel.grid_rank()[1]+1);
             for(int i=3;i<6;i++)
-            {   
+            {
                 if(bufferSize[i]!=0)
                 {
                     parallel.send_dim1( sendBuffer[i], bufferSize[i] , parallel.grid_rank()[1]+1);
                 }
             }
-            
+
             //recieve
             parallel.receive_dim1( &bufferSizeRec[3], 3, parallel.grid_rank()[1]+1);
             for(int i=3;i<6;i++)
@@ -942,15 +941,15 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                 {
                     recBuffer[i]=new part[bufferSizeRec[i]];
                     parallel.receive_dim1( recBuffer[i], bufferSizeRec[i] , parallel.grid_rank()[1]+1);
-                    
+
                 }
             }
 	    }
-        
+
         //////////////////////////////
         ///send/rec to/from lower rank
         //////////////////////////////
-		
+
         if(parallel.grid_rank()[1] != 0)     /// si pas le premier alors envoie au -1
 	    {
             //send
@@ -970,10 +969,10 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                 {
                     recBuffer[i]=new part[bufferSizeRec[i]];
                     parallel.receive_dim1( recBuffer[i], bufferSizeRec[i] , parallel.grid_rank()[1]-1);
-                    
+
                 }
             }
-            
+
 	    }
         else if(parallel.grid_size()[1]%2==0)  /// si pair et = 0 alors envoi au dernier
 	    {
@@ -994,21 +993,21 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                 {
                     recBuffer[i]=new part[bufferSizeRec[i]];
                     parallel.receive_dim1( recBuffer[i], bufferSizeRec[i] , parallel.grid_size()[1]-1);
-                    
+
                 }
             }
 	    }
-        
-        
+
+
 	}
     else
     {
         //////////////////////////////
         ///rec/send from/to lower rank
         //////////////////////////////
-        
+
         //tous recois du -1 puis envois au -1
-        
+
         //recieve
         parallel.receive_dim1( bufferSizeRec, 3, parallel.grid_rank()[1]-1);
         for(int i=0;i<3;i++)
@@ -1028,15 +1027,15 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                 parallel.send_dim1( sendBuffer[i], bufferSize[i] , parallel.grid_rank()[1]-1);
             }
         }
-        
-        
+
+
         //////////////////////////////
         //rec/send from/to higher rank
         /////////////////////////////
-        
+
         if(parallel.grid_rank()[1]!=parallel.grid_size()[1]-1)//si pas dernier alors recoi du +1
         {
-            
+
             //recieve
             parallel.receive_dim1( &bufferSizeRec[3], 3, parallel.grid_rank()[1]+1);
             for(int i=3;i<6;i++)
@@ -1047,7 +1046,7 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                     parallel.receive_dim1( recBuffer[i], bufferSizeRec[i] , parallel.grid_rank()[1]+1);
                 }
             }
-            
+
             //send
             parallel.send_dim1( &bufferSize[3], 3, parallel.grid_rank()[1]+1);
             for(int i=3;i<6;i++)
@@ -1057,12 +1056,12 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                     parallel.send_dim1( sendBuffer[i], bufferSize[i] , parallel.grid_rank()[1]+1);
                 }
             }
-            
-            
+
+
         }
         else // si dernier alors pair et recoi du premier
         {
-            
+
             //recieve
             parallel.receive_dim1( &bufferSizeRec[3], 3, 0);
             for(int i=3;i<6;i++)
@@ -1071,10 +1070,10 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                 {
                     recBuffer[i]=new part[bufferSizeRec[i]];
                     parallel.receive_dim1( recBuffer[i], bufferSizeRec[i] , 0);
-                    
+
                 }
             }
-            
+
             //send
             parallel.send_dim1( &bufferSize[3], 3,0);
             for(int i=3;i<6;i++)
@@ -1086,10 +1085,10 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
             }
         }
     }
-	
+
 	//if unpair :
 	/////////////
-	
+
     if(parallel.grid_size()[1]%2!=0)
     {
         if(parallel.grid_rank()[1]==0)
@@ -1116,7 +1115,7 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
         }
         if(parallel.grid_rank()[1]==parallel.grid_size()[1]-1)
         {
-            
+
             //recieve
             parallel.receive_dim1( &bufferSizeRec[3], 3, 0);
             for(int i=3;i<6;i++)
@@ -1127,7 +1126,7 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                     parallel.receive_dim1( recBuffer[i], bufferSizeRec[i] , 0);
                 }
             }
-            
+
             //send
             parallel.send_dim1( &bufferSize[3], 3,0);
             for(int i=3;i<6;i++)
@@ -1139,48 +1138,48 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
             }
         }
     }
-    
-    
+
+
     //cout<<"okokok  move firs statrt unpack"<<endl;
-    
+
     //unpack local list: rec[2] and rec[5]
-    
+
     //add partnum
     numParticles_ += bufferSizeRec[2] + bufferSizeRec[5];
     for(int i=0;i<bufferSizeRec[2];i++)
     {
         this->getPartCoordLocal(recBuffer[2][i],newLocalCoord);
         x.setCoordLocal(newLocalCoord);
-        
+
         field_part_(x).size += 1;
         field_part_(x).parts.push_back(recBuffer[2][i]);
 #ifdef DEBUG_MOVE
         int verif;
         verif=addParticle_global(recBuffer[2][i]);
-        
+
         if(verif != 1)
         {
             cout<<parallel.rank()<<"; MOVEBUF2 partID "<< recBuffer[2][i].ID<<" is not in the correct proc. " << recBuffer[2][i]<<endl;
         }
 #endif
     }
-    
+
     //cout<<"buffer size: "<<bufferSizeRec[5]<<endl;
     //if(bufferSizeRec[5]!=0)
     for(int i=0;i<bufferSizeRec[5];i++)
     {
         //cout<<i<<endl;
-        
+
         this->getPartCoordLocal(recBuffer[5][i],newLocalCoord);
-        
+
         x.setCoordLocal(newLocalCoord);
-        
+
         field_part_(x).size += 1;
         field_part_(x).parts.push_back(recBuffer[5][i]);
 #ifdef DEBUG_MOVE
         int verif;
         verif=addParticle_global(recBuffer[5][i]);
-        
+
         if(verif != 1)
         {
             cout<<parallel.rank()<<"; MOVEBUF5 partID "<< recBuffer[5][i].ID<<" is not in the correct proc. "<<recBuffer[5][i] <<endl;
@@ -1188,32 +1187,32 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
 #endif
 
     }
-     
-    
+
+
 #ifdef DEBUG_MOVE
     cout<<parallel.rank()<<"; move : end of buffer 2 and 5 copy"<<endl;
 #endif
-    
+
     //cout<<"unpack done  "<<endl;
-    
+
     pTemp = sendBuffer[0];
     sendBuffer[0]=recBuffer[0];
     recBuffer[0]=pTemp;
     if(bufferSize[0]!=0)delete[] recBuffer[0];
     bufferSize[0]=bufferSizeRec[0];
-        
+
     pTemp = sendBuffer[1];
     sendBuffer[1]=recBuffer[3];
     recBuffer[3]=pTemp;
     if(bufferSize[1]!=0)delete[] recBuffer[3];
     bufferSize[1]=bufferSizeRec[3];
-    
+
     pTemp = sendBuffer[3];
     sendBuffer[3]=recBuffer[1];
     recBuffer[1]=pTemp;
     if(bufferSize[3]!=0)delete[] recBuffer[1];
     bufferSize[3]=bufferSizeRec[1];
-    
+
     pTemp = sendBuffer[4];
     sendBuffer[4]=recBuffer[4];
     recBuffer[4]=pTemp;
@@ -1224,11 +1223,11 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
     if(bufferSizeRec[2]!=0)delete[] recBuffer[2];
     if(bufferSize[5]!=0)delete[] sendBuffer[5];
     if(bufferSizeRec[5]!=0)delete[] recBuffer[5];
-    
-    
-    
+
+
+
     //pack list 6 & 7 into buffer 2 & 5
-    
+
     bufferSize[2]=part_moveProc[6].size();
     if( bufferSize[2]!=0 )
     {
@@ -1237,7 +1236,7 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
         part_moveProc[6].clear();
     }
 
-    
+
     bufferSize[5]=part_moveProc[7].size();
     if( bufferSize[5]!=0 )
     {
@@ -1246,26 +1245,26 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
         part_moveProc[7].clear();
     }
    //send z
-    
+
     if(parallel.grid_rank()[0]%2==0)
 	{
 		////////////////////////////////
 		///send/rec to/from higher rank
 		////////////////////////////////
-		
+
 		if(parallel.grid_rank()[0]!=parallel.grid_size()[0]-1)/// si pas le dernier alors envoie au +1
 		{
             //send
             parallel.send_dim0( &bufferSize[3], 3, parallel.grid_rank()[0]+1);
             for(int i=3;i<6;i++)
-            {   
+            {
                 if(bufferSize[i]!=0)
                 {
                     parallel.send_dim0( sendBuffer[i], bufferSize[i] , parallel.grid_rank()[0]+1);
                 }
-                
+
             }
-            
+
             //recieve
             parallel.receive_dim0( &bufferSizeRec[3], 3, parallel.grid_rank()[0]+1);
             for(int i=3;i<6;i++)
@@ -1274,15 +1273,15 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                 {
                     recBuffer[i]=new part[bufferSizeRec[i]];
                     parallel.receive_dim0( recBuffer[i], bufferSizeRec[i] , parallel.grid_rank()[0]+1);
-                    
+
                 }
             }
 		}
-		
+
 		//////////////////////////////
 		///send/rec to/from lower rank
 		//////////////////////////////
-		
+
 		if(parallel.grid_rank()[0] != 0)     /// si pas le premier alors envoie au -1
 		{
             //send
@@ -1302,10 +1301,10 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                 {
                    recBuffer[i]=new part[bufferSizeRec[i]];
                     parallel.receive_dim0( recBuffer[i], bufferSizeRec[i] , parallel.grid_rank()[0]-1);
-                    
+
                 }
             }
-            
+
 		}
 		else if(parallel.grid_size()[0]%2==0)  /// si pair et = 0 alors envoi au dernier
 		{
@@ -1326,20 +1325,20 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                 {
                     recBuffer[i]=new part[bufferSizeRec[i]];
                     parallel.receive_dim0( recBuffer[i], bufferSizeRec[i] , parallel.grid_size()[0]-1);
-                    
+
                 }
             }
 		}
-        
+
 	}
 	else
 	{
 		//////////////////////////////
 		///rec/send from/to lower rank
 		//////////////////////////////
-        
+
 		//tous recois du -1 puis envois au -1
-		
+
         //recieve
         parallel.receive_dim0( bufferSizeRec, 3, parallel.grid_rank()[0]-1);
         for(int i=0;i<3;i++)
@@ -1348,7 +1347,7 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
             {
                 recBuffer[i]=new part[bufferSizeRec[i]];
                 parallel.receive_dim0( recBuffer[i], bufferSizeRec[i] , parallel.grid_rank()[0]-1);
-                
+
             }
         }
         //send
@@ -1360,15 +1359,15 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                 parallel.send_dim0( sendBuffer[i], bufferSize[i] , parallel.grid_rank()[0]-1);
             }
 		}
-        
-        
+
+
 		//////////////////////////////
 		//rec/send from/to higher rank
 		/////////////////////////////
-        
+
         if(parallel.grid_rank()[0]!=parallel.grid_size()[0]-1)//si pas dernier alors recoi du +1
 		{
-            
+
             //recieve
             parallel.receive_dim0( &bufferSizeRec[3], 3, parallel.grid_rank()[0]+1);
             for(int i=3;i<6;i++)
@@ -1377,10 +1376,10 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                 {
                     recBuffer[i]=new part[bufferSizeRec[i]];
                     parallel.receive_dim0( recBuffer[i], bufferSizeRec[i] , parallel.grid_rank()[0]+1);
-                    
+
                 }
             }
-            
+
             //send
             parallel.send_dim0( &bufferSize[3], 3, parallel.grid_rank()[0]+1);
             for(int i=3;i<6;i++)
@@ -1390,11 +1389,11 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                     parallel.send_dim0( sendBuffer[i], bufferSize[i] , parallel.grid_rank()[0]+1);
                 }
             }
-            
+
 		}
 		else // si dernier alors pair et recoi du premier
 		{
-            
+
             //recieve
             parallel.receive_dim0( &bufferSizeRec[3], 3, 0);
             for(int i=3;i<6;i++)
@@ -1405,7 +1404,7 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                     parallel.receive_dim0( recBuffer[i], bufferSizeRec[i] , 0);
                 }
             }
-            
+
             //send
             parallel.send_dim0( &bufferSize[3], 3,0);
             for(int i=3;i<6;i++)
@@ -1416,12 +1415,12 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                 }
 			}
 		}
-        
+
 	}
-	
+
 	//if unpair :
 	/////////////
-	
+
 	if(parallel.grid_size()[0]%2!=0)
 	{
 		if(parallel.grid_rank()[0]==0)
@@ -1443,13 +1442,13 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                 {
                     recBuffer[i]=new part[bufferSizeRec[i]];
                     parallel.receive_dim0( recBuffer[i], bufferSizeRec[i] , parallel.grid_size()[0]-1);
-                    
+
                 }
             }
 		}
 		if(parallel.grid_rank()[0]==parallel.grid_size()[0]-1)
 		{
-            
+
             //recieve
             parallel.receive_dim0( &bufferSizeRec[3], 3, 0);
             for(int i=3;i<6;i++)
@@ -1458,10 +1457,10 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                 {
                     recBuffer[i]=new part[bufferSizeRec[i]];
                     parallel.receive_dim0( recBuffer[i], bufferSizeRec[i] , 0);
-                    
+
                 }
             }
-            
+
             //send
             parallel.send_dim0( &bufferSize[3], 3,0);
             for(int i=3;i<6;i++)
@@ -1473,27 +1472,27 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
             }
 		}
 	}
-    
+
     //unpack data
 	for(int i=0;i<6;i++)
     {
 	    numParticles_ += bufferSizeRec[i] ;
     }
-    
+
     for(int p=0;p<6;p++)
     {
         for(int i=0;i<bufferSizeRec[p];i++)
         {
             this->getPartCoordLocal(recBuffer[p][i],newLocalCoord);
-            
+
             x.setCoordLocal(newLocalCoord);
-            
+
             field_part_(x).size += 1;
             field_part_(x).parts.push_back(recBuffer[p][i]);
         }
     }
-    
-     
+
+
     for(int i=0;i<6;i++)
     {
         if(bufferSize[i]!=0)delete[] sendBuffer[i];
@@ -1501,9 +1500,9 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
     }
     delete[] sendBuffer;
     delete[] recBuffer;
-    
+
   if(nfields!=0 && sites) { delete[] sites; sites = NULL; };
-    
+
 }
 
 
@@ -1518,9 +1517,9 @@ void Particles<part,part_info,part_dataType>::saveHDF5(string filename_base, int
         exit(111);
     }
     string filename;
-    
-    
-    
+
+
+
     int numProcPerFile = parallel.size()/fileNumber;
     int numProcPerFileDim1 = parallel.grid_size()[1]/fileNumber;
     int whichFile  = parallel.grid_rank()[1] * fileNumber / parallel.grid_size()[1];
@@ -1536,14 +1535,14 @@ void Particles<part,part_info,part_dataType>::saveHDF5(string filename_base, int
     LATfield2::Site x(lat_part_);
     typename std::list<part>::iterator it;
     int rang[3];
-    
-    
+
+
     rang[0]= whichFile * numProcPerFile ;
     rang[1]= ((whichFile+1) * numProcPerFile) -1;
     rang[2]=1;
     MPI_Group_range_incl(parallel.lat_world_group(),1,&rang,&fileGroup);
     MPI_Comm_create(parallel.lat_world_comm(),fileGroup , &fileComm);
-   
+
   index=0;
   for(x.first();x.test();x.next())
     {
@@ -1560,7 +1559,7 @@ void Particles<part,part_info,part_dataType>::saveHDF5(string filename_base, int
             }
         }
     }
-  
+
   fileDsc fd;
   fd.fileNumber=fileNumber;
   fd.numParts=numParticles_;
@@ -1576,25 +1575,25 @@ void Particles<part,part_info,part_dataType>::saveHDF5(string filename_base, int
     fd.localBoxOffset[0] = 0;
     fd.localBoxOffset[1] = lat_resolution_ * (Real)(lat_part_.coordSkip()[1]);
     fd.localBoxOffset[2] = lat_resolution_ * (Real)(lat_part_.coordSkip()[0]);
-    
-    
+
+
     Real fileBoxSize[fileNumber];
     for(int i=0;i<fileNumber;i++)fileBoxSize[i]=0;
     fileBoxSize[whichFile]=fd.localBoxSize[1];
     parallel.sum_dim1(fileBoxSize,fileNumber);
-    
-   
-    
+
+
+
     Real fileBoxOffset[fileNumber];
     for(int i=0;i<fileNumber;i++)fileBoxOffset[i]=boxSize_[1]+1.;
     fileBoxOffset[whichFile]=fd.localBoxOffset[1];
     parallel.min_dim1(fileBoxOffset,fileNumber);
-       
+
     fd.fileBoxSize = fileBoxSize[whichFile];
     fd.fileBoxOffset = fileBoxOffset[whichFile];
-    
-    
-    
+
+
+
   if(fileNumber==1)  filename = filename_base +".h5";
   else filename = filename_base + "_" + int2string(whichFile,999)+".h5";
 
@@ -1619,23 +1618,23 @@ void Particles<part,part_info,part_dataType>::loadHDF5(string filename_base, int
 {
     //get_fd_global.
     struct fileDsc fd[fileNumber];
-   
+
     part * partList;
     long partList_size,partList_offset;
-    
+
     string filename;
     part_info part_info_file;
-    
+
     std::list<int> file_list;
     std::list<int> block_list;
     std::list<int>::iterator it;
-    
+
     std::list<fileDsc> fileDscList;
-    
+
     long * numParts_file;
     Real * localBoxOffset_file;
     Real * localBoxSize_file;
-   
+
         if(fileNumber ==1)
         {
             get_fileDsc_global(filename_base + ".h5",fd[0]);
@@ -1646,51 +1645,51 @@ void Particles<part,part_info,part_dataType>::loadHDF5(string filename_base, int
             for(int i=0;i<fileNumber;i++)get_fileDsc_global(filename_base + "_" + int2string(i,999)+".h5",fd[i]);
             get_partInfo(filename_base + "_" + int2string(0,999)+".h5",part_info_file,part_datatype_);
         }
-    
-    
-    
+
+
+
     if(fd[0].boxSize[0]!=boxSize_[0] || fd[0].boxSize[1]!=boxSize_[1] || fd[0].boxSize[2]!=boxSize_[2]){
         cout<<"LATfield2::Particles::loadHDF5  :  wrong boxSize, exiting: "<< fd[0].boxSize[0] <<", "<< boxSize_[0] <<endl;
         exit(-111);
     }
-    
+
     //verif if it is correct parlicles.
-   
+
     string type_name_file = part_info_file.type_name;
     string type_name_mem = part_global_info_.type_name;
-     
+
     if(type_name_file.compare(type_name_file))
     {
         cout<<"LATfield2::Particles::loadHDF5  :  wrong particles type, expecting "<<type_name_mem <<", exiting"<<endl;
         exit(-111);
     }
-    
+
     part_global_info_ = part_info_file;
-    
+
     //compute which file to read.
-    
+
     Real localBoxOffset[3];
     Real localBoxSize[3];
-    
+
     localBoxOffset[0] = 0;
     localBoxOffset[1] = lat_resolution_ * (Real)(lat_part_.coordSkip()[1]);
     localBoxOffset[2] = lat_resolution_ * (Real)(lat_part_.coordSkip()[0]);
-    
+
     for(int i=0;i<3;i++)
     {
         localBoxSize[i] = lat_resolution_ * (Real)(lat_part_.sizeLocal(i));
     }
-    
+
     for(int i=0;i<fileNumber;i++)
     {
         //cout<<"offset: "<<fd[i].fileBoxOffset<<endl;
         //cout<<"box: "<<fd[i].fileBoxSize<<endl;
-        
+
         if( !(localBoxOffset[1] >= fd[i].fileBoxOffset+fd[i].fileBoxSize) &&
            !(fd[i].fileBoxOffset >= localBoxOffset[1] + localBoxSize[1]) ) file_list.push_back(i);
-        
+
     }
-    
+
     for(it = file_list.begin();it != file_list.end(); it++)
     {
 
@@ -1699,54 +1698,54 @@ void Particles<part,part_info,part_dataType>::loadHDF5(string filename_base, int
         numParts_file = new long[nPP];
         localBoxOffset_file = new Real[3*nPP];
         localBoxSize_file = new Real[3*nPP];
-        
+
         if(fileNumber ==1)get_fileDsc_local(filename_base + ".h5",numParts_file,
                                             localBoxOffset_file,localBoxSize_file,nPP);
         else get_fileDsc_local(filename_base + "_" + int2string((*it),999)+".h5",
                                numParts_file,localBoxOffset_file,localBoxSize_file,nPP);
-            
-        
+
+
         //look if need to reed a block, if yes read it and add particles...
         for(int i=0;i<fd[(*it)].numProcPerFile;i++)
         {
             if( !(localBoxOffset[2] >= localBoxOffset_file[3*i+2] + localBoxSize_file[3*i+2]) &&
-                !(localBoxOffset_file[3*i+2] >= localBoxOffset[2] + localBoxSize[2])  && 
+                !(localBoxOffset_file[3*i+2] >= localBoxOffset[2] + localBoxSize[2])  &&
                !(localBoxOffset[1] >= localBoxOffset_file[3*i+1] + localBoxSize_file[3*i+1]) &&
                !(localBoxOffset_file[3*i+1] >= localBoxOffset[1] + localBoxSize[1])  ){
-                                
+
                 //load the particles list...
                 partList_size = numParts_file[i];
                 partList_offset=0;
                 for(int l=0;l<i;l++)partList_offset += numParts_file[l];
                 partList = new part[partList_size];
-                
+
                 //cout<< "list size: "<<partList_size <<endl;
-                
+
                 if(fileNumber ==1)get_part_sublist(filename_base + ".h5",
                                                    partList_offset,partList_size,partList,part_datatype_);
                 else get_part_sublist(filename_base + "_" + int2string((*it),999)+".h5",
                                       partList_offset,partList_size,partList,part_datatype_);
-                
-                
+
+
                 for(int p=0;p<partList_size;p++)
                 {
                     this->addParticle_global(partList[p]);
                 }
-                
-                
+
+
                 delete[] partList;
             }
         }
-        
+
         delete[] numParts_file;
         delete[] localBoxOffset_file;
         delete[] localBoxSize_file;
         //cout<< parallel.grid_rank()[0]<<";"<< parallel.grid_rank()[1] <<" ,  nparts: "<< numParticles_ << endl;
-        
-        
+
+
     }
-    
-    
+
+
 }
 #endif
 
@@ -1761,8 +1760,8 @@ void Particles<part,part_info,part_dataType>::saveHDF5_server_write(string filen
 {
     if(!(io_file_.is_open))
         io_file_ = ioserver.openFile(filename_base.c_str() ,UNSTRUCTURED_H5_FILE, part_datatype_.part_memType, part_datatype_.part_fileType);
-    
-    
+
+
     part * partlist;
     partlist = new part[numParticles_];
     LATfield2::Site x(lat_part_);
@@ -1774,7 +1773,7 @@ void Particles<part,part_info,part_dataType>::saveHDF5_server_write(string filen
         {
             for(it=field_part_(x).parts.begin(); it != field_part_(x).parts.end();++it)
             {
-                
+
                 for(int i=0;i<3;i++)
                 {
                     partlist[index]=(*it);
@@ -1785,7 +1784,7 @@ void Particles<part,part_info,part_dataType>::saveHDF5_server_write(string filen
     }
     ioserver.sendData(io_file_,(char*)partlist,numParticles_ * H5Tget_size(part_datatype_.part_memType));
     delete[] partlist;
-    
+
     hsize_t dim;
     hsize_t size[3];
     int file_number = ioserver.io_node_number();
@@ -1801,31 +1800,31 @@ void Particles<part,part_info,part_dataType>::saveHDF5_server_write(string filen
         localBoxSize[i] = lat_resolution_ * (Real)(lat_part_.sizeLocal(i));
         latSize[i]=lat_part_.size(i);
     }
-    
+
     Real localBoxOffset[3];
     localBoxOffset[0] = 0;
     localBoxOffset[1] = lat_resolution_ * (Real)(lat_part_.coordSkip()[1]);
     localBoxOffset[2] = lat_resolution_ * (Real)(lat_part_.coordSkip()[0]);
-    
-    
+
+
     Real fbs[file_number];
     for(int i=0;i<file_number;i++)fbs[i]=0;
     fbs[whichFile]=localBoxSize[1];
     parallel.sum_dim1(fbs,file_number);
-    
-    
+
+
     Real fbo[file_number];
     for(int i=0;i<file_number;i++)fbo[i]=boxSize_[1]+1.;
     fbo[whichFile]=localBoxOffset[1];
     parallel.min_dim1(fbo,file_number);
-    
-    
+
+
     long numPartsAll[numProcPerFile];
     Real localBoxOffsetAll[numProcPerFile*3];
     Real localBoxSizeAll[numProcPerFile*3];
     int mpi_rank = ioserver.compute_file_rank();
-    
-    
+
+
     numPartsAll[mpi_rank] = numParticles_;
     for(int i=0;i<3;i++)
     {
@@ -1859,10 +1858,10 @@ void Particles<part,part_info,part_dataType>::saveHDF5_server_write(string filen
     dim = 2;
     ioserver.sendDataset(io_file_,"localBoxOffset",(char*)localBoxOffsetAll,dim,size,REAL_TYPE);
     ioserver.sendDataset(io_file_,"localBoxSize",(char*)localBoxSizeAll,dim,size,REAL_TYPE);
-    
-    
+
+
     ioserver.closeFile(io_file_);
-    
+
 }
 #endif
 /**@}*/

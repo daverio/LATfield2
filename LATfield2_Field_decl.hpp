@@ -305,8 +305,13 @@ class Field
          \param filename : path to the file, from the executable folder.
          */
 
+<<<<<<< HEAD
       void loadHDF5(string filename,string dataset_name);
 	    void loadHDF5(string filename){loadHDF5(filename,"data");}
+=======
+        void loadHDF5(string filename,string dataset_name);
+	    	void loadHDF5(string filename){loadHDF5(filename, "data");}
+>>>>>>> 4a4adeb1ee4d44d4de36b483b79e93d1ca958ee8
 
         /*!
          A way to save coarse grained version of the fields. To be able to use this method the flag HDF5 need to be set at compilation (-DHDF5). Work only for 3D lattice!!!
@@ -318,7 +323,11 @@ class Field
          */
 
 	    void saveHDF5_coarseGrain3D(string filename,string dataset_name ,int ratio);
+<<<<<<< HEAD
 	    void saveHDF5_coarseGrain3D(string filename,int ratio){saveHDF5_coarseGrain3D(filename,"data",ratio);}
+=======
+	    void saveHDF5_coarseGrain3D(string filename,int ratio){this->saveHDF5_coarseGrain3D(filename,"data",ratio);}
+>>>>>>> 4a4adeb1ee4d44d4de36b483b79e93d1ca958ee8
 
         /*!
          Save a slice perpendicular to the first coordinate, at xcoord. To be able to use this method the flag HDF5 need to be set at compilation (-DHDF5).
@@ -331,7 +340,11 @@ class Field
          */
 
 	    void saveSliceHDF5(string filename,string dataset_name , int xcoord, int thickness = 1);
+<<<<<<< HEAD
 	    void saveSliceHDF5(string filename, int xcoord, int thickness = 1){saveSliceHDF5(filename,"data",xcoord,thickness);}
+=======
+	    void saveSliceHDF5(string filename, int xcoord, int thickness = 1){;}
+>>>>>>> 4a4adeb1ee4d44d4de36b483b79e93d1ca958ee8
 
 
 
@@ -1699,16 +1712,12 @@ void  Field<FieldType>::saveHDF5_coarseGrain3D(string filename, string dataset_n
         {
             for(int i=0;i<slocalsize[0];i++)
             {
-		//for(int i_block=0;i_block<blocksize;i_block++)sfield.data()[sindex*blocksize+i_block] = 0;
                 for(int i_block=0;i_block<blocksize;i_block++)sfield.data()[sindex*blocksize+i_block] = data_[index*blocksize + i_block];
-		for(int s=0;s<number_cg;s++)
+								for(int s=1;s<number_cg;s++)
                 {
                     for(int i_block=0;i_block<blocksize;i_block++)sfield.data()[sindex*blocksize+i_block] += data_[index*blocksize + index_cg[s] + i_block];
                 }
                 for(int i_block=0;i_block<blocksize;i_block++)sfield.data()[sindex*blocksize+i_block]/=number_cg;
-
-
-
 
                 index+=ratio;
                 sindex+=1;
