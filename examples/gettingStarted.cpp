@@ -65,7 +65,7 @@ int main(int argc, char **argv)
         x2  = pow(0.5 + x.coord(0) - lat.size(0)/2.,2.);
         x2 += pow(0.5 + x.coord(1) - lat.size(1)/2.,2.);
         x2 += pow(0.5 + x.coord(2) - lat.size(2)/2.,2.);
-        phi(x) = exp(-x2 * 2.);
+        phi(x) = 1.0 + x.coord(0);//exp(-x2 * 2.);
     }
 
     phi.updateHalo();

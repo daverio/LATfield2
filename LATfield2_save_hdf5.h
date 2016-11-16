@@ -19,8 +19,8 @@ extern "C"{
 
 	   char * filename;
 	   filename = (char*)malloc((filename_str.size()+1)*sizeof(char));
-           for(int i = 0;i<filename_str.size();i++)filename[i]=filename_str[i];
-           filename[filename_str.size()] = '\0';  
+     for(int i = 0;i<filename_str.size();i++)filename[i]=filename_str[i];
+     filename[filename_str.size()] = '\0';
 
 	   char  dataset_name[128];
 	   for(int i = 0;i<filename_str.size();i++)dataset_name[i]=dataset_name_str[i];
@@ -132,15 +132,19 @@ extern "C"{
 	   H5Sclose(memspace);
 	   H5Pclose(plist_id);
 	   H5Fclose(file_id);
-	   free(filename);  
+	   free(filename);
 
 	   return 1;
 
 #else // serial version, without H5_HAVE_PARALLEL definition hdf5 will run in serial !
 
+
+
 	   int mpi_size,mpi_rank,p;
 	   mpi_size = parallel.size();
 	   mpi_rank = parallel.rank();
+
+     cout<<"rank: "<<mpi_rank<<" , calling save HDF5 extern c serial"<<endl;
 
 	   if(mpi_rank==0)
 	   {
@@ -173,6 +177,7 @@ extern "C"{
 
 		   if(mpi_rank==p)
 		   {
+         cout<<"rank: "<<mpi_rank<<" , writting data"<<endl;
 			   plist_id = H5Pcreate(H5P_FILE_ACCESS);
 
 			   file_id = H5Fopen(filename,H5F_ACC_RDWR,plist_id);
@@ -195,7 +200,9 @@ extern "C"{
 
 			   H5Pclose(plist_id);
 			   H5Sclose(filespace);
+         H5Sclose(memspace);
 			   H5Dclose(dset_id);
+         H5Gclose(root_id);
 			   H5Fclose(file_id);
 
 		   }
@@ -329,10 +336,13 @@ extern "C"{
 				status = H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offsetf, NULL,count, NULL);
 				status = H5Dread(dset_id, dtype_id, memspace, filespace, plist_id, data);
 
-				H5Pclose(plist_id);
-				H5Sclose(filespace);
-				H5Dclose(dset_id);
-				H5Fclose(file_id);
+
+        H5Pclose(plist_id);
+        H5Sclose(filespace);
+        H5Sclose(memspace);
+        H5Dclose(dset_id);
+        H5Gclose(root_id);
+        H5Fclose(file_id);
 
 			}
 			MPI_Barrier(MPI_COMM_WORLD);

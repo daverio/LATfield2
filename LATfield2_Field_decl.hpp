@@ -305,8 +305,8 @@ class Field
          \param filename : path to the file, from the executable folder.
          */
 
-        void loadHDF5(string filename,string dataset_name);
-	    void loadHDF5(string filename){;}
+      void loadHDF5(string filename,string dataset_name);
+	    void loadHDF5(string filename){loadHDF5(filename,"data");}
 
         /*!
          A way to save coarse grained version of the fields. To be able to use this method the flag HDF5 need to be set at compilation (-DHDF5). Work only for 3D lattice!!!
@@ -318,7 +318,7 @@ class Field
          */
 
 	    void saveHDF5_coarseGrain3D(string filename,string dataset_name ,int ratio);
-	    void saveHDF5_coarseGrain3D(string filename,int ratio){;}
+	    void saveHDF5_coarseGrain3D(string filename,int ratio){saveHDF5_coarseGrain3D(filename,"data",ratio);}
 
         /*!
          Save a slice perpendicular to the first coordinate, at xcoord. To be able to use this method the flag HDF5 need to be set at compilation (-DHDF5).
@@ -331,8 +331,8 @@ class Field
          */
 
 	    void saveSliceHDF5(string filename,string dataset_name , int xcoord, int thickness = 1);
-	    void saveSliceHDF5(string filename, int xcoord, int thickness = 1){;}
-		
+	    void saveSliceHDF5(string filename, int xcoord, int thickness = 1){saveSliceHDF5(filename,"data",xcoord,thickness);}
+
 
 
 
@@ -342,9 +342,9 @@ class Field
 #endif
 
 
-	    //MISCELLANEOUS                                                                                      
-	    /*!                                                                                                          
-         Returns a pointer to the lattice on which the field is defined.                                             
+	    //MISCELLANEOUS
+	    /*!
+         Returns a pointer to the lattice on which the field is defined.
 	    */
 		Lattice& lattice();
         /*!
