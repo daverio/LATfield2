@@ -295,7 +295,7 @@ class Field
          */
 
 	    void saveHDF5(string filename, string dataset_name);
-	    void saveHDF5(string filename){saveHDF5(filename, "data");}
+	    void saveHDF5(string filename){this->saveHDF5(filename, "data");}
 
 	    /*!
          Method to load a field with HDF5. To be able to use this method the flag HDF5 need to be set at compilation (-DHDF5). This method use serial HDF5 by default. For parallel HDF5 the flag -DH5_HAVE_PARALLEL must be set at compilation.
@@ -305,13 +305,10 @@ class Field
          \param filename : path to the file, from the executable folder.
          */
 
-<<<<<<< HEAD
-      void loadHDF5(string filename,string dataset_name);
-	    void loadHDF5(string filename){loadHDF5(filename,"data");}
-=======
+
         void loadHDF5(string filename,string dataset_name);
-	    	void loadHDF5(string filename){loadHDF5(filename, "data");}
->>>>>>> 4a4adeb1ee4d44d4de36b483b79e93d1ca958ee8
+	    	void loadHDF5(string filename){this->loadHDF5(filename, "data");}
+
 
         /*!
          A way to save coarse grained version of the fields. To be able to use this method the flag HDF5 need to be set at compilation (-DHDF5). Work only for 3D lattice!!!
@@ -323,11 +320,8 @@ class Field
          */
 
 	    void saveHDF5_coarseGrain3D(string filename,string dataset_name ,int ratio);
-<<<<<<< HEAD
-	    void saveHDF5_coarseGrain3D(string filename,int ratio){saveHDF5_coarseGrain3D(filename,"data",ratio);}
-=======
 	    void saveHDF5_coarseGrain3D(string filename,int ratio){this->saveHDF5_coarseGrain3D(filename,"data",ratio);}
->>>>>>> 4a4adeb1ee4d44d4de36b483b79e93d1ca958ee8
+
 
         /*!
          Save a slice perpendicular to the first coordinate, at xcoord. To be able to use this method the flag HDF5 need to be set at compilation (-DHDF5).
@@ -340,11 +334,8 @@ class Field
          */
 
 	    void saveSliceHDF5(string filename,string dataset_name , int xcoord, int thickness = 1);
-<<<<<<< HEAD
-	    void saveSliceHDF5(string filename, int xcoord, int thickness = 1){saveSliceHDF5(filename,"data",xcoord,thickness);}
-=======
-	    void saveSliceHDF5(string filename, int xcoord, int thickness = 1){;}
->>>>>>> 4a4adeb1ee4d44d4de36b483b79e93d1ca958ee8
+	    void saveSliceHDF5(string filename, int xcoord, int thickness = 1){this->saveSliceHDF5(filename,"data",xcoord,thickness);}
+
 
 
 
