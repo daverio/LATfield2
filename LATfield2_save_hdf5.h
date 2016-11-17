@@ -144,7 +144,7 @@ extern "C"{
 	   mpi_size = parallel.size();
 	   mpi_rank = parallel.rank();
 
-     cout<<"rank: "<<mpi_rank<<" , calling save HDF5 extern c serial"<<endl;
+     //cout<<"rank: "<<mpi_rank<<" , calling save HDF5 extern c serial"<<endl;
 
 	   if(mpi_rank==0)
 	   {
@@ -177,7 +177,7 @@ extern "C"{
 
 		   if(mpi_rank==p)
 		   {
-         cout<<"rank: "<<mpi_rank<<" , writting data"<<endl;
+         //cout<<"rank: "<<mpi_rank<<" , writting data"<<endl;
 			   plist_id = H5Pcreate(H5P_FILE_ACCESS);
 
 			   file_id = H5Fopen(filename,H5F_ACC_RDWR,plist_id);
