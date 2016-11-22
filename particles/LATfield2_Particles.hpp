@@ -1548,15 +1548,11 @@ void Particles<part,part_info,part_dataType>::saveHDF5(string filename_base, int
     {
       if(field_part_(x).size!=0)
         {
-	  for(it=field_part_(x).parts.begin(); it != field_part_(x).parts.end();++it)
-            {
-
-	      for(int i=0;i<3;i++)
-                {
-		  partlist[index]=(*it);
-                }
-	      index++;
-            }
+	         for(it=field_part_(x).parts.begin(); it != field_part_(x).parts.end();++it)
+           {
+	             partlist[index]=(*it);
+               index++;
+           }
         }
     }
 
