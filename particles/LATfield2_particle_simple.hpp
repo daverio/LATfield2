@@ -102,7 +102,7 @@ struct part_simple_dataType{
     H5Tinsert(part_info_memType, "type_name_size", HOFFSET (part_simple_info, type_name_size),INT_TYPE_FILE );
     H5Tinsert(part_info_memType, "type_name", HOFFSET (part_simple_info, type_name), strtype);
 
-    
+
     part_fileType = H5Tcreate (H5T_COMPOUND, sizeof(long) + 6 * sizeof(Real) );
     H5Tinsert(part_fileType, "ID"       ,0  ,LONG_TYPE_FILE);
     H5Tinsert(part_fileType, "positionX",sizeof(long)                    ,REAL_TYPE_FILE);
