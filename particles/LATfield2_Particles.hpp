@@ -85,6 +85,8 @@ CREATE_MEMBER_DETECTOR_MAXI(mass)
 #define MIN_LOCAL      16
 #define MAX_LOCAL      32
 
+#define MAX_NUMBER 9223372036854775807
+
 using namespace LATfield2;
 
 template <typename part, typename part_info, typename part_dataType>
@@ -501,7 +503,7 @@ Real Particles<part,part_info,part_dataType>::updateVel(Real (*updateVel_funct)(
 
     typename std::list<part>::iterator it;
     double frac[3];
-    double x0;
+    Real x0;
     Real maxvel = 0.;
     Real v2;
 
@@ -631,7 +633,7 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
     typename std::list<part>::iterator it,itTemp;
     //Real b[3];
     double frac[3];
-    double x0;
+    Real x0;
     int localCoord[3];
     int newLocalCoord[3];
 
@@ -679,12 +681,12 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
         }
         else if(reduce_type[i] & (MIN | MIN_LOCAL))
         {
-            output[i]=9223372036854775807;
+            output[i]=MAX_NUMBER;
             //COUT<<"min"<<endl;
         }
         else if(reduce_type[i] & (MAX | MAX_LOCAL))
         {
-            output[i]=-9223372036854775807;
+            output[i]=-MAX_NUMBER;
             //COUT<<"max"<<endl;
         }
     }
@@ -716,6 +718,22 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
 #endif
                 for (int l=0; l<3; l++)
                     frac[l] = modf( (*itTemp).pos[l] / lat_resolution_, &x0);
+
+
+
+                    int partRanks[2];
+                    int thisRanks[2];
+
+                if((*itTemp).ID==81934)
+                {
+
+                  getPartNewProcess((*itTemp),partRanks);
+                  thisRanks[0] = parallel.grid_rank()[0];
+                  thisRanks[1] = parallel.grid_rank()[1];
+                    cout<<(*itTemp)<<endl;
+                    cout<< thisRanks[0]<<" , "<< thisRanks[0]<<" , "<< partRanks[0]<<" , "<< partRanks[0]<<endl;
+
+                }
 
                 move_funct(dtau,
                            lat_resolution_,
@@ -749,8 +767,8 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
 
 
 
-                int partRanks[2];
-                int thisRanks[2];
+                //int partRanks[2];
+                //int thisRanks[2];
                 getPartNewProcess((*itTemp),partRanks);
                 thisRanks[0] = parallel.grid_rank()[0];
                 thisRanks[1] = parallel.grid_rank()[1];
@@ -801,6 +819,8 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                     else
                     {
                         cout<< "particle : "<<(*itTemp).ID<<" have move to far away (more than 1 proc)."<<endl;
+                        cout<< "particle position: "<< (*itTemp) <<endl;
+                        cout<< thisRanks[0]<<" , "<< thisRanks[0]<<" , "<< partRanks[0]<<" , "<< partRanks[0]<<endl;
                     }
                 }
                 else if(partRanks[1]==thisRanks[1]+1)
@@ -823,6 +843,8 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                     else
                     {
                         cout<< "particle : "<<(*itTemp).ID<<" have move to far away (more than 1 proc)."<<endl;
+                        cout<< "particle position: "<< (*itTemp) <<endl;
+                        cout<< thisRanks[0]<<" , "<< thisRanks[0]<<" , "<< partRanks[0]<<" , "<< partRanks[0]<<endl;
                     }
                 }
                 else if(partRanks[1]==thisRanks[1])
@@ -840,11 +862,15 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                     else
                     {
                         cout<< "particle : "<<(*itTemp).ID<<" have move to far away (more than 1 proc)."<<endl;
+                        cout<< "particle position: "<< (*itTemp) <<endl;
+                        cout<< thisRanks[0]<<" , "<< thisRanks[0]<<" , "<< partRanks[0]<<" , "<< partRanks[0]<<endl;
                     }
                 }
                 else
                 {
                     cout<< "particle : "<<(*itTemp).ID<<" have move to far away (more than 1 proc)."<<endl;
+                    cout<< "particle position: "<< (*itTemp) <<endl;
+                    cout<< thisRanks[0]<<" , "<< thisRanks[0]<<" , "<< partRanks[0]<<" , "<< partRanks[0]<<endl;
                 }
 
             }
