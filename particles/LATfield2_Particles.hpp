@@ -410,11 +410,19 @@ void Particles<part,part_info,part_dataType>::getPartNewProcess(part pcl,int * r
     for(int i=0;i<3;i++)coord[i] = (int)(floor(pcl.pos[i]/lat_resolution_)) %lat_part_.size(i);
 
     if(pcl.pos[2] >=boxSize_[2]) ranks[0] = parallel.grid_size()[0];
-    else if (pcl.pos[2] < 0.) ranks[0] = -1;
+    else if (pcl.pos[2] < 0.)
+    {
+      if (pcl.pos[2] + boxSize_[2] >= boxSize_[2]) ranks[0] = 0;
+      else ranks[0] = -1;
+    }
     else ranks[0] = lat_part_.getRankDim0(coord[2]);
 
     if(pcl.pos[1] >=boxSize_[1]) ranks[1] = parallel.grid_size()[1];
-    else if (pcl.pos[1] < 0.) ranks[1] = -1;
+    else if (pcl.pos[1] < 0.)
+    {
+      if (pcl.pos[1] + boxSize_[1] >= boxSize_[1]) ranks[1] = 0;
+      else ranks[1] = -1;
+    }
     else ranks[1] = lat_part_.getRankDim1(coord[1]);
 }
 
@@ -720,21 +728,6 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                     frac[l] = modf( (*itTemp).pos[l] / lat_resolution_, &x0);
 
 
-
-                    int partRanks[2];
-                    int thisRanks[2];
-
-                if((*itTemp).ID==81934)
-                {
-
-                  getPartNewProcess((*itTemp),partRanks);
-                  thisRanks[0] = parallel.grid_rank()[0];
-                  thisRanks[1] = parallel.grid_rank()[1];
-                    cout<<(*itTemp)<<endl;
-                    cout<< thisRanks[0]<<" , "<< thisRanks[0]<<" , "<< partRanks[0]<<" , "<< partRanks[0]<<endl;
-
-                }
-
                 move_funct(dtau,
                            lat_resolution_,
                            &(*itTemp),
@@ -767,8 +760,8 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
 
 
 
-                //int partRanks[2];
-                //int thisRanks[2];
+                int partRanks[2];
+                int thisRanks[2];
                 getPartNewProcess((*itTemp),partRanks);
                 thisRanks[0] = parallel.grid_rank()[0];
                 thisRanks[1] = parallel.grid_rank()[1];
@@ -820,7 +813,7 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                     {
                         cout<< "particle : "<<(*itTemp).ID<<" have move to far away (more than 1 proc)."<<endl;
                         cout<< "particle position: "<< (*itTemp) <<endl;
-                        cout<< thisRanks[0]<<" , "<< thisRanks[0]<<" , "<< partRanks[0]<<" , "<< partRanks[0]<<endl;
+                        cout<< thisRanks[0]<<" , "<< thisRanks[1]<<" , "<< partRanks[0]<<" , "<< partRanks[1]<<endl;
                     }
                 }
                 else if(partRanks[1]==thisRanks[1]+1)
@@ -844,7 +837,7 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                     {
                         cout<< "particle : "<<(*itTemp).ID<<" have move to far away (more than 1 proc)."<<endl;
                         cout<< "particle position: "<< (*itTemp) <<endl;
-                        cout<< thisRanks[0]<<" , "<< thisRanks[0]<<" , "<< partRanks[0]<<" , "<< partRanks[0]<<endl;
+                        cout<< thisRanks[0]<<" , "<< thisRanks[1]<<" , "<< partRanks[0]<<" , "<< partRanks[1]<<endl;
                     }
                 }
                 else if(partRanks[1]==thisRanks[1])
@@ -863,14 +856,14 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                     {
                         cout<< "particle : "<<(*itTemp).ID<<" have move to far away (more than 1 proc)."<<endl;
                         cout<< "particle position: "<< (*itTemp) <<endl;
-                        cout<< thisRanks[0]<<" , "<< thisRanks[0]<<" , "<< partRanks[0]<<" , "<< partRanks[0]<<endl;
+                        cout<< thisRanks[0]<<" , "<< thisRanks[1]<<" , "<< partRanks[0]<<" , "<< partRanks[1]<<endl;
                     }
                 }
                 else
                 {
                     cout<< "particle : "<<(*itTemp).ID<<" have move to far away (more than 1 proc)."<<endl;
                     cout<< "particle position: "<< (*itTemp) <<endl;
-                    cout<< thisRanks[0]<<" , "<< thisRanks[0]<<" , "<< partRanks[0]<<" , "<< partRanks[0]<<endl;
+                    cout<< thisRanks[0]<<" , "<< thisRanks[1]<<" , "<< partRanks[0]<<" , "<< partRanks[1]<<endl;
                 }
 
             }
