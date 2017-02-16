@@ -75,7 +75,7 @@ LFvector<T>::LFvector(const LFvector& other)
 template<class T>
 LFvector<T>::LFvector(Lattice * lat, T * source = NULL)
 {
-  size_=lat->size(0);
+  size_=lat->vectorSize();
   if(source!=NULL)
   {
     data_=source;

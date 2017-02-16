@@ -133,44 +133,65 @@ class Field
 
 
         /*!
-         Returns the value of the field stored in data_[index]. User should used operator()(const Site& site) to refer and access to the value of the field.
-
-         \param index: displacment on the data_ array.
+         to be implemented, return vector
          */
 		FieldType& operator()(long index);
 
-        /*!
-         Returns the value of the field stored in data_[component + index*components_]. User should used operator()(const Site& site, int component) to refer and access to the value of the field.
+		/*!
+		 Returns the value of the field stored in data_[index]. User should used operator()(const Site& site) to refer and access to the value of the field.
 
-         \param index    : number of site to skip.
-         \param component: index of the desired component.
+		 \param index: displacment on the data_ array.
+		 */
+		FieldType& value(long index);
+
+        /*!
+          to be implemented, return vector
          */
 		FieldType& operator()(long index, int component);
+		/*!
+		 Returns the value of the field stored in data_[component + index*components_]. User should used operator()(const Site& site, int component) to refer and access to the value of the field.
+
+		 \param index    : number of site to skip.
+		 \param component: index of the desired component.
+		 */
+		 FieldType& value(long index, int component);
 
         /*!
-         Returns the value of the field stored in data_[j*rows_ + i + index*components_]. In the symmetric case, it returns data_[abs(i-j) + min(i,j)*(rows_+0.5-0.5*min(i,j)) + index*components_]. User should used operator()(const Site& site, int i, int j) to refer and access to the value of the field.
-
-         \param index : number of site to skip.
-         \param i     : index of the row
-         \param j     : index of the column
+         to be implemented, return vector
          */
 		FieldType& operator()(long index, int i, int j);
+		/*!
+		 Returns the value of the field stored in data_[j*rows_ + i + index*components_]. In the symmetric case, it returns data_[abs(i-j) + min(i,j)*(rows_+0.5-0.5*min(i,j)) + index*components_]. User should used operator()(const Site& site, int i, int j) to refer and access to the value of the field.
+
+		 \param index : number of site to skip.
+		 \param i     : index of the row
+		 \param j     : index of the column
+		 */
+		 FieldType& value(long index, int i, int j);
 
 
 
 
         FieldType& operator()(long index, int k, int i, int j);
+				FieldType& value(long index, int k, int i, int j);
 
-
-        /*!
-         Returns the value of the field at the position pointed by the Site object (data_[site.index()]). Can be used only for field with one component!
-
-         \param site: a site instance which points to the desired lattice site.
-
-         \sa To have more description see the Site class documentation.
+				/*!
+         to be implemented, return vector
          */
-		FieldType& operator()(const Site& site);
+				FieldType& operator()(const Site& site);
+		/*!
+		 Returns the value of the field at the position pointed by the Site object (data_[site.index()]). Can be used only for field with one component!
 
+		 \param site: a site instance which points to the desired lattice site.
+
+		 \sa To have more description see the Site class documentation.
+		 */
+		 		FieldType& value(const Site& site);
+
+				/*!
+         to be implemented, return vector
+         */
+		FieldType& operator()(const Site& site, int component);
         /*!
          Returns the value of a (vector) field's component at the position pointed by the Site object (data_[component + site.index()*components_]).
 
@@ -180,8 +201,12 @@ class Field
 
          \sa To have more description see the Site class documentation.
          */
-		FieldType& operator()(const Site& site, int component);
+		FieldType& value(const Site& site, int component);
 
+		/*!
+		 to be implemented, return vector
+		 */
+FieldType& operator()(const Site& site, int i, int j);
         /*!
          Returns the value of the (i,j) matrix component of the field at the position pointed by the Site object (data_[j*rows_ + i + site.index*components_]). In the symmetric case, it returns data_[abs(i-j) + min(i,j)*(rows_+0.5-0.5*min(i,j)) + site.index()*components_].
 
@@ -191,9 +216,10 @@ class Field
 
          \sa To have more description see the Site class documentation.
          */
-		FieldType& operator()(const Site& site, int i, int j);
+		FieldType& value(const Site& site, int i, int j);
 
         FieldType& operator()(const Site& site, int k, int i, int j);
+				FieldType& value(const Site& site, int k, int i, int j);
 
 #ifdef FFT3D
 
@@ -201,36 +227,60 @@ class Field
          Equivalent to FieldType& operator()(const Site& site) for cKsite
          */
 		FieldType& operator()(const cKSite& site);
+		/*!
+		 Equivalent to FieldType& value(const Site& site) for cKsite
+		 */
+FieldType& value(const cKSite& site);
 
         /*!
          Equivalent to FieldType& operator()(const Site& site, int component) for cKsite
          */
 		FieldType& operator()(const cKSite& site, int component);
+		/*!
+		 Equivalent to FieldType& value(const Site& site, int component) for cKsite
+		 */
+FieldType& value(const cKSite& site, int component);
 
         /*!
          Equivalent to FieldType& operator()(const Site& site, int i, int j) for cKsite
          */
 		FieldType& operator()(const cKSite& site, int i, int j);
+		/*!
+		 Equivalent to FieldType& value(const Site& site, int i, int j) for cKsite
+		 */
+FieldType& value(const cKSite& site, int i, int j);
 
         FieldType& operator()(const cKSite& site,int k, int i, int j);
+				FieldType& value(const cKSite& site,int k, int i, int j);
 
         /*!
          Equivalent to FieldType& operator()(const Site& site) for rKsite
          */
 		FieldType& operator()(const rKSite& site);
+		/*!
+		 Equivalent to FieldType& value(const Site& site) for rKsite
+		 */
+FieldType& value(const rKSite& site);
 
         /*!
          Equivalent to FieldType& operator()(const Site& site, int component) for rKsite
          */
-
 		FieldType& operator()(const rKSite& site, int component);
-
+		/*!
+		 Equivalent to FieldType& value(const Site& site, int component) for rKsite
+		 */
+FieldType& value(const rKSite& site, int component);
         /*!
          Equivalent to FieldType& operator()(const Site& site, int i, int j) for rKsite
          */
 		FieldType& operator()(const rKSite& site, int i, int j);
+		/*!
+		 Equivalent to FieldType& value(const Site& site, int i, int j) for rKsite
+		 */
+FieldType& value(const rKSite& site, int i, int j);
 
         FieldType& operator()(const rKSite& site,int k, int i, int j);
+				FieldType& value(const rKSite& site,int k, int i, int j);
 #endif
 
 		//BOUNDARY UPDATE
@@ -389,8 +439,8 @@ class Field
 		int        components_;
 		int        rows_;
 		int        cols_;
-        int        nMatrix_;
-        int        matrixSize_;
+    int        nMatrix_;
+    int        matrixSize_;
 		int        symmetry_;
 		unsigned int sizeof_fieldType_;
 
@@ -398,10 +448,13 @@ class Field
 		static int initialized;
 		static int allocated;
 
+		long vectorSize_;
+		long sitesLocalGross_;
+
     unsigned long long data_memSize_;
 #ifdef HDF5
-        hid_t type_id;
-        int array_size;
+        hid_t type_id_;
+        int array_size_;
 #endif
 #ifdef EXTERNAL_IO
         ioserver_file io_file_;
@@ -469,9 +522,9 @@ void Field<FieldType>::get_h5type()
 {
     string type_name;
 	type_name = typeid(FieldType).name();
-	char  str_array_size[20];
-	//string str_array_size;
-	array_size = 1;
+	char  str_array_size_[20];
+	//string str_array_size_;
+	array_size_ = 1;
 	int nt;
 
 	nt = 0;
@@ -481,10 +534,10 @@ void Field<FieldType>::get_h5type()
 
 		while(type_name[nt+1]!='_')
 		{
-			str_array_size[nt]=type_name[nt+1];
+			str_array_size_[nt]=type_name[nt+1];
 			nt++;
 		}
-		str_array_size[nt]='\0';
+		str_array_size_[nt]='\0';
 
 		nt = nt + 2;
 		if(type_name[nt]=='A')
@@ -499,77 +552,77 @@ void Field<FieldType>::get_h5type()
 
 		}
 
-		array_size=atoi(str_array_size);
+		array_size_=atoi(str_array_size_);
 	}
 	//get the type
 
 	if(type_name[nt]=='s')
 	{
-		//COUT << " type : short ; size : "<<array_size<<endl;
-		type_id = H5T_NATIVE_SHORT;
+		//COUT << " type : short ; size : "<<array_size_<<endl;
+		type_id_ = H5T_NATIVE_SHORT;
 	}
 	else if(type_name[nt]=='t')
 	{
-		//COUT << " type : unsigned short ; size : "<<array_size<<endl;
-		type_id = H5T_NATIVE_USHORT;
+		//COUT << " type : unsigned short ; size : "<<array_size_<<endl;
+		type_id_ = H5T_NATIVE_USHORT;
 	}
 
 	else if(type_name[nt]=='i')
 	{
-		//COUT << " type : int ; size : "<<array_size<<endl;
-		type_id = H5T_NATIVE_INT;
+		//COUT << " type : int ; size : "<<array_size_<<endl;
+		type_id_ = H5T_NATIVE_INT;
 	}
 	else if(type_name[nt]=='j')
 	{
-		//COUT << " type : unsigned int ; size : "<<array_size<<endl;
-		type_id = H5T_NATIVE_UINT;
+		//COUT << " type : unsigned int ; size : "<<array_size_<<endl;
+		type_id_ = H5T_NATIVE_UINT;
 	}
 
 	else if(type_name[nt]=='l')
 	{
-		//COUT << " type : long ; size : "<<array_size<<endl;
-		type_id = H5T_NATIVE_LONG;
+		//COUT << " type : long ; size : "<<array_size_<<endl;
+		type_id_ = H5T_NATIVE_LONG;
 	}
 	else if(type_name[nt]=='m')
 	{
-		//COUT << " type : unsigned long ; size : "<<array_size<<endl;
-		type_id = H5T_NATIVE_ULONG;
+		//COUT << " type : unsigned long ; size : "<<array_size_<<endl;
+		type_id_ = H5T_NATIVE_ULONG;
 	}
 	else if(type_name[nt]=='x')
 	{
-		//COUT << " type : long long ; size : "<<array_size<<endl;
-		type_id = H5T_NATIVE_LLONG;
+		//COUT << " type : long long ; size : "<<array_size_<<endl;
+		type_id_ = H5T_NATIVE_LLONG;
 	}
 	else if(type_name[nt]=='y')
 	{
-		//COUT << " type : unsigned long long ; size : "<<array_size<<endl;
-		type_id = H5T_NATIVE_ULLONG;
+		//COUT << " type : unsigned long long ; size : "<<array_size_<<endl;
+		type_id_ = H5T_NATIVE_ULLONG;
 	}
 	else if(type_name[nt]=='f')
 	{
-		//COUT << " type : float ; size : "<<array_size<<endl;
-		type_id = H5T_NATIVE_FLOAT;
+		//COUT << " type : float ; size : "<<array_size_<<endl;
+		type_id_ = H5T_NATIVE_FLOAT;
 	}
 	else if(type_name[nt]=='d')
 	{
-		//COUT << " type : double ; size : "<<array_size<<endl;
-		type_id = H5T_NATIVE_DOUBLE;
+		//COUT << " type : double ; size : "<<array_size_<<endl;
+		type_id_ = H5T_NATIVE_DOUBLE;
 	}
 
 	else if(type_name[nt]=='e')
 	{
-		//COUT << " type : long double ; size : "<<array_size<<endl;
-		type_id = H5T_NATIVE_LDOUBLE;
+		//COUT << " type : long double ; size : "<<array_size_<<endl;
+		type_id_ = H5T_NATIVE_LDOUBLE;
 	}
 	else if (type_name[nt]=='N'&&type_name[nt+12]=='I'&&type_name[nt+13]=='m'&&type_name[nt+14]=='a'&&type_name[nt+15]=='g')
 	{
-        type_id = H5Tcreate (H5T_COMPOUND, sizeof (Imag));
+        type_id_ = H5Tcreate (H5T_COMPOUND, sizeof (Imag));
 #ifdef SINGLE
-        H5Tinsert (type_id, "real", 0,H5T_NATIVE_FLOAT);
-        H5Tinsert (type_id, "imaginary", sizeof(Real),H5T_NATIVE_FLOAT);
+        H5Tinsert (type_id_, "real", 0,H5T_NATIVE_FLOAT);
+        H5Tinsert (type_id_, "imaginary", sizeof(Real),H5T_NATIVE_FLOAT);
 #else
-	    H5Tinsert (type_id, "real", 0,H5T_NATIVE_DOUBLE);
-        H5Tinsert (type_id, "imaginary", sizeof(Real),H5T_NATIVE_DOUBLE);
+	    H5Tinsert (type_id_, "real", 0,H5T_NATIVE_DOUBLE);
+        H5Tinsert (type_id_, "imaginary", sizeof(Real),H5T_NATIVE_DOUBLE);
 #endif
     }
     else if (type_name[nt+12]=='p' && type_name[nt+13]=='a' && type_name[nt+14]=='r' && type_name[nt+15]=='t' &&
@@ -612,6 +665,8 @@ void Field<FieldType>::initialize(Lattice& lattice, int components)
 	sizeof_fieldType_ = sizeof(FieldType);
 	status_= initialized;
 	lattice_=&lattice;
+	vectorSize_ = lattice_->vectorSize();
+	sitesLocalGross_ = lattice_->sitesLocalGross();
 	components_=components;
 	rows_=components_;
 	cols_=1;
@@ -632,6 +687,8 @@ void Field<FieldType>::initialize(Lattice& lattice, int rows, int cols, int symm
 	sizeof_fieldType_ = sizeof(FieldType);
 	status_= initialized;
 	lattice_=&lattice;
+	vectorSize_ = lattice_->vectorSize();
+	sitesLocalGross_ = lattice_->sitesLocalGross();
 	rows_=rows;
 	cols_=cols;
     nMatrix_ =1;
@@ -653,6 +710,8 @@ void Field<FieldType>::initialize(Lattice& lattice,int nMatrix, int rows, int co
     sizeof_fieldType_ = sizeof(FieldType);
     status_= initialized;
     lattice_=&lattice;
+		vectorSize_ = lattice_->vectorSize();
+		sitesLocalGross_ = lattice_->sitesLocalGross();
     rows_=rows;
     cols_=cols;
     nMatrix_ = nMatrix;
@@ -737,17 +796,43 @@ void Field<FieldType>::dealloc()
 template <class FieldType>
 inline FieldType& Field<FieldType>::operator()(long index)
 {
+	//TODO
+	return data_[index];
+}
+template <class FieldType>
+inline FieldType& Field<FieldType>::value(long index)
+{
 	return data_[index];
 }
 
 template <class FieldType>
 inline FieldType& Field<FieldType>::operator()(long index, int component)
 {
-	return data_[index*components_ + component];
+	//TODO
+	return data_[index + component * sitesLocalGross_];
 }
+template <class FieldType>
+inline FieldType& Field<FieldType>::value(long index, int component)
+{
+	return data_[index + component * sitesLocalGross_];
+}
+
 
 template <class FieldType>
 inline FieldType& Field<FieldType>::operator()(long index, int i, int j)
+{
+	//TODO
+	int component;
+	if(symmetry_==symmetric)
+    {
+		if (i>j) component = i + j * rows_ - (j * (1 + j)) / 2;
+		else component = j + i * rows_ - (i * (1 + i)) / 2;
+    }
+	else { component = j*rows_ + i; }
+	return data_[index + component * sitesLocalGross_];
+}
+template <class FieldType>
+inline FieldType& Field<FieldType>::value(long index, int i, int j)
 {
 	int component;
 	if(symmetry_==symmetric)
@@ -756,12 +841,26 @@ inline FieldType& Field<FieldType>::operator()(long index, int i, int j)
 		else component = j + i * rows_ - (i * (1 + i)) / 2;
     }
 	else { component = j*rows_ + i; }
-	return data_[index*components_ + component];
+	return data_[index + component * sitesLocalGross_];
 }
 
 
 template <class FieldType>
 inline FieldType& Field<FieldType>::operator()(long index, int k, int i, int j)
+{
+		//TODO
+    int component;
+    if(symmetry_==symmetric)
+    {
+        if (i>j) component = i + j * rows_ - (j * (1 + j)) / 2;
+        else component = j + i * rows_ - (i * (1 + i)) / 2;
+    }
+    else { component = j*rows_ + i; }
+    component += matrixSize_ * k;
+    return data_[index + component * sitesLocalGross_];
+}
+template <class FieldType>
+inline FieldType& Field<FieldType>::value(long index, int k, int i, int j)
 {
     int component;
     if(symmetry_==symmetric)
@@ -771,7 +870,7 @@ inline FieldType& Field<FieldType>::operator()(long index, int k, int i, int j)
     }
     else { component = j*rows_ + i; }
     component += matrixSize_ * k;
-    return data_[index*components_ + component];
+    return data_[index + component * sitesLocalGross_];
 }
 
 template <class FieldType>
@@ -779,23 +878,41 @@ inline FieldType& Field<FieldType>::operator()(const Site& site)
 {
 	return this->operator()(site.index());
 }
-
 template <class FieldType>
 inline FieldType& Field<FieldType>::operator()(const Site& site, int component)
 {
 	return this->operator()(site.index(),component);
 }
-
 template <class FieldType>
 inline FieldType& Field<FieldType>::operator()(const Site& site, int i, int j)
 {
 	return this->operator()(site.index(),i,j);
 }
-
 template <class FieldType>
 inline FieldType& Field<FieldType>::operator()(const Site& site,int k, int i, int j)
 {
     return this->operator()(site.index(),k,i,j);
+}
+
+template <class FieldType>
+inline FieldType& Field<FieldType>::value(const Site& site)
+{
+	return this->value(site.index());
+}
+template <class FieldType>
+inline FieldType& Field<FieldType>::value(const Site& site, int component)
+{
+	return this->value(site.index(),component);
+}
+template <class FieldType>
+inline FieldType& Field<FieldType>::value(const Site& site, int i, int j)
+{
+	return this->value(site.index(),i,j);
+}
+template <class FieldType>
+inline FieldType& Field<FieldType>::value(const Site& site,int k, int i, int j)
+{
+    return this->value(site.index(),k,i,j);
 }
 
 #ifdef FFT3D
@@ -848,6 +965,55 @@ inline FieldType& Field<FieldType>::operator()(const rKSite& site, int k, int i,
     return this->operator()(site.index(),k,i,j);
 }
 
+
+template <class FieldType>
+inline FieldType& Field<FieldType>::value(const cKSite& site)
+{
+	return this->value(site.index());
+}
+
+template <class FieldType>
+inline FieldType& Field<FieldType>::value(const cKSite& site, int component)
+{
+	return this->value(site.index(),component);
+}
+
+template <class FieldType>
+inline FieldType& Field<FieldType>::value(const cKSite& site, int i, int j)
+{
+	return this->value(site.index(),i,j);
+}
+
+template <class FieldType>
+inline FieldType& Field<FieldType>::value(const cKSite& site, int k, int i, int j)
+{
+    return this->value(site.index(),k,i,j);
+}
+
+template <class FieldType>
+inline FieldType& Field<FieldType>::value(const rKSite& site)
+{
+	return this->value(site.index());
+}
+
+template <class FieldType>
+inline FieldType& Field<FieldType>::value(const rKSite& site, int component)
+{
+	return this->value(site.index(),component);
+}
+
+template <class FieldType>
+inline FieldType& Field<FieldType>::value(const rKSite& site, int i, int j)
+{
+	return this->value(site.index(),i,j);
+}
+
+template <class FieldType>
+inline FieldType& Field<FieldType>::value(const rKSite& site, int k, int i, int j)
+{
+    return this->value(site.index(),k,i,j);
+}
+
 #endif
 
 //FIELD BOUNDARY UPDATE=========
@@ -869,26 +1035,26 @@ void Field<FieldType>::updateHalo()
 		jump[i]=lattice_->jump(i);
 		size[i]=lattice_->sizeLocal(i);
 	}
-
-	for(site.haloFirst(); site.haloTest(); site.haloNext())
+	for(int i=0; i<components_; i++)
 	{
-		//Work out where to copy from
-		copyfrom=site.index();
-		for(int i=0; i<dim; i++)
+		for(site.haloFirst(); site.haloTest(); site.haloNext())
 		{
-			if( site.coordLocal(i)<0 )
+			//Work out where to copy from
+			copyfrom=site.index();
+			for(int i=0; i<dim; i++)
 			{
-				copyfrom += jump[i] * size[i];
+				if( site.coordLocal(i)<0 )
+				{
+					copyfrom += jump[i] * size[i];
+				}
+				else if( site.coordLocal(i) >= size[i] )
+				{
+					copyfrom -= jump[i] * size[i];
+				}
 			}
-			else if( site.coordLocal(i) >= size[i] )
-			{
-				copyfrom -= jump[i] * size[i];
-			}
-		}
-		//Copy data
-		for(int i=0; i<components_; i++)
-		{
-			data_[site.index()*components_+i] = data_[copyfrom*components_+i];
+			//Copy data
+
+			data_[site.index() + i*sitesLocalGross_] = data_[copyfrom + i*sitesLocalGross_];
 			//memcpy(data_[site.index()*components_+i],data_[copyfrom*components_+i],sizeof_fieldType_);
 
 		}
@@ -897,12 +1063,121 @@ void Field<FieldType>::updateHalo()
 	delete[] jump;
 	delete[] size;
 
-	if( parallel.size()>1 ) { updateHaloComms(); }
+	updateHaloComms();
 }
 
 template <class FieldType>
 void Field<FieldType>::updateHaloComms()
 {
+
+	long buffer_size1, buffer_size0;
+	int i,j,comp, si, sj;
+
+	FieldType* pointer_send_up;
+	FieldType* pointer_send_down;
+	FieldType* pointer_rec_up;
+	FieldType* pointer_rec_down;
+
+	buffer_size1 = components_ * lattice_->halo() * lattice_->jump(lattice_->dim()-2) * lattice_->sizeLocal(lattice_->dim()-1);
+	buffer_size0 = lattice_->halo() * lattice_->jump(lattice_->dim()-1);
+	FieldType* buffer_send = new FieldType[buffer_size1];
+	FieldType* buffer_rec = new FieldType[buffer_size1];
+
+
+
+	pointer_send_up = data_ + (lattice_->halo()+1)*lattice_->jump(lattice_->dim()-1) - 2*lattice_->halo()*lattice_->jump(lattice_->dim()-2);
+	pointer_rec_up = data_ + (lattice_->halo())*lattice_->jump(lattice_->dim()-1);
+
+	pointer_send_down = data_ +  (lattice_->halo())*lattice_->jump(lattice_->dim()-1) + lattice_->halo()*lattice_->jump(lattice_->dim()-2)  ;
+	pointer_rec_down = data_ + (lattice_->halo()+1)*lattice_->jump(lattice_->dim()-1) - lattice_->halo()*lattice_->jump(lattice_->dim()-2) ;
+
+
+
+	//send up dim1_comm
+	//pack data
+
+	si=lattice_->halo() * lattice_->jump(lattice_->dim()-2);
+	sj=lattice_->sizeLocal(lattice_->dim()-1);
+	for(comp = 0; comp<components_;comp++)
+	{
+		for(j=0;j<sj;j++)
+		{
+			for(i=0;i<si ;i++)
+			{
+				buffer_send[i+si*(j+sj*comp)] = pointer_send_up[i+j*lattice_->jump(lattice_->dim()-1)];
+			}
+		}
+		pointer_send_up += sitesLocalGross_;
+	}
+	//send up dim1
+	parallel.sendUp_dim1(buffer_send,buffer_rec, buffer_size1);
+
+	//unpackdata.
+
+	for(comp = 0; comp<components_;comp++)
+	{
+		for(j=0;j<sj;j++)
+		{
+			for(i=0;i<si ;i++)
+			{
+				pointer_rec_up[i+j*lattice_->jump(lattice_->dim()-1)] = buffer_rec[i+si*(j+sj*comp)];
+			}
+		}
+		pointer_send_up += sitesLocalGross_;
+	}
+
+
+	//send down dim1_comm
+	for(comp = 0; comp<components_;comp++)
+	{
+		for(j=0;j<sj;j++)
+		{
+			for(i=0;i<si ;i++)
+			{
+				buffer_send[i+si*(j+sj*comp)] = pointer_send_down[i+j*lattice_->jump(lattice_->dim()-1)];
+			}
+		}
+		pointer_send_up += sitesLocalGross_;
+	}
+	//send down dim1
+	parallel.sendDown_dim1(buffer_send,buffer_rec, buffer_size1);
+
+	//unpackdata.
+
+	for(comp = 0; comp<components_;comp++)
+	{
+		for(j=0;j<sj;j++)
+		{
+			for(i=0;i<si ;i++)
+			{
+				pointer_rec_down[i+j*lattice_->jump(lattice_->dim()-1)] = buffer_rec[i+si*(j+sj*comp)];
+			}
+		}
+		pointer_send_up += sitesLocalGross_;
+	}
+
+	//work on dim 0
+
+	pointer_send_up = data_ + sitesLocalGross_ - 2*buffer_size0;
+	pointer_rec_up = data_;
+
+	pointer_send_down = data_  + buffer_size0;
+	pointer_rec_down = data_ + sitesLocalGross_ - buffer_size0;
+
+	for(comp = 0; comp<components_;comp++)
+	{
+
+		parallel.sendUpDown_dim0(pointer_send_up, pointer_rec_up, buffer_size0,
+			 											 pointer_send_down, pointer_rec_down, buffer_size0);
+
+		pointer_send_up += sitesLocalGross_;
+		pointer_rec_up += sitesLocalGross_;
+		pointer_send_down += sitesLocalGross_;
+		pointer_rec_down += sitesLocalGross_;
+
+	}
+
+	/*
 
 	int buffer_size0, buffer_size1,temp;
 	int i,j;
@@ -1161,7 +1436,7 @@ void Field<FieldType>::updateHaloComms()
 
 
 
-
+	*/
 	delete[] buffer_send;
 	delete[] buffer_rec;
 
@@ -1550,7 +1825,7 @@ void  Field<FieldType>::saveHDF5(string filename, string dataset_name)
 {
 #ifdef HDF5
 
-	save_hdf5(data_,type_id,array_size,lattice_->coordSkip(),lattice_->size(),lattice_->sizeLocal(),lattice_->halo(),lattice_->dim(),components_,filename,dataset_name);
+	save_hdf5(data_,type_id_,array_size_,lattice_->coordSkip(),lattice_->size(),lattice_->sizeLocal(),lattice_->halo(),lattice_->dim(),components_,filename,dataset_name);
 #else
     COUT<<"LATfield2d must be compiled with HDF5 (flag HDF5 turn on!)"<<endl;
     COUT<<"to be able to use hdf5 data format!!!)"<<endl;
@@ -1655,7 +1930,7 @@ void  Field<FieldType>::saveHDF5_coarseGrain3D(string filename, string dataset_n
     int sSize[dim];
     int slocalsize[dim];
 
-    long blocksize = array_size*components_;
+    long blocksize = array_size_*components_;
     long halo = lattice_->halo();
 
     int number_cg = ratio*ratio*ratio;
@@ -1743,7 +2018,7 @@ void Field<FieldType>:: saveHDF5_server_open(string filename_base,int offset,int
     if(lattice_->dim()==2)iof_thickness_=-1;
     if(iof_thickness_!=-1)size[0]=iof_thickness_;
     lat.initialize(lattice_->dim(),size,lattice_->halo());
-    io_file_ = ioserver.openFile(filename_base.c_str(),STRUCTURED_H5_FILE,type_id,type_id,&lat,components_,array_size);
+    io_file_ = ioserver.openFile(filename_base.c_str(),STRUCTURED_H5_FILE,type_id_,type_id_,&lat,components_,array_size_);
 }
 template <class FieldType>
 void Field<FieldType>:: saveHDF5_server_write(int number_of_message, string filename_base, int offset,int thickness)
