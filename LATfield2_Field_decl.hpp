@@ -279,7 +279,7 @@ FieldType& value(const rKSite& site, int component);
 		 */
 FieldType& value(const rKSite& site, int i, int j);
 
-        FieldType& operator()(const rKSite& site,int k, int i, int j);
+        LFvector<FieldType> operator()(const rKSite& site,int k, int i, int j);
 				FieldType& value(const rKSite& site,int k, int i, int j);
 #endif
 
@@ -1455,6 +1455,10 @@ void Field<FieldType>::updateHaloComms()
 template <class FieldType>
 void Field<FieldType>::write(const string filename)
 {
+	COUT<< "Field::write method depreciated."<<endl;
+	COUT<< "calling: saveHDF5"<<endl;
+	this->saveHDF5(filename + ".h5");
+	/*
 	fstream file;
 	Site    x(*lattice_);
 	int     p,j,i,k;
@@ -1522,6 +1526,10 @@ void Field<FieldType>::write(const string filename)
 template <class FieldType>
 void Field<FieldType>::fastwrite(const string filename)
 {
+	COUT<< "Field::fastwrite method depreciated."<<endl;
+	COUT<< "calling: saveHDF5"<<endl;
+	this->saveHDF5(filename + ".h5");
+	/*
 	fstream file;
 	Site    x(*lattice_);
 	int     i;
@@ -1559,12 +1567,16 @@ void Field<FieldType>::fastwrite(const string filename)
 		}
 		parallel.barrier();
 	}
-
+	*/
 }
 
 template <class FieldType>
 void Field<FieldType>::read(const string filename)
 {
+	COUT<< "Field::read method depreciated."<<endl;
+	COUT<< "Aborting"<<endl;
+	exit(1);
+	/*
 	fstream file;
 	Site    x(*lattice_);
 	int p,i;
@@ -1621,13 +1633,17 @@ void Field<FieldType>::read(const string filename)
 		parallel.barrier();
 	}
 	this->updateHalo();
-
+	*/
 }
 
 //FILE ASCII I/O FUNCTIONS=======================
 template <class FieldType>
 void Field<FieldType>::save(const string filename, void (*FormatFunction)(fstream&,FieldType*, int))
 {
+	COUT<< "Field::save method depreciated."<<endl;
+	COUT<< "calling: saveHDF5"<<endl;
+	this->saveHDF5(filename + ".h5");
+	/*
 	fstream file;
 	Site    x(*lattice_);
 	int     p,i,j,k;
@@ -1738,7 +1754,7 @@ void Field<FieldType>::fastsave(const string filename,
 		}
 	}
 
-
+*/
 }
 
 
@@ -1746,6 +1762,10 @@ template <class FieldType>
 void Field<FieldType>::load(const string filename,
 							void (*FormatFunction)(fstream&,FieldType*, int) )
 {
+	COUT<< "Field::read method depreciated."<<endl;
+	COUT<< "Aborting"<<endl;
+	exit(1);
+	/*
 	fstream file;
 	Site    x(*lattice_);
 	int     p,i;
@@ -1821,7 +1841,7 @@ void Field<FieldType>::load(const string filename,
 	}
 	this->updateHalo();
 
-
+*/
 }
 
 template <class FieldType>
@@ -1837,6 +1857,7 @@ void  Field<FieldType>::saveHDF5(string filename, string dataset_name)
     this->write(filename+"BIN");
 #endif
 }
+
 template <class FieldType>
 void  Field<FieldType>::loadHDF5(string filename, string dataset_name)
 {
