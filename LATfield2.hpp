@@ -16,6 +16,7 @@
 #include <list>
 
 
+
 #ifdef FFT3D
 #include "fftw3.h"
 #endif
@@ -64,7 +65,9 @@ using namespace std;
 
 namespace LATfield2
 {
+
 #include "LATfield2_Lattice_decl.hpp"
+#include "LATfield2_vector.hpp"
 }
 
 #ifdef EXTERNAL_IO
@@ -100,7 +103,7 @@ namespace LATfield2
         #ifdef FFT3D
             #include "LATfield2_PlanFFT.hpp"
         #endif
-        #include "particles/LATfield2_Particles.hpp"
+        //#include "particles/LATfield2_Particles.hpp"
 
 //macros
         #include  "looping_macro.hpp"

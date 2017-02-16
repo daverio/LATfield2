@@ -135,7 +135,7 @@ class Field
         /*!
          to be implemented, return vector
          */
-		FieldType& operator()(long index);
+		LFvector<FieldType> operator()(long index);
 
 		/*!
 		 Returns the value of the field stored in data_[index]. User should used operator()(const Site& site) to refer and access to the value of the field.
@@ -147,7 +147,7 @@ class Field
         /*!
           to be implemented, return vector
          */
-		FieldType& operator()(long index, int component);
+		LFvector<FieldType> operator()(long index, int component);
 		/*!
 		 Returns the value of the field stored in data_[component + index*components_]. User should used operator()(const Site& site, int component) to refer and access to the value of the field.
 
@@ -159,7 +159,7 @@ class Field
         /*!
          to be implemented, return vector
          */
-		FieldType& operator()(long index, int i, int j);
+		LFvector<FieldType> operator()(long index, int i, int j);
 		/*!
 		 Returns the value of the field stored in data_[j*rows_ + i + index*components_]. In the symmetric case, it returns data_[abs(i-j) + min(i,j)*(rows_+0.5-0.5*min(i,j)) + index*components_]. User should used operator()(const Site& site, int i, int j) to refer and access to the value of the field.
 
@@ -172,13 +172,13 @@ class Field
 
 
 
-        FieldType& operator()(long index, int k, int i, int j);
+        LFvector<FieldType> operator()(long index, int k, int i, int j);
 				FieldType& value(long index, int k, int i, int j);
 
 				/*!
          to be implemented, return vector
          */
-				FieldType& operator()(const Site& site);
+				LFvector<FieldType> operator()(const Site& site);
 		/*!
 		 Returns the value of the field at the position pointed by the Site object (data_[site.index()]). Can be used only for field with one component!
 
@@ -191,7 +191,7 @@ class Field
 				/*!
          to be implemented, return vector
          */
-		FieldType& operator()(const Site& site, int component);
+		LFvector<FieldType> operator()(const Site& site, int component);
         /*!
          Returns the value of a (vector) field's component at the position pointed by the Site object (data_[component + site.index()*components_]).
 
@@ -206,7 +206,7 @@ class Field
 		/*!
 		 to be implemented, return vector
 		 */
-FieldType& operator()(const Site& site, int i, int j);
+LFvector<FieldType> operator()(const Site& site, int i, int j);
         /*!
          Returns the value of the (i,j) matrix component of the field at the position pointed by the Site object (data_[j*rows_ + i + site.index*components_]). In the symmetric case, it returns data_[abs(i-j) + min(i,j)*(rows_+0.5-0.5*min(i,j)) + site.index()*components_].
 
@@ -218,7 +218,7 @@ FieldType& operator()(const Site& site, int i, int j);
          */
 		FieldType& value(const Site& site, int i, int j);
 
-        FieldType& operator()(const Site& site, int k, int i, int j);
+        LFvector<FieldType> operator()(const Site& site, int k, int i, int j);
 				FieldType& value(const Site& site, int k, int i, int j);
 
 #ifdef FFT3D
@@ -226,7 +226,7 @@ FieldType& operator()(const Site& site, int i, int j);
         /*!
          Equivalent to FieldType& operator()(const Site& site) for cKsite
          */
-		FieldType& operator()(const cKSite& site);
+		LFvector<FieldType> operator()(const cKSite& site);
 		/*!
 		 Equivalent to FieldType& value(const Site& site) for cKsite
 		 */
@@ -235,7 +235,7 @@ FieldType& value(const cKSite& site);
         /*!
          Equivalent to FieldType& operator()(const Site& site, int component) for cKsite
          */
-		FieldType& operator()(const cKSite& site, int component);
+		LFvector<FieldType> operator()(const cKSite& site, int component);
 		/*!
 		 Equivalent to FieldType& value(const Site& site, int component) for cKsite
 		 */
@@ -244,19 +244,19 @@ FieldType& value(const cKSite& site, int component);
         /*!
          Equivalent to FieldType& operator()(const Site& site, int i, int j) for cKsite
          */
-		FieldType& operator()(const cKSite& site, int i, int j);
+		LFvector<FieldType> operator()(const cKSite& site, int i, int j);
 		/*!
 		 Equivalent to FieldType& value(const Site& site, int i, int j) for cKsite
 		 */
 FieldType& value(const cKSite& site, int i, int j);
 
-        FieldType& operator()(const cKSite& site,int k, int i, int j);
+        LFvector<FieldType> operator()(const cKSite& site,int k, int i, int j);
 				FieldType& value(const cKSite& site,int k, int i, int j);
 
         /*!
          Equivalent to FieldType& operator()(const Site& site) for rKsite
          */
-		FieldType& operator()(const rKSite& site);
+		LFvector<FieldType> operator()(const rKSite& site);
 		/*!
 		 Equivalent to FieldType& value(const Site& site) for rKsite
 		 */
@@ -265,7 +265,7 @@ FieldType& value(const rKSite& site);
         /*!
          Equivalent to FieldType& operator()(const Site& site, int component) for rKsite
          */
-		FieldType& operator()(const rKSite& site, int component);
+		LFvector<FieldType> operator()(const rKSite& site, int component);
 		/*!
 		 Equivalent to FieldType& value(const Site& site, int component) for rKsite
 		 */
@@ -273,7 +273,7 @@ FieldType& value(const rKSite& site, int component);
         /*!
          Equivalent to FieldType& operator()(const Site& site, int i, int j) for rKsite
          */
-		FieldType& operator()(const rKSite& site, int i, int j);
+		LFvector<FieldType> operator()(const rKSite& site, int i, int j);
 		/*!
 		 Equivalent to FieldType& value(const Site& site, int i, int j) for rKsite
 		 */
@@ -448,7 +448,7 @@ FieldType& value(const rKSite& site, int i, int j);
 		static int initialized;
 		static int allocated;
 
-		long vectorSize_;
+		int vectorSize_;
 		long sitesLocalGross_;
 
     unsigned long long data_memSize_;
@@ -794,10 +794,11 @@ void Field<FieldType>::dealloc()
 //FIELD INDEXING===============
 
 template <class FieldType>
-inline FieldType& Field<FieldType>::operator()(long index)
+inline LFvector<FieldType> Field<FieldType>::operator()(long index)
 {
 	//TODO
-	return data_[index];
+	LFvector<FieldType> vec(vectorSize_,&data_[index]);
+	return vec;
 }
 template <class FieldType>
 inline FieldType& Field<FieldType>::value(long index)
@@ -806,10 +807,11 @@ inline FieldType& Field<FieldType>::value(long index)
 }
 
 template <class FieldType>
-inline FieldType& Field<FieldType>::operator()(long index, int component)
+inline LFvector<FieldType> Field<FieldType>::operator()(long index, int component)
 {
 	//TODO
-	return data_[index + component * sitesLocalGross_];
+	LFvector<FieldType> vec(vectorSize_,&data_[index + component * sitesLocalGross_]);
+	return vec;
 }
 template <class FieldType>
 inline FieldType& Field<FieldType>::value(long index, int component)
@@ -819,7 +821,7 @@ inline FieldType& Field<FieldType>::value(long index, int component)
 
 
 template <class FieldType>
-inline FieldType& Field<FieldType>::operator()(long index, int i, int j)
+inline LFvector<FieldType> Field<FieldType>::operator()(long index, int i, int j)
 {
 	//TODO
 	int component;
@@ -829,7 +831,8 @@ inline FieldType& Field<FieldType>::operator()(long index, int i, int j)
 		else component = j + i * rows_ - (i * (1 + i)) / 2;
     }
 	else { component = j*rows_ + i; }
-	return data_[index + component * sitesLocalGross_];
+	LFvector<FieldType> vec(vectorSize_,&data_[index + component * sitesLocalGross_]);
+	return vec;
 }
 template <class FieldType>
 inline FieldType& Field<FieldType>::value(long index, int i, int j)
@@ -846,7 +849,7 @@ inline FieldType& Field<FieldType>::value(long index, int i, int j)
 
 
 template <class FieldType>
-inline FieldType& Field<FieldType>::operator()(long index, int k, int i, int j)
+inline LFvector<FieldType> Field<FieldType>::operator()(long index, int k, int i, int j)
 {
 		//TODO
     int component;
@@ -857,7 +860,8 @@ inline FieldType& Field<FieldType>::operator()(long index, int k, int i, int j)
     }
     else { component = j*rows_ + i; }
     component += matrixSize_ * k;
-    return data_[index + component * sitesLocalGross_];
+		LFvector<FieldType> vec(vectorSize_,&data_[index + component * sitesLocalGross_]);
+		return vec;
 }
 template <class FieldType>
 inline FieldType& Field<FieldType>::value(long index, int k, int i, int j)
@@ -874,22 +878,22 @@ inline FieldType& Field<FieldType>::value(long index, int k, int i, int j)
 }
 
 template <class FieldType>
-inline FieldType& Field<FieldType>::operator()(const Site& site)
+inline LFvector<FieldType> Field<FieldType>::operator()(const Site& site)
 {
 	return this->operator()(site.index());
 }
 template <class FieldType>
-inline FieldType& Field<FieldType>::operator()(const Site& site, int component)
+inline LFvector<FieldType> Field<FieldType>::operator()(const Site& site, int component)
 {
 	return this->operator()(site.index(),component);
 }
 template <class FieldType>
-inline FieldType& Field<FieldType>::operator()(const Site& site, int i, int j)
+inline LFvector<FieldType> Field<FieldType>::operator()(const Site& site, int i, int j)
 {
 	return this->operator()(site.index(),i,j);
 }
 template <class FieldType>
-inline FieldType& Field<FieldType>::operator()(const Site& site,int k, int i, int j)
+inline LFvector<FieldType> Field<FieldType>::operator()(const Site& site,int k, int i, int j)
 {
     return this->operator()(site.index(),k,i,j);
 }
@@ -918,49 +922,49 @@ inline FieldType& Field<FieldType>::value(const Site& site,int k, int i, int j)
 #ifdef FFT3D
 
 template <class FieldType>
-inline FieldType& Field<FieldType>::operator()(const cKSite& site)
+inline LFvector<FieldType> Field<FieldType>::operator()(const cKSite& site)
 {
 	return this->operator()(site.index());
 }
 
 template <class FieldType>
-inline FieldType& Field<FieldType>::operator()(const cKSite& site, int component)
+inline LFvector<FieldType> Field<FieldType>::operator()(const cKSite& site, int component)
 {
 	return this->operator()(site.index(),component);
 }
 
 template <class FieldType>
-inline FieldType& Field<FieldType>::operator()(const cKSite& site, int i, int j)
+inline LFvector<FieldType> Field<FieldType>::operator()(const cKSite& site, int i, int j)
 {
 	return this->operator()(site.index(),i,j);
 }
 
 template <class FieldType>
-inline FieldType& Field<FieldType>::operator()(const cKSite& site, int k, int i, int j)
+inline LFvector<FieldType> Field<FieldType>::operator()(const cKSite& site, int k, int i, int j)
 {
     return this->operator()(site.index(),k,i,j);
 }
 
 template <class FieldType>
-inline FieldType& Field<FieldType>::operator()(const rKSite& site)
+inline LFvector<FieldType> Field<FieldType>::operator()(const rKSite& site)
 {
 	return this->operator()(site.index());
 }
 
 template <class FieldType>
-inline FieldType& Field<FieldType>::operator()(const rKSite& site, int component)
+inline LFvector<FieldType> Field<FieldType>::operator()(const rKSite& site, int component)
 {
 	return this->operator()(site.index(),component);
 }
 
 template <class FieldType>
-inline FieldType& Field<FieldType>::operator()(const rKSite& site, int i, int j)
+inline LFvector<FieldType> Field<FieldType>::operator()(const rKSite& site, int i, int j)
 {
 	return this->operator()(site.index(),i,j);
 }
 
 template <class FieldType>
-inline FieldType& Field<FieldType>::operator()(const rKSite& site, int k, int i, int j)
+inline LFvector<FieldType> Field<FieldType>::operator()(const rKSite& site, int k, int i, int j)
 {
     return this->operator()(site.index(),k,i,j);
 }

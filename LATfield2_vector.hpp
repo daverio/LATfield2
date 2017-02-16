@@ -11,8 +11,8 @@ class LFvector
 public:
   LFvector();
   LFvector(const LFvector& other);
-  LFvector(Lattice * lat, T * source);
-  LFvector(int size, T * source);
+  LFvector(Lattice * lat, T * source=NULL);
+  LFvector(int size, T * source=NULL);
   ~LFvector();
 
 
@@ -73,7 +73,7 @@ LFvector<T>::LFvector(const LFvector& other)
 }
 
 template<class T>
-LFvector<T>::LFvector(Lattice * lat, T * source = NULL)
+LFvector<T>::LFvector(Lattice * lat, T * source)
 {
   size_=lat->vectorSize();
   if(source!=NULL)
@@ -89,7 +89,7 @@ LFvector<T>::LFvector(Lattice * lat, T * source = NULL)
 }
 
 template<class T>
-LFvector<T>::LFvector(int size, T * source=NULL)
+LFvector<T>::LFvector(int size, T * source)
 {
   size_=size;
   if(source!=NULL)

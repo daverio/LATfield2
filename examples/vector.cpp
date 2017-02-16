@@ -36,12 +36,14 @@ int main(int argc, char **argv)
 
     //------------   Declaration of a Lattice   --------------
     int dim = 3;
-    int latSize = 16;
+    int latSize = 256;
     int halo = 1;
-    Lattice lat(dim,latSize,halo, latSize/4);
+    Lattice lat(dim,latSize,halo);
 
 
     Field<Real> rho(lat,3);
+    Field<Real> phi(lat);
+    Field<Real> beta(lat,3);
 
     //-----------------------   end   ------------------------
 
@@ -66,6 +68,22 @@ int main(int argc, char **argv)
 
     }
 
+    for(x.first();x.test();x.next())
+    {
+      rho(x,0)=0;
+      rho(x,1)=1;
+      rho(x,2)=2;
+    }
+
+    for(x.first();x.test();x.next())
+    {
+      phi(x)=rho(x,0)+rho(x,2)+rho(x,3);
+      for(int i = 0;i<3;i++)beta(x,i)=phi(x+i)-phi(x-i);
+
+
+    }
+
+
 
     for(int p = 0; p<parallel.size();p++)
     {
@@ -77,7 +95,9 @@ int main(int argc, char **argv)
 
         for(x.first();x.test();x.next())
         {
-          //cout<< x <<endl;
+          rho(x,0)=0;
+          rho(x,1)=1;
+          rho(x,2)=2;
         }
 
       }
