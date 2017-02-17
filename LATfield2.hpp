@@ -21,6 +21,9 @@
 #include "fftw3.h"
 #endif
 
+#ifndef HDF5
+#define HDF5
+#endif
 
 #ifdef HDF5
 #include "hdf5.h"
@@ -84,12 +87,7 @@ Parallel2d parallel;
 
 
 #ifdef HDF5
-#include "hdf5.h"
-#ifdef H5_HAVE_PIXIE
-#include "LATfield2_save_hdf5_pixie.h"
-#else
 #include "LATfield2_save_hdf5.h"
-#endif
 #endif
 
 

@@ -336,7 +336,14 @@ FieldType& value(const rKSite& site, int i, int j);
          */
         void fastsave(const string filename,
                       void (*FormatFunction)(fstream&,FieldType*,int) = defaultFieldSave<FieldType>);
-        /*!
+
+
+
+			void saveHDF5(string filename, string dataset_name, int offset, int thickness);
+
+
+
+				/*!
          Method to write a field with HDF5. To be able to use this method the flag HDF5 need to be set at compilation (-DHDF5). This method use serial HDF5 by default. For parallel HDF5 the flag -DH5_HAVE_PARALLEL must be used at compilation.
 
          This methods will write 1 dataset (named "/field") which contain all components of the field. If one want to use a dataset per components (named "/comp0" to "/compN") the flag -DH5_HAVE_PIXIE need to be set at compilation.
@@ -344,8 +351,8 @@ FieldType& value(const rKSite& site, int i, int j);
          \param filename : path to the file, from the executable folder.
          */
 
-	    void saveHDF5(string filename, string dataset_name);
-	    void saveHDF5(string filename){this->saveHDF5(filename, "data");}
+	    void saveHDF5(string filename, string dataset_name){this->saveHDF5(filename, dataset_name,0,this->lattice_->size(0));}
+	    void saveHDF5(string filename){this->saveHDF5(filename, "data",0,this->lattice_->size(0));}
 
 	    /*!
          Method to load a field with HDF5. To be able to use this method the flag HDF5 need to be set at compilation (-DHDF5). This method use serial HDF5 by default. For parallel HDF5 the flag -DH5_HAVE_PARALLEL must be set at compilation.
@@ -383,8 +390,8 @@ FieldType& value(const rKSite& site, int i, int j);
          \param thickness: thickness of the slice, the default is 1.
          */
 
-	    void saveSliceHDF5(string filename,string dataset_name , int xcoord, int thickness = 1);
-	    void saveSliceHDF5(string filename, int xcoord, int thickness = 1){this->saveSliceHDF5(filename,"data",xcoord,thickness);}
+	    void saveSliceHDF5(string filename,string dataset_name , int xcoord, int thickness = 1){this->saveHDF5(filename,dataset_name,xcoord,thickness);}
+	    void saveSliceHDF5(string filename, int xcoord, int thickness = 1){this->saveHDF5(filename,"data",xcoord,thickness);}
 
 
 
@@ -1845,22 +1852,45 @@ void Field<FieldType>::load(const string filename,
 }
 
 template <class FieldType>
-void  Field<FieldType>::saveHDF5(string filename, string dataset_name)
+void Field<FieldType>::saveHDF5(string filename, string dataset_name, int offset, int thickness)
 {
+	/*
 #ifdef HDF5
 
-	save_hdf5(data_,type_id_,array_size_,lattice_->coordSkip(),lattice_->size(),lattice_->sizeLocal(),lattice_->halo(),lattice_->dim(),components_,filename,dataset_name);
+	save_hdf5(data_,type_id_,array_size_,lattice_->coordSkip(),lattice_->size(),lattice_->sizeLocal(),lattice_->halo(),
+	lattice_->dim(),components_,filename,dataset_name);
 #else
     COUT<<"LATfield2d must be compiled with HDF5 (flag HDF5 turn on!)"<<endl;
     COUT<<"to be able to use hdf5 data format!!!)"<<endl;
     COUT<<"saving file in binary: "<<filename<<"BIN"<<endl;
     this->write(filename+"BIN");
 #endif
+*/
+
+char * dp[components_];
+for(long i=0;i<components_;i++)dp[i] = (char*)&data_[i*sitesLocalGross_];
+save_hdf5_externC(dp,
+                  lattice_->coordSkip(),
+                  lattice_->size(),
+                  lattice_->sizeLocal(),
+                  lattice_->halo(),
+                  lattice_->dim(),
+                  components_,
+                  offset,
+                  thickness,
+                  type_id_,
+                  array_size_,
+                  filename,
+                  dataset_name);
+
+
+
 }
 
 template <class FieldType>
 void  Field<FieldType>::loadHDF5(string filename, string dataset_name)
 {
+	/*
 #ifdef HDF5
 	load_hdf5(data_,lattice_->coordSkip(),lattice_->size(),lattice_->sizeLocal(),lattice_->halo(),lattice_->dim(),components_,filename,dataset_name);
 #else
@@ -1868,79 +1898,21 @@ void  Field<FieldType>::loadHDF5(string filename, string dataset_name)
     COUT<<"to be able to use hdf5 data format!!!)"<<endl;
     COUT<<"aborting...."<<endl;
 #endif
+	*/
+	char * dp[components_];
+	for(long i=0;i<components_;i++)dp[i] = (char*)&data_[i*sitesLocalGross_];
+	load_hdf5_externC(dp,
+										lattice_->coordSkip(),
+										lattice_->size(),
+										lattice_->sizeLocal(),
+										lattice_->halo(),
+										lattice_->dim(),
+										components_,
+	                  filename,
+	                  dataset_name);
 }
 
-template <class FieldType>
 
-void  Field<FieldType>::saveSliceHDF5(string filename, string dataset_name,int xcoord, int thickness)
-{
-//write a slice which is in the y-z (done to insure same amount of data from each proc)
-
-#ifdef HDF5
-
-    Lattice slat;
-    Field<FieldType> sfield;
-
-    Site X(*lattice_);
-    Site sX;
-
-    int dim = this->lattice_->dim();
-
-    int sSize[dim];
-    int r[dim];
-
-    if(thickness>1)
-    {
-
-        sSize[0]=thickness;
-        for(int i=1;i<dim;i++)sSize[i]=this->lattice_->size(i);
-        slat.initialize(dim,sSize,0);
-        sfield.initialize(slat,rows_,cols_,symmetry_);
-        sfield.alloc();
-
-        sX.initialize(slat);
-
-        for(sX.first();sX.test();sX.next())
-        {
-            for(int l=0;l<dim;l++)r[l]=sX.coord(l);
-            r[0]+=xcoord;
-
-            X.setCoord(r);
-
-            for(int i =0; i<components_;i++)sfield(sX,i)=this->operator()(X,i);
-        }
-    }
-    else
-    {
-        for(int i=1;i<dim-1;i++)sSize[i]=this->lattice_->size(i+1);
-        slat.initialize(dim-1,sSize,0);
-        sfield.initialize(slat,rows_,cols_,symmetry_);
-        sfield.alloc();
-
-        sX.initialize(slat);
-
-        for(sX.first();sX.test();sX.next())
-        {
-            for(int l=1;l<dim;l++)r[l]=sX.coord(l-1);
-            r[0]=xcoord;
-
-            X.setCoord(r);
-
-            for(int i =0; i<components_;i++)sfield(sX,i)=this->operator()(X,i);
-        }
-    }
-
-    sfield.saveHDF5(filename,dataset_name);
-    sfield.dealloc();
-
-
-#else
-    COUT<<"LATfield2d must be compiled with HDF5 (flag HDF5 turn on!)"<<endl;
-    COUT<<"to be able to use hdf5 data format!!!)"<<endl;
-    COUT<<"aborting...."<<endl;
-#endif
-
-}
 
 template <class FieldType>
 void  Field<FieldType>::saveHDF5_coarseGrain3D(string filename, string dataset_name, int ratio)
