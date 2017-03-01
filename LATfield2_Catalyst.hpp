@@ -19,10 +19,10 @@
 #include <vtkPointData.h>
 
 
-class LATfield2_Catalyst
+class CataLAT
 {
 public:
-LATfield2_Catalyst();
+CataLAT();
 void initialize(int paraview_scripts_number, int paraview_scripts_offset,char** argv);
 void finalize();
 void createVTKgrid(Lattice *lat,double dx);
@@ -38,13 +38,13 @@ vtkMultiBlockDataSet* vtkGrid_;
 
 };
 
-LATfield2_Catalyst::LATfield2_Catalyst()
+CataLAT::CataLAT()
 {
   processor_ = NULL;
   vtkGrid_ = NULL;
 }
 
-void LATfield2_Catalyst::initialize(int paraview_scripts_number, int paraview_scripts_offset,char** argv)
+void CataLAT::initialize(int paraview_scripts_number, int paraview_scripts_offset,char** argv)
 {
 
 
@@ -68,7 +68,7 @@ void LATfield2_Catalyst::initialize(int paraview_scripts_number, int paraview_sc
 
 }
 
-void LATfield2_Catalyst::createVTKgrid(Lattice *lat, double dx)
+void CataLAT::createVTKgrid(Lattice *lat, double dx)
 {
 
     vtkGrid_ = vtkMultiBlockDataSet::New();
@@ -87,13 +87,13 @@ void LATfield2_Catalyst::createVTKgrid(Lattice *lat, double dx)
     vtkGrid_->SetBlock(0, multiPiece.GetPointer());
 
 }
-void LATfield2_Catalyst::addField(string arrayName, Field<double> *source)
+void CataLAT::addField(string arrayName, Field<double> *source)
 {
   //method called by both server and compute;
 
   if(vtkGrid_==NULL)
   {
-    COUT<<"LATfield2_Catalyst::addField : the grid must have been created before calling LATfield2_Catalyst::addField... aborting"<<endl;
+    COUT<<"CataLAT::addField : the grid must have been created before calling CataLat::addField... aborting"<<endl;
     exit(1);
   }
   else
@@ -114,19 +114,19 @@ void LATfield2_Catalyst::addField(string arrayName, Field<double> *source)
     }
     else
     {
-      COUT<<"LATfield2_Catalyst::addField : trying to add a field which does already exist: "<<arrayName<<endl;
+      COUT<<"CataLAT::addField : trying to add a field which does already exist: "<<arrayName<<endl;
     }
   }
 
 
 }
-void LATfield2_Catalyst::copyField(string arrayName, Field<double> *source)
+void CataLAT::copyField(string arrayName, Field<double> *source)
 {
 
   //method called by both server and compute;
   if(vtkGrid_==NULL)
   {
-    COUT<<"LATfield2_Catalyst::copyField : the grid must have been created before calling LATfield2_Catalyst::copyField... aborting"<<endl;
+    COUT<<"CataLAT::copyField : the grid must have been created before calling CataLat::copyField... aborting"<<endl;
     if(parallel.root())parallel.abortForce();
   }
   else
@@ -152,8 +152,8 @@ void LATfield2_Catalyst::copyField(string arrayName, Field<double> *source)
     }
     else
     {
-      COUT<<"LATfield2_Catalyst::copyField : trying to copy a field which does not already exist"<<endl;
-      COUT<<"LATfield2_Catalyst::copyField : creating the field: "<<arrayName<<endl;
+      COUT<<"CataLAT::copyField : trying to copy a field which does not already exist"<<endl;
+      COUT<<"CataLAT::copyField : creating the field: "<<arrayName<<endl;
       this->addField(arrayName,source);
       this->copyField(arrayName,source);
     }
@@ -162,7 +162,7 @@ void LATfield2_Catalyst::copyField(string arrayName, Field<double> *source)
 
 }
 
-void LATfield2_Catalyst::coProcess(double time, unsigned int timeStep, Lattice *lat)
+void CataLAT::coProcess(double time, unsigned int timeStep, Lattice *lat)
 {
 
   //cout<<"blabla"<<endl;
@@ -187,7 +187,7 @@ void LATfield2_Catalyst::coProcess(double time, unsigned int timeStep, Lattice *
 }
 
 
-void LATfield2_Catalyst::finalize()
+void CataLAT::finalize()
 {
   if(processor_)
     {

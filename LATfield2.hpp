@@ -101,6 +101,10 @@ namespace LATfield2
             #include "LATfield2_PlanFFT.hpp"
         #endif
         #include "particles/LATfield2_Particles.hpp"
+        #ifdef CATALAT
+        #include "LATfield2_catalyst.hpp"
+        #endif
+
 
 //macros
         #include  "looping_macro.hpp"
