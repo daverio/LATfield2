@@ -13,6 +13,11 @@ public:
   LFvector(const LFvector& other);
   LFvector(Lattice * lat, T * source=NULL);
   LFvector(int size, T * source=NULL);
+
+  initialize(Lattice * lat, T * source=NULL);
+  initialize(int size, T * source=NULL);
+
+
   ~LFvector();
 
 
@@ -75,6 +80,11 @@ LFvector<T>::LFvector(const LFvector& other)
 template<class T>
 LFvector<T>::LFvector(Lattice * lat, T * source)
 {
+  this->initialize(lat, source)
+}
+template<class T>
+LFvector<T>::initialize(Lattice * lat, T * source=NULL)
+{
   size_=lat->vectorSize();
   if(source!=NULL)
   {
@@ -88,8 +98,14 @@ LFvector<T>::LFvector(Lattice * lat, T * source)
   }
 }
 
+
 template<class T>
 LFvector<T>::LFvector(int size, T * source)
+{
+  this->initialize(size, source)
+}
+template<class T>
+LFvector<T>::initialize(int size, T * source=NULL)
 {
   size_=size;
   if(source!=NULL)
@@ -174,6 +190,7 @@ LFvector<T>& LFvector<T>::operator/=(const T& a)
 }
 
 
+
 template<class T>
 LFvector<T> LFvector<T>::operator+(const LFvector<T>& v1)
 {
@@ -183,10 +200,6 @@ LFvector<T> LFvector<T>::operator+(const LFvector<T>& v1)
     result[i] = data_[i] + v1.data_[i];
   }
   return result;
-
-
-
-
 }
 
 template<class T>
@@ -308,5 +321,23 @@ LFvector<T> operator/( const T& a, const LFvector<T>& v1 ) {
 }
 
 
+
+LFvector<double> vpow(LFvector<double> v, double n)
+{
+  LFvector<double> result(v.size_);
+  for(int i = 0;i<v.size_;i++)
+  {
+    result.data_[i] = pow(v.data_[i],n);
+  }
+}
+
+LFvector<double> vsqrt(LFvector<double> v)
+{
+  LFvector<double> result(v.size_);
+  for(int i = 0;i<v.size_;i++)
+  {
+    result.data_[i] = sqrt(v.data_[i]);
+  }
+}
 
 #endif
