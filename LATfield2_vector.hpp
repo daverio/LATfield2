@@ -329,6 +329,7 @@ LFvector<double> vpow(LFvector<double> v, double n)
   {
     result.data_[i] = pow(v.data_[i],n);
   }
+  return result;
 }
 
 LFvector<double> vsqrt(LFvector<double> v)
@@ -338,6 +339,18 @@ LFvector<double> vsqrt(LFvector<double> v)
   {
     result.data_[i] = sqrt(v.data_[i]);
   }
+  return result;
+}
+
+
+LFvector<double> vexp(LFvector<double> v)
+{
+  LFvector<double> result(v.size_);
+  for(int i = 0;i<v.size_;i++)
+  {
+    result.data_[i] = exp(v.data_[i]);
+  }
+  return result;
 }
 
 #endif
