@@ -36,7 +36,7 @@ int main(int argc, char **argv)
 
     //------------   Declaration of a Lattice   --------------
     int dim = 3;
-    int latSize = 16;
+    int latSize = 512;
     int halo = 1;
     Lattice lat(dim,latSize,halo);
 
@@ -70,26 +70,39 @@ int main(int argc, char **argv)
 
     rho.updateHalo();
 
+
+    for(int i = 0;i<1;i++)
+      {
     for(x.first();x.test();x.next())
     {
-      phi(x)=rho(x+0,0)+rho(x+1,1)+rho(x+2,2);
+      phi(x)=rho(x,0)+rho(x,1)+rho(x,2);
       for(int i = 0;i<3;i++)beta(x,i)=phi(x+i)-phi(x-i);
     }
+      }
 
 
+    for(x.first();x.test();x.nextValue())
+      {
 
-    rho.saveHDF5("test.h5","rho");
-    phi.saveHDF5("phi.h5");
+	if(rho.value(x+0,1) != x.coord(1)) cout<<"error"<<endl;
+	if(rho.value(x+0,2) != x.coord(2)) cout<<"error"<<endl;
+	if(rho.value(x-0,1) != x.coord(1)) cout<<"error"<<endl;
+	if(rho.value(x-0,2) != x.coord(2)) cout<<"error"<<endl;
+
+      }
+
+    //    rho.saveHDF5("rho.h5","rho");
+    //phi.saveHDF5("phi.h5");
 
 
-    rho.loadHDF5("test.h5","rho");
-    phi.loadHDF5("phi.h5");
+    //rho.loadHDF5("rho.h5","rho");
+    //phi.loadHDF5("phi.h5");
 
 
     for(x.first();x.test();x.nextValue())
     {
-      for(int i=0;i<3;i++)if(rho.value(x,i) != x.coord(i))cout<<"error"<<endl;
-      if(phi.value(x)!=(rho.value(x+0,0)+rho.value(x+1,1)+rho.value(x+2,2)))cout<<"error"<<endl;
+      //for(int i=0;i<3;i++)if(rho.value(x,i) != x.coord(i))cout<<"error"<<endl;
+      //if(phi.value(x)!=(rho.value(x+0,0)+rho.value(x+1,1)+rho.value(x+2,2)))cout<<"error"<<endl;
     }
 
     cout<<"done"<<endl;

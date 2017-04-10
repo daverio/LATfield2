@@ -14,8 +14,8 @@ public:
   LFvector(Lattice * lat, T * source=NULL);
   LFvector(int size, T * source=NULL);
 
-  initialize(Lattice * lat, T * source=NULL);
-  initialize(int size, T * source=NULL);
+  void initialize(Lattice * lat, T * source=NULL);
+  void initialize(int size, T * source=NULL);
 
 
   ~LFvector();
@@ -33,6 +33,8 @@ public:
   LFvector<T>& operator/=(const LFvector<T>& source);
   LFvector<T>& operator/=(const T& a);
 
+
+
   LFvector<T> operator+(const LFvector<T>& v1);
   LFvector<T> operator+(const T& a);
   LFvector<T> operator-(const LFvector<T>& v1);
@@ -41,6 +43,9 @@ public:
   LFvector<T> operator*(const T& a);
   LFvector<T> operator/(const LFvector<T>& v1);
   LFvector<T> operator/(const T& a);
+
+
+
 
 
   T * data_;
@@ -80,10 +85,10 @@ LFvector<T>::LFvector(const LFvector& other)
 template<class T>
 LFvector<T>::LFvector(Lattice * lat, T * source)
 {
-  this->initialize(lat, source)
+  this->initialize(lat, source);
 }
 template<class T>
-LFvector<T>::initialize(Lattice * lat, T * source=NULL)
+void LFvector<T>::initialize(Lattice * lat, T * source)
 {
   size_=lat->vectorSize();
   if(source!=NULL)
@@ -102,10 +107,10 @@ LFvector<T>::initialize(Lattice * lat, T * source=NULL)
 template<class T>
 LFvector<T>::LFvector(int size, T * source)
 {
-  this->initialize(size, source)
+  this->initialize(size, source);
 }
 template<class T>
-LFvector<T>::initialize(int size, T * source=NULL)
+void LFvector<T>::initialize(int size, T * source)
 {
   size_=size;
   if(source!=NULL)
@@ -310,12 +315,42 @@ LFvector<T> LFvector<T>::operator/(const T& a)
   return result;
 }
 
+
+
+
+
+
 template<class T>
-LFvector<T> operator/( const T& a, const LFvector<T>& v1 ) {
-  LFvector<T> result(v1.size_,NULL);
+T vsum(const LFvector<T>& v1)
+{
+  T result;
   for(int i = 0;i<v1.size_;i++)
   {
-    result[i] = a / v1.data_[i];
+    result += v1.data_[i];
+  }
+  return result;
+}
+
+template<class T>
+T vmax(const LFvector<T>& v1)
+{
+  T result = 0.0;
+  for(int i = 0;i<v1.size_;i++)
+  {
+    if(result<v1.data_[i])result = v1.data_[i];
+  }
+  return result;
+}
+
+
+
+template<class T>
+T vmin(const LFvector<T>& v1)
+{
+  T result = 1000000000000000.0;
+  for(int i = 0;i<v1.size_;i++)
+  {
+    if(result>v1.data_[i])result = v1.data_[i];
   }
   return result;
 }
@@ -351,6 +386,26 @@ LFvector<double> vexp(LFvector<double> v)
     result.data_[i] = exp(v.data_[i]);
   }
   return result;
+}
+
+LFvector<double> vabs(LFvector<double> v)
+{
+  LFvector<double> result(v.size_);
+  for(int i = 0;i<v.size_;i++)
+  {
+    result.data_[i] = fabs(v.data_[i]);
+  }
+  return result;
+}
+
+ostream& operator<<(ostream& os, const LFvector<double> &v)
+{
+  for(int i = 0;i<v.size_-1;i++)
+  {
+    os <<  v.data_[i] << " , ";
+  }
+  os << v.data_[v.size_-1];
+  return os;
 }
 
 #endif
