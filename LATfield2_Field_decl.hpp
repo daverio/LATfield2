@@ -1134,7 +1134,7 @@ void Field<FieldType>::updateHaloComms()
 				pointer_rec_up[i+j*lattice_->jump(lattice_->dim()-1)] = buffer_rec[i+si*(j+sj*comp)];
 			}
 		}
-		pointer_send_up += sitesLocalGross_;
+		pointer_rec_up += sitesLocalGross_;
 	}
 
 
@@ -1148,7 +1148,7 @@ void Field<FieldType>::updateHaloComms()
 				buffer_send[i+si*(j+sj*comp)] = pointer_send_down[i+j*lattice_->jump(lattice_->dim()-1)];
 			}
 		}
-		pointer_send_up += sitesLocalGross_;
+		pointer_send_down += sitesLocalGross_;
 	}
 	//send down dim1
 	parallel.sendDown_dim1(buffer_send,buffer_rec, buffer_size1);
@@ -1164,7 +1164,7 @@ void Field<FieldType>::updateHaloComms()
 				pointer_rec_down[i+j*lattice_->jump(lattice_->dim()-1)] = buffer_rec[i+si*(j+sj*comp)];
 			}
 		}
-		pointer_send_up += sitesLocalGross_;
+		pointer_rec_down += sitesLocalGross_;
 	}
 
 	//work on dim 0

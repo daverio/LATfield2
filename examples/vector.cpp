@@ -36,8 +36,8 @@ int main(int argc, char **argv)
 
     //------------   Declaration of a Lattice   --------------
     int dim = 3;
-    int latSize = 512;
-    int halo = 1;
+    int latSize = 16;
+    int halo = 2;
     Lattice lat(dim,latSize,halo);
 
 
@@ -45,26 +45,127 @@ int main(int argc, char **argv)
     Field<Real> phi(lat);
     Field<Real> beta(lat,3);
 
+
     //-----------------------   end   ------------------------
 
     //--------------   Operations on Fields   ----------------
     Site x(lat);
+    Site y(lat);
 
 
     for(x.first();x.test();x.nextValue())
     {
-      for(int i=0;i<3;i++)rho.value(x,i) = x.coord(i);
+      for(int i=0;i<3;i++)rho.value(x,i) = 2.0;
     }
 
+
+    for(x.first();x.test();x.next())
+    {
+      for(int i=0;i<3;i++)
+      {
+
+        cout<<x<< " , comp: "<<i<<" : "<<vsum(vexp(rho(x,i)))<<endl;
+
+      }
+    }
+    if(x.setCoord(0,0,0))cout<<rho(x,0)<<endl;
+    /*
+    for(x.first();x.test();x.next())
+    {
+      for(int i=0;i<3;i++)cout<<"comp "<< i <<" : " <<x<<rho(x,i)<<endl;
+    }
+    */
     rho.updateHalo();
+    /*
 
     for(x.first();x.test();x.nextValue())
     {
 
-      if(rho.value(x+0,1) != x.coord(1)) cout<<"error"<<endl;
-      if(rho.value(x+0,2) != x.coord(2)) cout<<"error"<<endl;
-      if(rho.value(x-0,1) != x.coord(1)) cout<<"error"<<endl;
-      if(rho.value(x-0,2) != x.coord(2)) cout<<"error"<<endl;
+      y=x-0;
+      if(y.coord(0)==-1){
+        if(rho.value(y,0)!=latSize-1) cout<< "error down 0, comp 0" << endl;
+        if(rho.value(y,1)!=y.coord(1)) cout<< "error down 0, comp 1" << endl;
+        if(rho.value(y,2)!=y.coord(2)) cout<< "error down 0, comp 2" << endl;
+      }
+
+      y=x-0-0;
+      if(y.coord(0)==-2){
+        if(rho.value(y,0)!=latSize-2) cout<< "error down2 0, comp 0" << endl;
+        if(rho.value(y,1)!=y.coord(1)) cout<< "error down2 0, comp 1" << endl;
+        if(rho.value(y,2)!=y.coord(2)) cout<< "error down2 0, comp 2" << endl;
+      }
+
+      y=x+0;
+      if(y.coord(0)==latSize){
+        if(rho.value(y,0)!=0) cout<< "error up 0, comp 0" << endl;
+        if(rho.value(y,1)!=y.coord(1)) cout<< "error up 0, comp 1" << endl;
+        if(rho.value(y,2)!=y.coord(2)) cout<< "error up 0, comp 2" << endl;
+      }
+
+      y=x+0+0;
+      if(y.coord(0)==latSize+1){
+        if(rho.value(y,0)!=1) cout<< "error up2 0, comp 0" << endl;
+        if(rho.value(y,1)!=y.coord(1)) cout<< "error up2 0, comp 1" << endl;
+        if(rho.value(y,2)!=y.coord(2)) cout<< "error up2 0, comp 2" << endl;
+      }
+
+
+      y=x-1;
+      if(y.coord(1)==-1){
+        if(rho.value(y,1)!=latSize-1) cout<<y<< "error down 1, comp 1: "<< rho.value(y,0) << "," << rho.value(y,1) << "," << rho.value(y,2) << endl;
+        if(rho.value(y,0)!=y.coord(0)) cout<<y<< "error down 1, comp 0: "<< rho.value(y,0) << "," << rho.value(y,1) << "," << rho.value(y,2)  << endl;
+        if(rho.value(y,2)!=y.coord(2)) cout<<y<< "error down 1, comp 2: "<< rho.value(y,0) << "," << rho.value(y,1) << "," << rho.value(y,2)  << endl;
+      }
+      y=x-1-1;
+      if(y.coord(1)==-2){
+        if(rho.value(y,1)!=latSize-2) cout<<y<< "error down2 1, comp 1: "<< rho.value(y,0) << "," << rho.value(y,1) << "," << rho.value(y,2) << endl;
+        if(rho.value(y,0)!=y.coord(0)) cout<<y<< "error down2 1, comp 0: "<< rho.value(y,0) << "," << rho.value(y,1) << "," << rho.value(y,2)  << endl;
+        if(rho.value(y,2)!=y.coord(2)) cout<<y<< "error down2 1, comp 2: "<< rho.value(y,0) << "," << rho.value(y,1) << "," << rho.value(y,2)  << endl;
+      }
+
+      y=x+1;
+      if(y.coord(1)==latSize){
+        if(rho.value(y,1)!=0) cout<<y<< "error up 1, comp 1: "<< rho.value(y,0) << "," << rho.value(y,1) << "," << rho.value(y,2) << endl;
+        if(rho.value(y,0)!=y.coord(0)) cout<<y<< "error up 1, comp 0: "<< rho.value(y,0) << "," << rho.value(y,1) << "," << rho.value(y,2)  << endl;
+        if(rho.value(y,2)!=y.coord(2)) cout<<y<< "error up 1, comp 2: "<< rho.value(y,0) << "," << rho.value(y,1) << "," << rho.value(y,2)  << endl;
+      }
+      y=x+1+1;
+      if(y.coord(1)==latSize+1){
+        if(rho.value(y,1)!=1) cout<<y<< "error up2 1, comp 1: "<< rho.value(y,0) << "," << rho.value(y,1) << "," << rho.value(y,2) << endl;
+        if(rho.value(y,0)!=y.coord(0)) cout<<y<< "error up2 1, comp 0: "<< rho.value(y,0) << "," << rho.value(y,1) << "," << rho.value(y,2)  << endl;
+        if(rho.value(y,2)!=y.coord(2)) cout<<y<< "error up2 1, comp 2: "<< rho.value(y,0) << "," << rho.value(y,1) << "," << rho.value(y,2)  << endl;
+      }
+
+      y=x-2;
+      if(y.coord(2)==-1){
+        if(rho.value(y,0)!=y.coord(0)) cout<<y<< "error down 2, comp 0: "<< rho.value(y,0) << "," << rho.value(y,1) << "," << rho.value(y,2) << endl;
+        if(rho.value(y,1)!=y.coord(1)) cout<<y<< "error down 2, comp 1: "<< rho.value(y,0) << "," << rho.value(y,1) << "," << rho.value(y,2)  << endl;
+        if(rho.value(y,2)!=latSize-1) cout<<y<< "error down 2, comp 2: "<< rho.value(y,0) << "," << rho.value(y,1) << "," << rho.value(y,2)  << endl;
+      }
+
+      y=x-2-2;
+      if(y.coord(2)==-2){
+        if(rho.value(y,0)!=y.coord(0)) cout<<y<< "error down2 2, comp 0: "<< rho.value(y,0) << "," << rho.value(y,1) << "," << rho.value(y,2) << endl;
+        if(rho.value(y,1)!=y.coord(1)) cout<<y<< "error down2 2, comp 1: "<< rho.value(y,0) << "," << rho.value(y,1) << "," << rho.value(y,2)  << endl;
+        if(rho.value(y,2)!=latSize-2) cout<<y<< "error down2 2, comp 2: "<< rho.value(y,0) << "," << rho.value(y,1) << "," << rho.value(y,2)  << endl;
+      }
+
+      y=x+2;
+      if(y.coord(2)==latSize){
+        if(rho.value(y,0)!=y.coord(0)) cout<<y<< "error up 2, comp 0: "<< rho.value(y,0) << "," << rho.value(y,1) << "," << rho.value(y,2) << endl;
+        if(rho.value(y,1)!=y.coord(1)) cout<<y<< "error up 2, comp 1: "<< rho.value(y,0) << "," << rho.value(y,1) << "," << rho.value(y,2)  << endl;
+        if(rho.value(y,2)!=0) cout<<y<< "error up 2, comp 2: "<< rho.value(y,0) << "," << rho.value(y,1) << "," << rho.value(y,2)  << endl;
+      }
+
+      y=x+2+2;
+      if(y.coord(2)==latSize+1){
+        if(rho.value(y,0)!=y.coord(0)) cout<<y<< "error up2 2, comp 0: "<< rho.value(y,0) << "," << rho.value(y,1) << "," << rho.value(y,2) << endl;
+        if(rho.value(y,1)!=y.coord(1)) cout<<y<< "error up2 2, comp 1: "<< rho.value(y,0) << "," << rho.value(y,1) << "," << rho.value(y,2)  << endl;
+        if(rho.value(y,2)!=1) cout<<y<< "error up2 2, comp 2: "<< rho.value(y,0) << "," << rho.value(y,1) << "," << rho.value(y,2)  << endl;
+      }
+
+
+
 
     }
 
@@ -83,20 +184,19 @@ int main(int argc, char **argv)
 
     for(x.first();x.test();x.nextValue())
       {
-
-	if(rho.value(x+0,1) != x.coord(1)) cout<<"error"<<endl;
-	if(rho.value(x+0,2) != x.coord(2)) cout<<"error"<<endl;
-	if(rho.value(x-0,1) != x.coord(1)) cout<<"error"<<endl;
-	if(rho.value(x-0,2) != x.coord(2)) cout<<"error"<<endl;
+        if(rho.value(x+0,1) != x.coord(1)) cout<<"error"<<endl;
+        if(rho.value(x+0,2) != x.coord(2)) cout<<"error"<<endl;
+	      if(rho.value(x-0,1) != x.coord(1)) cout<<"error"<<endl;
+	      if(rho.value(x-0,2) != x.coord(2)) cout<<"error"<<endl;
 
       }
 
-    //    rho.saveHDF5("rho.h5","rho");
-    //phi.saveHDF5("phi.h5");
+    rho.saveHDF5("rho.h5","rho");
+    phi.saveHDF5("phi.h5");
 
 
-    //rho.loadHDF5("rho.h5","rho");
-    //phi.loadHDF5("phi.h5");
+    rho.loadHDF5("rho.h5","rho");
+    phi.loadHDF5("phi.h5");
 
 
     for(x.first();x.test();x.nextValue())
@@ -107,4 +207,5 @@ int main(int argc, char **argv)
 
     cout<<"done"<<endl;
     //--------------------------------------------------------
+    */
 }

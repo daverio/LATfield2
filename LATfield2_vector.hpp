@@ -11,10 +11,10 @@ class LFvector
 public:
   LFvector();
   LFvector(const LFvector& other);
-  LFvector(Lattice * lat, T * source=NULL);
+  LFvector(Lattice & lat, T * source=NULL);
   LFvector(int size, T * source=NULL);
 
-  void initialize(Lattice * lat, T * source=NULL);
+  void initialize(Lattice & lat, T * source=NULL);
   void initialize(int size, T * source=NULL);
 
 
@@ -60,6 +60,7 @@ LFvector<T>::~LFvector()
 {
   if(allocated_)
   {
+    //cout<<"vector dealocated"<<endl;
     free(data_);
     allocated_=false;
   }
@@ -83,14 +84,14 @@ LFvector<T>::LFvector(const LFvector& other)
 }
 
 template<class T>
-LFvector<T>::LFvector(Lattice * lat, T * source)
+LFvector<T>::LFvector(Lattice & lat, T * source)
 {
   this->initialize(lat, source);
 }
 template<class T>
-void LFvector<T>::initialize(Lattice * lat, T * source)
+void LFvector<T>::initialize(Lattice & lat, T * source)
 {
-  size_=lat->vectorSize();
+  size_=lat.vectorSize();
   if(source!=NULL)
   {
     data_=source;
@@ -120,6 +121,7 @@ void LFvector<T>::initialize(int size, T * source)
   }
   else
   {
+    //cout<<" vector allocation "<<endl;
     data_= (T*)malloc(size_*sizeof(T));
     allocated_=true;
   }
@@ -323,7 +325,7 @@ LFvector<T> LFvector<T>::operator/(const T& a)
 template<class T>
 T vsum(const LFvector<T>& v1)
 {
-  T result;
+  T result = 0.0;
   for(int i = 0;i<v1.size_;i++)
   {
     result += v1.data_[i];

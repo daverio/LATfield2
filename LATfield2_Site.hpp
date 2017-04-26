@@ -417,6 +417,15 @@ bool rKSite::setCoord(int x, int y=0, int z=0)
 }
 
 
+ostream& operator<<(ostream& os, const Site& x)
+{
+	int size = x.lattice_->dim();
+  os << " ( ";
+	for(int i = 0; i<size-1;i++)os << x.coord(i)<< " , ";
+	os << x.coord(size-1)<< " ) ";
+  return os;
+}
+
 #endif
 
 
