@@ -317,6 +317,15 @@ LFvector<T> LFvector<T>::operator/(const T& a)
   return result;
 }
 
+template<class T>
+LFvector<T> operator/( const T& a, const LFvector<T>& v1 ) {
+  LFvector<T> result(v1.size_,NULL);
+  for(int i = 0;i<v1.size_;i++)
+  {
+    result[i] =  a / v1.data_[i];
+  }
+  return result;
+}
 
 
 
@@ -359,7 +368,7 @@ T vmin(const LFvector<T>& v1)
 
 
 
-LFvector<double> vpow(LFvector<double> v, double n)
+LFvector<double> vpow(const LFvector<double> v, double n)
 {
   LFvector<double> result(v.size_);
   for(int i = 0;i<v.size_;i++)
@@ -369,7 +378,7 @@ LFvector<double> vpow(LFvector<double> v, double n)
   return result;
 }
 
-LFvector<double> vsqrt(LFvector<double> v)
+LFvector<double> vsqrt(const LFvector<double> v)
 {
   LFvector<double> result(v.size_);
   for(int i = 0;i<v.size_;i++)
@@ -380,7 +389,7 @@ LFvector<double> vsqrt(LFvector<double> v)
 }
 
 
-LFvector<double> vexp(LFvector<double> v)
+LFvector<double> vexp(const LFvector<double> v)
 {
   LFvector<double> result(v.size_);
   for(int i = 0;i<v.size_;i++)
@@ -390,7 +399,7 @@ LFvector<double> vexp(LFvector<double> v)
   return result;
 }
 
-LFvector<double> vabs(LFvector<double> v)
+LFvector<double> vabs(const LFvector<double> v)
 {
   LFvector<double> result(v.size_);
   for(int i = 0;i<v.size_;i++)
