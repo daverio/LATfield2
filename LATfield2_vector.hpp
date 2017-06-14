@@ -16,6 +16,7 @@ public:
 
   void initialize(Lattice & lat, T * source=NULL);
   void initialize(int size, T * source=NULL);
+  void nocopy(const LFvector& other);
 
 
   ~LFvector();
@@ -125,6 +126,13 @@ void LFvector<T>::initialize(int size, T * source)
     data_= (T*)malloc(size_*sizeof(T));
     allocated_=true;
   }
+}
+
+template<class T>
+void LFvector<T>::nocopy(const LFvector& other)
+{
+  this->size_ = other->size_;
+  this->data_ = other->data_;
 }
 
 template<class T>

@@ -449,7 +449,7 @@ void Particles<part,part_info,part_dataType>::coutPart(long ID)
     Site x(lat_part_);
     typename std::list<part>::iterator it;
 
-    for(x.first();x.test();x.next())
+    for(x.first();x.test();x.nextValue())
     {
         if((field_part_)(x).size!=0)
         {
@@ -474,15 +474,13 @@ bool Particles<part,part_info,part_dataType>::addParticle_global(part newPart)
 
   if(x.setCoord(coord))
     {
-      field_part_(x).size += 1;
-      field_part_(x).parts.push_back(newPart);
+      field_part_.value(x).size += 1;
+      field_part_.value(x).parts.push_back(newPart);
       numParticles_ +=1;
       return true;
     }
-  else
-    {
-      return false;
-    }
+  else return false;
+
 }
 
 template <typename part, typename part_info, typename part_dataType>
@@ -542,11 +540,11 @@ Real Particles<part,part_info,part_dataType>::updateVel(Real (*updateVel_funct)(
         }
     }
 
-    for(xPart.first() ; xPart.test(); xPart.next())
+    for(xPart.first() ; xPart.test(); xPart.nextValue())
     {
-        if(field_part_(xPart).size!=0)
+        if(field_part_.value(xPart).size!=0)
         {
-            for (it=(field_part_)(xPart).parts.begin(); it != (field_part_)(xPart).parts.end(); ++it)
+            for (it=(field_part_).value(xPart).parts.begin(); it != (field_part_).value(xPart).parts.end(); ++it)
             {
                 for (int l=0; l<3; l++)
                     frac[l] = modf( (*it).pos[l] / lat_resolution_, &x0);
@@ -587,7 +585,7 @@ Real Particles<part,part_info,part_dataType>::updateVel(Real (*updateVel_funct)(
 
             }
         }
-        for(int i=0;i<nfields;i++) sites[i].next();
+        for(int i=0;i<nfields;i++) sites[i].nextValue();
     }
 
     if(noutput>0)for(int i=0;i<noutput;i++)
@@ -701,13 +699,13 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
 
 
 
-    for(x.first();x.test();x.next())
+    for(x.first();x.test();x.nextValue())
     {
-        if(field_part_(x).size!=0)
+        if(field_part_.value(x).size!=0)
         {
             for(int i=0;i<3;i++)localCoord[i] = x.coordLocal(i);
 
-            for(it=field_part_(x).parts.begin(); it != field_part_(x).parts.end();)
+            for(it=field_part_.value(x).parts.begin(); it != field_part_.value(x).parts.end();)
             {
                 itTemp = it;
                 ++it;
@@ -777,18 +775,18 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                 {
                     int r[3];
                     getPartCoord(*itTemp, r);
-                    if(!xNew.setCoord(r))
-                    {
-                        cout<<"arg"<< *itTemp <<" ; "<< partRanks[0]<< " , " << thisRanks[0] <<endl;
-                    }
+                    //if(!xNew.setCoord(r))
+                    //{
+                    //    cout<<"arg"<< *itTemp <<" ; "<< partRanks[0]<< " , " << thisRanks[0] <<endl;
+                    //}
 
                     getPartCoordLocal(*itTemp, newLocalCoord);
                     if(localCoord[0]!=newLocalCoord[0] || localCoord[1]!=newLocalCoord[1] || localCoord[2]!=newLocalCoord[2] )
                     {
                         xNew.setCoordLocal(newLocalCoord);
-                        field_part_(xNew).partsTemp.splice(field_part_(xNew).partsTemp.end(),field_part_(x).parts,itTemp);
-                        field_part_(xNew).size += 1;
-                        field_part_(x).size -= 1;
+                        field_part_.value(xNew).partsTemp.splice(field_part_.value(xNew).partsTemp.end(),field_part_.value(x).parts,itTemp);
+                        field_part_.value(xNew).size += 1;
+                        field_part_.value(x).size -= 1;
                     }
 
                 }
@@ -796,18 +794,18 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                 {
                     if(partRanks[0]==thisRanks[0])
                     {
-                        part_moveProc[2].splice(part_moveProc[2].end(),field_part_(x).parts,itTemp);
-                        field_part_(x).size -= 1;
+                        part_moveProc[2].splice(part_moveProc[2].end(),field_part_.value(x).parts,itTemp);
+                        field_part_.value(x).size -= 1;
                     }
                     else if(partRanks[0]==thisRanks[0]-1)
                     {
-                        part_moveProc[0].splice(part_moveProc[0].end(),field_part_(x).parts,itTemp);
-                        field_part_(x).size -= 1;
+                        part_moveProc[0].splice(part_moveProc[0].end(),field_part_.value(x).parts,itTemp);
+                        field_part_.value(x).size -= 1;
                     }
                     else if(partRanks[0]==thisRanks[0]+1)
                     {
-                        part_moveProc[1].splice(part_moveProc[1].end(),field_part_(x).parts,itTemp);
-                        field_part_(x).size -= 1;
+                        part_moveProc[1].splice(part_moveProc[1].end(),field_part_.value(x).parts,itTemp);
+                        field_part_.value(x).size -= 1;
                     }
                     else
                     {
@@ -820,18 +818,18 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                 {
                     if(partRanks[0]==thisRanks[0])
                     {
-                        part_moveProc[5].splice(part_moveProc[5].end(),field_part_(x).parts,itTemp);
-                        field_part_(x).size -= 1;
+                        part_moveProc[5].splice(part_moveProc[5].end(),field_part_.value(x).parts,itTemp);
+                        field_part_.value(x).size -= 1;
                     }
                     else if(partRanks[0]==thisRanks[0]-1)
                     {
-                        part_moveProc[3].splice(part_moveProc[3].end(),field_part_(x).parts,itTemp);
-                        field_part_(x).size -= 1;
+                        part_moveProc[3].splice(part_moveProc[3].end(),field_part_.value(x).parts,itTemp);
+                        field_part_.value(x).size -= 1;
                     }
                     else if(partRanks[0]==thisRanks[0]+1)
                     {
-                        part_moveProc[4].splice(part_moveProc[4].end(),field_part_(x).parts,itTemp);
-                        field_part_(x).size -= 1;
+                        part_moveProc[4].splice(part_moveProc[4].end(),field_part.value(x).parts,itTemp);
+                        field_part.value(x).size -= 1;
                     }
                     else
                     {
@@ -844,13 +842,13 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                 {
                     if(partRanks[0]==thisRanks[0]-1)
                     {
-                        part_moveProc[6].splice(part_moveProc[6].end(),field_part_(x).parts,itTemp);
-                        field_part_(x).size -= 1;
+                        part_moveProc[6].splice(part_moveProc[6].end(),field_part.value(x).parts,itTemp);
+                        field_part.value(x).size -= 1;
                     }
                     else if(partRanks[0]==thisRanks[0]+1)
                     {
-                        part_moveProc[7].splice(part_moveProc[7].end(),field_part_(x).parts,itTemp);
-                        field_part_(x).size -= 1;
+                        part_moveProc[7].splice(part_moveProc[7].end(),field_part.value(x).parts,itTemp);
+                        field_part.value(x).size -= 1;
                     }
                     else
                     {
@@ -869,14 +867,14 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
             }
         }
 
-        if(nfields!=0) for(int i=0;i<nfields;i++) sites[i].next();
+        if(nfields!=0) for(int i=0;i<nfields;i++) sites[i].nextValue();
 
     }
 
 
 
 
-    for(x.first();x.test();x.next())if((field_part_)(x).size!=0)(field_part_)(x).parts.splice((field_part_)(x).parts.end(), (field_part_)(x).partsTemp );
+    for(x.first();x.test();x.nextValue())if((field_part_)(x).size!=0)(field_part_)(x).parts.splice((field_part_)(x).parts.end(), (field_part_)(x).partsTemp );
 
 
      //cout<<"starting first dim"<<endl;
@@ -1170,8 +1168,8 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
         this->getPartCoordLocal(recBuffer[2][i],newLocalCoord);
         x.setCoordLocal(newLocalCoord);
 
-        field_part_(x).size += 1;
-        field_part_(x).parts.push_back(recBuffer[2][i]);
+        field_part.value(x).size += 1;
+        field_part.value(x).parts.push_back(recBuffer[2][i]);
 #ifdef DEBUG_MOVE
         int verif;
         verif=addParticle_global(recBuffer[2][i]);
@@ -1193,8 +1191,8 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
 
         x.setCoordLocal(newLocalCoord);
 
-        field_part_(x).size += 1;
-        field_part_(x).parts.push_back(recBuffer[5][i]);
+        field_part.value(x).size += 1;
+        field_part.value(x).parts.push_back(recBuffer[5][i]);
 #ifdef DEBUG_MOVE
         int verif;
         verif=addParticle_global(recBuffer[5][i]);
@@ -1506,8 +1504,8 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
 
             x.setCoordLocal(newLocalCoord);
 
-            field_part_(x).size += 1;
-            field_part_(x).parts.push_back(recBuffer[p][i]);
+            field_part.value(x).size += 1;
+            field_part.value(x).parts.push_back(recBuffer[p][i]);
         }
     }
 
@@ -1563,11 +1561,11 @@ void Particles<part,part_info,part_dataType>::saveHDF5(string filename_base, int
     MPI_Comm_create(parallel.lat_world_comm(),fileGroup , &fileComm);
 
   index=0;
-  for(x.first();x.test();x.next())
+  for(x.first();x.test();x.nextValue())
     {
-      if(field_part_(x).size!=0)
+      if(field_part.value(x).size!=0)
         {
-	         for(it=field_part_(x).parts.begin(); it != field_part_(x).parts.end();++it)
+	         for(it=field_part.value(x).parts.begin(); it != field_part.value(x).parts.end();++it)
            {
 	             partlist[index]=(*it);
                index++;
@@ -1782,11 +1780,11 @@ void Particles<part,part_info,part_dataType>::saveHDF5_server_write(string filen
     LATfield2::Site x(lat_part_);
     typename std::list<part>::iterator it;
     long index=0;
-    for(x.first();x.test();x.next())
+    for(x.first();x.test();x.nextValue())
     {
-        if(field_part_(x).size!=0)
+        if(field_part.value(x).size!=0)
         {
-            for(it=field_part_(x).parts.begin(); it != field_part_(x).parts.end();++it)
+            for(it=field_part.value(x).parts.begin(); it != field_part.value(x).parts.end();++it)
             {
 
                 for(int i=0;i<3;i++)

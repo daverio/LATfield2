@@ -128,16 +128,16 @@ void scalarProjectionCIC_project(Particles<part,part_info,part_dataType> * parts
 
 
 
-    for(xPart.first(),xField.first();xPart.test();xPart.next(),xField.next())
+    for(xPart.first(),xField.first();xPart.test();xPart.nextValue(),xField.nextValue())
     {
 
 
-        if(parts->field()(xPart).size!=0)
+        if(parts->field().value(xPart).size!=0)
         {
             for(int i=0;i<3;i++)referPos[i]=xPart.coord(i)*latresolution;
             for(int i=0;i<8;i++)localCube[i]=0;
 
-            for (it=(parts->field())(xPart).parts.begin(); it != (parts->field())(xPart).parts.end(); ++it)
+            for (it=(parts->field()).value(xPart).parts.begin(); it != (parts->field()).value(xPart).parts.end(); ++it)
             {
                 for(int i =0;i<3;i++)
                 {
@@ -169,14 +169,14 @@ void scalarProjectionCIC_project(Particles<part,part_info,part_dataType> * parts
                 localCube[7] += rescalPos[0]*rescalPos[1]*rescalPos[2] * mass;
             }
 
-            (*rho)(xField)+=localCube[0];
-            (*rho)(xField+2)+=localCube[1];
-            (*rho)(xField+1)+=localCube[2];
-            (*rho)(xField+1+2)+=localCube[3];
-            (*rho)(xField+0)+=localCube[4];
-            (*rho)(xField+0+2)+=localCube[5];
-            (*rho)(xField+0+1)+=localCube[6];
-            (*rho)(xField+0+1+2)+=localCube[7];
+            (*rho).value(xField)+=localCube[0];
+            (*rho).value(xField+2)+=localCube[1];
+            (*rho).value(xField+1)+=localCube[2];
+            (*rho).value(xField+1+2)+=localCube[3];
+            (*rho).value(xField+0)+=localCube[4];
+            (*rho).value(xField+0+2)+=localCube[5];
+            (*rho).value(xField+0+1)+=localCube[6];
+            (*rho).value(xField+0+1+2)+=localCube[7];
         }
     }
 
@@ -233,7 +233,7 @@ void scalarProjectionCIC_comm(Field<Real> * rho)
     {
         for(int j=distHaloOne;j<sizeLocalOne[1]+distHaloOne;j++)
         {
-            (*rho)(setIndex(sizeLocalGross,halo,j,k)) += (*rho)(setIndex(sizeLocalGross,iref,j,k));
+            (*rho).value(setIndex(sizeLocalGross,halo,j,k)) += (*rho).value(setIndex(sizeLocalGross,iref,j,k));
         }
     }
 
@@ -259,14 +259,14 @@ void scalarProjectionCIC_comm(Field<Real> * rho)
     {
         for(int i=0;i<imax;i++)
         {
-            bufferSend[i+k*imax]=(*rho)(setIndex(sizeLocalGross,i+halo,iref,k+halo));
+            bufferSend[i+k*imax]=(*rho).value(setIndex(sizeLocalGross,i+halo,iref,k+halo));
         }
     }
     parallel.sendUp_dim1(bufferSend,bufferRec,bufferSizeY);
     //unpack data
     for(int k=0;k<(sizeLocalOne[2]-1);k++)
     {
-        for(int i=0;i<imax;i++)(*rho)(setIndex(sizeLocalGross,i+halo,halo,k+halo))+=bufferRec[i+k*imax];
+        for(int i=0;i<imax;i++)(*rho).value(setIndex(sizeLocalGross,i+halo,halo,k+halo))+=bufferRec[i+k*imax];
 
     }
 
@@ -280,7 +280,7 @@ void scalarProjectionCIC_comm(Field<Real> * rho)
     {
         for(int i=0;i<imax;i++)
         {
-            bufferSend[i+j*imax]=(*rho)(setIndex(sizeLocalGross,i+halo,j+halo,iref));
+            bufferSend[i+j*imax]=(*rho).value(setIndex(sizeLocalGross,i+halo,j+halo,iref));
         }
     }
 
@@ -291,7 +291,7 @@ void scalarProjectionCIC_comm(Field<Real> * rho)
 
     for(int j=0;j<(sizeLocalOne[1]-2);j++)
     {
-        for(int i=0;i<imax;i++)(*rho)(setIndex(sizeLocalGross,i+halo,j+halo,halo))+=bufferRec[i+j*imax];
+        for(int i=0;i<imax;i++)(*rho).value(setIndex(sizeLocalGross,i+halo,j+halo,halo))+=bufferRec[i+j*imax];
     }
 
     free(bufferRec);
@@ -369,9 +369,9 @@ void vectorProjectionCICNGP_project(Particles<part,part_info,part_dataType> * pa
 
 
 
-    for(xPart.first(),xVel.first();xPart.test();xPart.next(),xVel.next())
+    for(xPart.first(),xVel.first();xPart.test();xPart.nextValue(),xVel.nextValue())
     {
-        if(parts->field()(xPart).size!=0)
+        if(parts->field().value(xPart).size!=0)
         {
             for(int i=0;i<3;i++)
 
@@ -379,7 +379,7 @@ void vectorProjectionCICNGP_project(Particles<part,part_info,part_dataType> * pa
 
             for(int i=0;i<12;i++)vi[i]=0.0;
 
-            for (it=(parts->field())(xPart).parts.begin(); it != (parts->field())(xPart).parts.end(); ++it)
+            for (it=(parts->field()).value(xPart).parts.begin(); it != (parts->field()).value(xPart).parts.end(); ++it)
             {
                 for(int i =0;i<3;i++)
                 {
@@ -427,22 +427,22 @@ void vectorProjectionCICNGP_project(Particles<part,part_info,part_dataType> * pa
             }
 
 
-            (*vel)(xVel,0)+=vi[0];
-            (*vel)(xVel,1)+=vi[4];
-            (*vel)(xVel,2)+=vi[8];
+            (*vel).value(xVel,0)+=vi[0];
+            (*vel).value(xVel,1)+=vi[4];
+            (*vel).value(xVel,2)+=vi[8];
 
-            (*vel)(xVel+0,1)+=vi[5];
-            (*vel)(xVel+0,2)+=vi[9];
+            (*vel).value(xVel+0,1)+=vi[5];
+            (*vel).value(xVel+0,2)+=vi[9];
 
-            (*vel)(xVel+1,0)+=vi[1];
-            (*vel)(xVel+1,2)+=vi[10];
+            (*vel).value(xVel+1,0)+=vi[1];
+            (*vel).value(xVel+1,2)+=vi[10];
 
-            (*vel)(xVel+2,0)+=vi[2];
-            (*vel)(xVel+2,1)+=vi[6];
+            (*vel).value(xVel+2,0)+=vi[2];
+            (*vel).value(xVel+2,1)+=vi[6];
 
-            (*vel)(xVel+1+2,0)+=vi[3];
-            (*vel)(xVel+0+2,1)+=vi[7];
-            (*vel)(xVel+0+1,2)+=vi[11];
+            (*vel).value(xVel+1+2,0)+=vi[3];
+            (*vel).value(xVel+0+2,1)+=vi[7];
+            (*vel).value(xVel+0+1,2)+=vi[11];
 
         }
     }
@@ -502,7 +502,7 @@ void vectorProjectionCICNGP_comm(Field<Real> * vel)
     {
         for(int j=distHaloOne;j<sizeLocalOne[1]+distHaloOne;j++)
         {
-            for(int c=0;c<comp;c++)(*vel)(setIndex(sizeLocalGross,halo,j,k),c) += (*vel)(setIndex(sizeLocalGross,iref,j,k),c);
+            for(int c=0;c<comp;c++)(*vel).value(setIndex(sizeLocalGross,halo,j,k),c) += (*vel).value(setIndex(sizeLocalGross,iref,j,k),c);
         }
     }
 
@@ -529,7 +529,7 @@ void vectorProjectionCICNGP_comm(Field<Real> * vel)
     {
         for(int i=0;i<imax;i++)
         {
-            for(int c=0;c<comp;c++)bufferSend[c+comp*(i+k*imax)]=(*vel)(setIndex(sizeLocalGross,i+halo,iref,k+halo),c);
+            for(int c=0;c<comp;c++)bufferSend[c+comp*(i+k*imax)]=(*vel).value(setIndex(sizeLocalGross,i+halo,iref,k+halo),c);
         }
     }
 
@@ -542,7 +542,7 @@ void vectorProjectionCICNGP_comm(Field<Real> * vel)
     {
         for(int i=0;i<imax;i++)
         {
-            for(int c=0;c<comp;c++)(*vel)(setIndex(sizeLocalGross,i+halo,halo,k+halo),c)+=bufferRec[c+comp*(i+k*imax)];
+            for(int c=0;c<comp;c++)(*vel).value(setIndex(sizeLocalGross,i+halo,halo,k+halo),c)+=bufferRec[c+comp*(i+k*imax)];
         }
 
     }
@@ -558,7 +558,7 @@ void vectorProjectionCICNGP_comm(Field<Real> * vel)
     {
         for(int i=0;i<imax;i++)
         {
-            for(int c=0;c<comp;c++)bufferSend[c+comp*(i+j*imax)]=(*vel)(setIndex(sizeLocalGross,i+halo,j+halo,iref),c);
+            for(int c=0;c<comp;c++)bufferSend[c+comp*(i+j*imax)]=(*vel).value(setIndex(sizeLocalGross,i+halo,j+halo,iref),c);
         }
     }
 
@@ -571,7 +571,7 @@ void vectorProjectionCICNGP_comm(Field<Real> * vel)
     {
         for(int i=0;i<imax;i++)
         {
-            for(int c=0;c<comp;c++)(*vel)(setIndex(sizeLocalGross,i+halo,j+halo,halo),c)+=bufferRec[c+comp*(i+j*imax)];
+            for(int c=0;c<comp;c++)(*vel).value(setIndex(sizeLocalGross,i+halo,j+halo,halo),c)+=bufferRec[c+comp*(i+j*imax)];
         }
     }
 
@@ -657,9 +657,9 @@ void symtensorProjectionCICNGP_project(Particles<part,part_info,part_dataType> *
 
 
 
-    for(xPart.first(),xTij.first();xPart.test();xPart.next(),xTij.next())
+    for(xPart.first(),xTij.first();xPart.test();xPart.nextValue(),xTij.nextValue())
     {
-        if(parts->field()(xPart).size!=0)
+        if(parts->field().value(xPart).size!=0)
         {
             for(int i=0;i<3;i++)
                 referPos[i] = (double)xPart.coord(i)*latresolution;
@@ -667,7 +667,7 @@ void symtensorProjectionCICNGP_project(Particles<part,part_info,part_dataType> *
             for(int i=0;i<6;i++)tij[i]=0.0;
             for(int i=0;i<24;i++)tii[i]=0.0;
 
-            for (it=(parts->field())(xPart).parts.begin(); it != (parts->field())(xPart).parts.end(); ++it)
+            for (it=(parts->field()).value(xPart).parts.begin(); it != (parts->field()).value(xPart).parts.end(); ++it)
             {
                 for(int i =0;i<3;i++)
                 {
@@ -724,24 +724,24 @@ void symtensorProjectionCICNGP_project(Particles<part,part_info,part_dataType> *
             }
 
 
-            for(int i=0;i<3;i++)(*Tij)(xTij,i,i)+=tii[8*i];
-            (*Tij)(xTij,0,1)+=tij[0];
-            (*Tij)(xTij,0,2)+=tij[2];
-            (*Tij)(xTij,1,2)+=tij[4];
+            for(int i=0;i<3;i++)(*Tij).value(xTij,i,i)+=tii[8*i];
+            (*Tij).value(xTij,0,1)+=tij[0];
+            (*Tij).value(xTij,0,2)+=tij[2];
+            (*Tij).value(xTij,1,2)+=tij[4];
 
-            for(int i=0;i<3;i++)(*Tij)(xTij+0,i,i)+=tii[4+8*i];
-            (*Tij)(xTij+0,1,2)+=tij[5];
+            for(int i=0;i<3;i++)(*Tij).value(xTij+0,i,i)+=tii[4+8*i];
+            (*Tij).value(xTij+0,1,2)+=tij[5];
 
-            for(int i=0;i<3;i++)(*Tij)(xTij+1,i,i)+=tii[2+8*i];
-            (*Tij)(xTij+1,0,2)+=tij[3];
+            for(int i=0;i<3;i++)(*Tij).value(xTij+1,i,i)+=tii[2+8*i];
+            (*Tij).value(xTij+1,0,2)+=tij[3];
 
-            for(int i=0;i<3;i++)(*Tij)(xTij+2,i,i)+=tii[1+8*i];
-            (*Tij)(xTij+2,0,1)+=tij[1];
+            for(int i=0;i<3;i++)(*Tij).value(xTij+2,i,i)+=tii[1+8*i];
+            (*Tij).value(xTij+2,0,1)+=tij[1];
 
-            for(int i=0;i<3;i++)(*Tij)(xTij+0+1,i,i)+=tii[6+8*i];
-            for(int i=0;i<3;i++)(*Tij)(xTij+0+2,i,i)+=tii[5+8*i];
-            for(int i=0;i<3;i++)(*Tij)(xTij+1+2,i,i)+=tii[3+8*i];
-            for(int i=0;i<3;i++)(*Tij)(xTij+0+1+2,i,i)+=tii[7+8*i];
+            for(int i=0;i<3;i++)(*Tij).value(xTij+0+1,i,i)+=tii[6+8*i];
+            for(int i=0;i<3;i++)(*Tij).value(xTij+0+2,i,i)+=tii[5+8*i];
+            for(int i=0;i<3;i++)(*Tij).value(xTij+1+2,i,i)+=tii[3+8*i];
+            for(int i=0;i<3;i++)(*Tij).value(xTij+0+1+2,i,i)+=tii[7+8*i];
         }
     }
 
@@ -799,7 +799,7 @@ void symtensorProjectionCICNGP_comm(Field<Real> * Tij)
     {
         for(int j=distHaloOne;j<sizeLocalOne[1]+distHaloOne;j++)
         {
-            for(int c=0;c<comp;c++)(*Tij)(setIndex(sizeLocalGross,halo,j,k),c) += (*Tij)(setIndex(sizeLocalGross,iref,j,k),c);
+            for(int c=0;c<comp;c++)(*Tij).value(setIndex(sizeLocalGross,halo,j,k),c) += (*Tij).value(setIndex(sizeLocalGross,iref,j,k),c);
         }
     }
 
@@ -826,7 +826,7 @@ void symtensorProjectionCICNGP_comm(Field<Real> * Tij)
     {
         for(int i=0;i<imax;i++)
         {
-            for(int c=0;c<comp;c++)bufferSend[c+comp*(i+k*imax)]=(*Tij)(setIndex(sizeLocalGross,i+halo,iref,k+halo),c);
+            for(int c=0;c<comp;c++)bufferSend[c+comp*(i+k*imax)]=(*Tij).value(setIndex(sizeLocalGross,i+halo,iref,k+halo),c);
         }
     }
 
@@ -839,7 +839,7 @@ void symtensorProjectionCICNGP_comm(Field<Real> * Tij)
     {
         for(int i=0;i<imax;i++)
         {
-            for(int c=0;c<comp;c++)(*Tij)(setIndex(sizeLocalGross,i+halo,halo,k+halo),c)+=bufferRec[c+comp*(i+k*imax)];
+            for(int c=0;c<comp;c++)(*Tij).value(setIndex(sizeLocalGross,i+halo,halo,k+halo),c)+=bufferRec[c+comp*(i+k*imax)];
         }
 
     }
@@ -852,7 +852,7 @@ void symtensorProjectionCICNGP_comm(Field<Real> * Tij)
     {
         for(int i=0;i<imax;i++)
         {
-            for(int c=0;c<comp;c++)bufferSend[c+comp*(i+j*imax)]=(*Tij)(setIndex(sizeLocalGross,i+halo,j+halo,iref),c);
+            for(int c=0;c<comp;c++)bufferSend[c+comp*(i+j*imax)]=(*Tij).value(setIndex(sizeLocalGross,i+halo,j+halo,iref),c);
         }
     }
 
@@ -865,7 +865,7 @@ void symtensorProjectionCICNGP_comm(Field<Real> * Tij)
     {
         for(int i=0;i<imax;i++)
         {
-            for(int c=0;c<comp;c++)(*Tij)(setIndex(sizeLocalGross,i+halo,j+halo,halo),c)+=bufferRec[c+comp*(i+j*imax)];
+            for(int c=0;c<comp;c++)(*Tij).value(setIndex(sizeLocalGross,i+halo,j+halo,halo),c)+=bufferRec[c+comp*(i+j*imax)];
         }
     }
 
@@ -934,9 +934,9 @@ void vectorProjectionCIC_project(Particles<part,part_info,part_dataType> * parts
     }
 
 
-    for(xPart.first(),xVel.first();xPart.test();xPart.next(),xVel.next())
+    for(xPart.first(),xVel.first();xPart.test();xPart.nextValue(),xVel.nextValue())
     {
-        if(parts->field()(xPart).size!=0)
+        if(parts->field().value(xPart).size!=0)
         {
             for(int i=0;i<3;i++)
             {
@@ -947,7 +947,7 @@ void vectorProjectionCIC_project(Particles<part,part_info,part_dataType> * parts
             for(int i=0;i<36;i++)vi[i]=0.0;
 
 
-            for (it=(parts->field())(xPart).parts.begin(); it != (parts->field())(xPart).parts.end(); ++it)
+            for (it=(parts->field()).value(xPart).parts.begin(); it != (parts->field()).value(xPart).parts.end(); ++it)
             {
 
                 for(int i =0;i<3;i++)
@@ -1023,65 +1023,65 @@ void vectorProjectionCIC_project(Particles<part,part_info,part_dataType> * parts
 
             //copy to field
 
-            (*vel)(xVel -0       ,0) += vi[0];//v0
+            (*vel).value(xVel -0       ,0) += vi[0];//v0
 
-            (*vel)(xVel -0    +2 ,0) += vi[1];//v0
+            (*vel).value(xVel -0    +2 ,0) += vi[1];//v0
 
-            (*vel)(xVel -0 +1    ,0) += vi[2];//v0
+            (*vel).value(xVel -0 +1    ,0) += vi[2];//v0
 
-            (*vel)(xVel -0 +1 +2 ,0) += vi[3];//v0
-
-            //--------------------------------------------
-
-            (*vel)(xVel    -1    ,1) += vi[12];//v1
-
-            (*vel)(xVel    -1 +2 ,1) += vi[14];//v1
-
-            (*vel)(xVel       -2 ,2) += vi[24];//v2
-
-            (*vel)(xVel          ,0) += vi[4];//v0
-            (*vel)(xVel          ,1) += vi[16];//v1
-            (*vel)(xVel          ,2) += vi[28];//v2
-
-            (*vel)(xVel       +2 ,0) += vi[5];//v0
-            (*vel)(xVel       +2 ,1) += vi[18];//v1
-            (*vel)(xVel       +2 ,2) += vi[32];//v2
-
-            (*vel)(xVel    +1 -2 ,2) += vi[25];//v2
-
-            (*vel)(xVel    +1    ,0) += vi[6];//v0
-            (*vel)(xVel    +1    ,1) += vi[20];//v1
-            (*vel)(xVel    +1    ,2) += vi[29];//v2
-
-            (*vel)(xVel    +1 +2 ,0) += vi[7];//v0
-            (*vel)(xVel    +1 +2 ,1) += vi[22];//v1
-            (*vel)(xVel    +1 +2 ,2) += vi[33];//v2
+            (*vel).value(xVel -0 +1 +2 ,0) += vi[3];//v0
 
             //--------------------------------------------
 
-            (*vel)(xVel +0 -1    ,1) += vi[13];//v1
+            (*vel).value(xVel    -1    ,1) += vi[12];//v1
 
-            (*vel)(xVel +0 -1 +2 ,1) += vi[15];//v1
+            (*vel).value(xVel    -1 +2 ,1) += vi[14];//v1
 
-            (*vel)(xVel +0    -2 ,2) += vi[26];//v2
+            (*vel).value(xVel       -2 ,2) += vi[24];//v2
 
-            (*vel)(xVel +0       ,0) += vi[8];//v0
-            (*vel)(xVel +0       ,1) += vi[17];//v1
-            (*vel)(xVel +0       ,2) += vi[30];//v2
+            (*vel).value(xVel          ,0) += vi[4];//v0
+            (*vel).value(xVel          ,1) += vi[16];//v1
+            (*vel).value(xVel          ,2) += vi[28];//v2
 
-            (*vel)(xVel +0    +2 ,0) += vi[9];//v0
-            (*vel)(xVel +0    +2 ,1) += vi[19];//v1
-            (*vel)(xVel +0    +2 ,2) += vi[34];//v2
+            (*vel).value(xVel       +2 ,0) += vi[5];//v0
+            (*vel).value(xVel       +2 ,1) += vi[18];//v1
+            (*vel).value(xVel       +2 ,2) += vi[32];//v2
 
-            (*vel)(xVel +0 +1 -2 ,2) += vi[27];//v2
+            (*vel).value(xVel    +1 -2 ,2) += vi[25];//v2
 
-            (*vel)(xVel +0 +1    ,0) += vi[10];//v0
-            (*vel)(xVel +0 +1    ,1) += vi[21];//v1
-            (*vel)(xVel +0 +1    ,2) += vi[31];//v2
+            (*vel).value(xVel    +1    ,0) += vi[6];//v0
+            (*vel).value(xVel    +1    ,1) += vi[20];//v1
+            (*vel).value(xVel    +1    ,2) += vi[29];//v2
 
-            (*vel)(xVel +0 +1 +2 ,0) += vi[11];//v0
-            (*vel)(xVel +0 +1 +2 ,1) += vi[23];//v1
-            (*vel)(xVel +0 +1 +2 ,2) += vi[35];//v2
+            (*vel).value(xVel    +1 +2 ,0) += vi[7];//v0
+            (*vel).value(xVel    +1 +2 ,1) += vi[22];//v1
+            (*vel).value(xVel    +1 +2 ,2) += vi[33];//v2
+
+            //--------------------------------------------
+
+            (*vel).value(xVel +0 -1    ,1) += vi[13];//v1
+
+            (*vel).value(xVel +0 -1 +2 ,1) += vi[15];//v1
+
+            (*vel).value(xVel +0    -2 ,2) += vi[26];//v2
+
+            (*vel).value(xVel +0       ,0) += vi[8];//v0
+            (*vel).value(xVel +0       ,1) += vi[17];//v1
+            (*vel).value(xVel +0       ,2) += vi[30];//v2
+
+            (*vel).value(xVel +0    +2 ,0) += vi[9];//v0
+            (*vel).value(xVel +0    +2 ,1) += vi[19];//v1
+            (*vel).value(xVel +0    +2 ,2) += vi[34];//v2
+
+            (*vel).value(xVel +0 +1 -2 ,2) += vi[27];//v2
+
+            (*vel).value(xVel +0 +1    ,0) += vi[10];//v0
+            (*vel).value(xVel +0 +1    ,1) += vi[21];//v1
+            (*vel).value(xVel +0 +1    ,2) += vi[31];//v2
+
+            (*vel).value(xVel +0 +1 +2 ,0) += vi[11];//v0
+            (*vel).value(xVel +0 +1 +2 ,1) += vi[23];//v1
+            (*vel).value(xVel +0 +1 +2 ,2) += vi[35];//v2
 
         }
     }
@@ -1136,9 +1136,9 @@ void vectorProjectionCIC_comm(Field<Real> * vel)
     {
         for(int j=distHaloOne;j<sizeLocalOne[1]+distHaloOne;j++)
         {
-            for(int comp=0;comp<3;comp++)(*vel)(setIndex(sizeLocalGross,halo,j,k),comp) += (*vel)(setIndex(sizeLocalGross,iref1,j,k),comp);
+            for(int comp=0;comp<3;comp++)(*vel).value(setIndex(sizeLocalGross,halo,j,k),comp) += (*vel).value(setIndex(sizeLocalGross,iref1,j,k),comp);
 
-            for(int comp=0;comp<3;comp++)(*vel)(setIndex(sizeLocalGross,iref2,j,k),comp) += (*vel)(setIndex(sizeLocalGross,distHaloOne,j,k),comp);
+            for(int comp=0;comp<3;comp++)(*vel).value(setIndex(sizeLocalGross,iref2,j,k),comp) += (*vel).value(setIndex(sizeLocalGross,distHaloOne,j,k),comp);
         }
     }
 
@@ -1178,11 +1178,11 @@ void vectorProjectionCIC_comm(Field<Real> * vel)
     {
         for(int i=0;i<imax;i++)
         {
-            for(int comp =0;comp<3;comp++)bufferSendUp[comp + 3l * (i+k*imax)]=(*vel)(setIndex(sizeLocalGross,i+halo,iref1,k+distHaloOne),comp);
+            for(int comp =0;comp<3;comp++)bufferSendUp[comp + 3l * (i+k*imax)]=(*vel).value(setIndex(sizeLocalGross,i+halo,iref1,k+distHaloOne),comp);
         }
         for(int i=0;i<imax;i++)
         {
-            for(int comp =0;comp<3;comp++)bufferSendDown[comp + 3l * (i+k*imax)]=(*vel)(setIndex(sizeLocalGross,i+halo,distHaloOne,k+distHaloOne),comp);
+            for(int comp =0;comp<3;comp++)bufferSendDown[comp + 3l * (i+k*imax)]=(*vel).value(setIndex(sizeLocalGross,i+halo,distHaloOne,k+distHaloOne),comp);
         }
     }
 
@@ -1195,11 +1195,11 @@ void vectorProjectionCIC_comm(Field<Real> * vel)
     {
         for(int i=0;i<imax;i++)
         {
-            for(int comp =0;comp<3;comp++)(*vel)(setIndex(sizeLocalGross,i+halo,halo,k+distHaloOne),comp) += bufferRecUp[comp + 3l * (i+k*imax)];
+            for(int comp =0;comp<3;comp++)(*vel).value(setIndex(sizeLocalGross,i+halo,halo,k+distHaloOne),comp) += bufferRecUp[comp + 3l * (i+k*imax)];
         }
         for(int i=0;i<imax;i++)
         {
-            for(int comp =0;comp<3;comp++)(*vel)(setIndex(sizeLocalGross,i+halo,iref1,k+distHaloOne),comp) += bufferRecDown[comp + 3l * (i+k*imax)];
+            for(int comp =0;comp<3;comp++)(*vel).value(setIndex(sizeLocalGross,i+halo,iref1,k+distHaloOne),comp) += bufferRecDown[comp + 3l * (i+k*imax)];
 
         }
     }
@@ -1214,11 +1214,11 @@ void vectorProjectionCIC_comm(Field<Real> * vel)
     {
         for(int i=0;i<imax;i++)
         {
-            for(int comp =0;comp<3;comp++)bufferSendUp[comp + 3l * (i+j*imax)]=(*vel)(setIndex(sizeLocalGross,i+halo,j+halo,iref1),comp);
+            for(int comp =0;comp<3;comp++)bufferSendUp[comp + 3l * (i+j*imax)]=(*vel).value(setIndex(sizeLocalGross,i+halo,j+halo,iref1),comp);
         }
         for(int i=0;i<imax;i++)
         {
-            for(int comp =0;comp<3;comp++)bufferSendDown[comp + 3l * (i+j*imax)]=(*vel)(setIndex(sizeLocalGross,i+halo,j+halo,distHaloOne),comp);
+            for(int comp =0;comp<3;comp++)bufferSendDown[comp + 3l * (i+j*imax)]=(*vel).value(setIndex(sizeLocalGross,i+halo,j+halo,distHaloOne),comp);
         }
 
     }
@@ -1233,11 +1233,11 @@ void vectorProjectionCIC_comm(Field<Real> * vel)
     {
         for(int i=0;i<imax;i++)
         {
-            for(int comp =0;comp<3;comp++)(*vel)(setIndex(sizeLocalGross,i+halo,j+halo,halo),comp) += bufferRecUp[comp + 3l * (i+j*imax)];
+            for(int comp =0;comp<3;comp++)(*vel).value(setIndex(sizeLocalGross,i+halo,j+halo,halo),comp) += bufferRecUp[comp + 3l * (i+j*imax)];
         }
         for(int i=0;i<imax;i++)
         {
-            for(int comp =0;comp<3;comp++)(*vel)(setIndex(sizeLocalGross,i+halo,j+halo,iref1),comp) += bufferRecDown[comp + 3l * (i+j*imax)];
+            for(int comp =0;comp<3;comp++)(*vel).value(setIndex(sizeLocalGross,i+halo,j+halo,iref1),comp) += bufferRecDown[comp + 3l * (i+j*imax)];
         }
 
     }
@@ -1310,9 +1310,9 @@ void VecVecProjectionCIC_project(Particles<part,part_info,part_dataType> * parts
 
 
 
-    for(xPart.first(),xTij.first();xPart.test();xPart.next(),xTij.next())
+    for(xPart.first(),xTij.first();xPart.test();xPart.nextValue(),xTij.nextValue())
     {
-        if(parts->field()(xPart).size!=0)
+        if(parts->field().value(xPart).size!=0)
         {
             for(int i=0;i<3;i++)
             {
@@ -1323,7 +1323,7 @@ void VecVecProjectionCIC_project(Particles<part,part_info,part_dataType> * parts
             for(int i=0;i<54;i++)tij[i]=0.0;
             for(int i=0;i<24;i++)tii[i]=0.0;
 
-            for (it=(parts->field())(xPart).parts.begin(); it != (parts->field())(xPart).parts.end(); ++it)
+            for (it=(parts->field()).value(xPart).parts.begin(); it != (parts->field()).value(xPart).parts.end(); ++it)
             {
                 for(int i =0;i<3;i++)
                 {
@@ -1425,97 +1425,97 @@ void VecVecProjectionCIC_project(Particles<part,part_info,part_dataType> * parts
 
             //add to the field T_ij
 
-            (*Tij)(xTij -0 -1    ,0,1) += tij[36];
+            (*Tij).value(xTij -0 -1    ,0,1) += tij[36];
 
-            (*Tij)(xTij -0 -1 +2 ,0,1) += tij[37];
+            (*Tij).value(xTij -0 -1 +2 ,0,1) += tij[37];
 
-            (*Tij)(xTij -0    -2 ,0,2) += tij[18];
+            (*Tij).value(xTij -0    -2 ,0,2) += tij[18];
 
-            (*Tij)(xTij -0       ,0,1) += tij[42];
-            (*Tij)(xTij -0       ,0,2) += tij[24];
+            (*Tij).value(xTij -0       ,0,1) += tij[42];
+            (*Tij).value(xTij -0       ,0,2) += tij[24];
 
-            (*Tij)(xTij -0    +2 ,0,1) += tij[43];
-            (*Tij)(xTij -0    +2 ,0,2) += tij[30];
+            (*Tij).value(xTij -0    +2 ,0,1) += tij[43];
+            (*Tij).value(xTij -0    +2 ,0,2) += tij[30];
 
-            (*Tij)(xTij -0 +1 -2 ,0,2) += tij[19];
+            (*Tij).value(xTij -0 +1 -2 ,0,2) += tij[19];
 
-            (*Tij)(xTij -0 +1    ,0,1) += tij[48];
-            (*Tij)(xTij -0 +1    ,0,2) += tij[25];
+            (*Tij).value(xTij -0 +1    ,0,1) += tij[48];
+            (*Tij).value(xTij -0 +1    ,0,2) += tij[25];
 
-            (*Tij)(xTij -0 +1 +2 ,0,1) += tij[49];
-            (*Tij)(xTij -0 +1 +2 ,0,2) += tij[31];
-
-            //--------------------------------------------
-
-            (*Tij)(xTij    -1 -2 ,1,2) += tij[0];
-
-            (*Tij)(xTij    -1    ,0,1) += tij[38];
-            (*Tij)(xTij    -1    ,1,2) += tij[6];
-
-            (*Tij)(xTij    -1 +2 ,0,1) += tij[39];
-            (*Tij)(xTij    -1 +2 ,1,2) += tij[12];
-
-            (*Tij)(xTij       -2 ,0,2) += tij[20];
-            (*Tij)(xTij       -2 ,1,2) += tij[2];
-
-            (*Tij)(xTij          ,0,1) += tij[44];
-            (*Tij)(xTij          ,0,2) += tij[26];
-            (*Tij)(xTij          ,1,2) += tij[8];
-            for(int i=0;i<3;i++)(*Tij)(xTij,i,i)+=tii[8*i];
-
-            (*Tij)(xTij       +2 ,0,1) += tij[45];
-            (*Tij)(xTij       +2 ,0,2) += tij[32];
-            (*Tij)(xTij       +2 ,1,2) += tij[14];
-            for(int i=0;i<3;i++)(*Tij)(xTij+2,i,i)+=tii[1+8*i];
-
-            (*Tij)(xTij    +1 -2 ,0,2) += tij[21];
-            (*Tij)(xTij    +1 -2 ,1,2) += tij[4];
-
-            (*Tij)(xTij    +1    ,0,1) += tij[50];
-            (*Tij)(xTij    +1    ,0,2) += tij[27];
-            (*Tij)(xTij    +1    ,1,2) += tij[10];
-            for(int i=0;i<3;i++)(*Tij)(xTij+1,i,i)+=tii[2+8*i];
-
-            (*Tij)(xTij    +1 +2 ,0,1) += tij[51];
-            (*Tij)(xTij    +1 +2 ,0,2) += tij[33];
-            (*Tij)(xTij    +1 +2 ,1,2) += tij[16];
-            for(int i=0;i<3;i++)(*Tij)(xTij+1+2,i,i)+=tii[3+8*i];
+            (*Tij).value(xTij -0 +1 +2 ,0,1) += tij[49];
+            (*Tij).value(xTij -0 +1 +2 ,0,2) += tij[31];
 
             //--------------------------------------------
 
-            (*Tij)(xTij +0 -1 -2 ,1,2) += tij[1];
+            (*Tij).value(xTij    -1 -2 ,1,2) += tij[0];
 
-            (*Tij)(xTij +0 -1    ,0,1) += tij[40];
-            (*Tij)(xTij +0 -1    ,1,2) += tij[7];
+            (*Tij).value(xTij    -1    ,0,1) += tij[38];
+            (*Tij).value(xTij    -1    ,1,2) += tij[6];
 
-            (*Tij)(xTij +0 -1 +2 ,0,1) += tij[41];
-            (*Tij)(xTij +0 -1 +2 ,1,2) += tij[13];
+            (*Tij).value(xTij    -1 +2 ,0,1) += tij[39];
+            (*Tij).value(xTij    -1 +2 ,1,2) += tij[12];
 
-            (*Tij)(xTij +0    -2 ,0,2) += tij[22];
-            (*Tij)(xTij +0    -2 ,1,2) += tij[3];
+            (*Tij).value(xTij       -2 ,0,2) += tij[20];
+            (*Tij).value(xTij       -2 ,1,2) += tij[2];
 
-            (*Tij)(xTij +0       ,0,1) += tij[46];
-            (*Tij)(xTij +0       ,0,2) += tij[28];
-            (*Tij)(xTij +0       ,1,2) += tij[9];
-            for(int i=0;i<3;i++)(*Tij)(xTij+0,i,i)+=tii[4+8*i];
+            (*Tij).value(xTij          ,0,1) += tij[44];
+            (*Tij).value(xTij          ,0,2) += tij[26];
+            (*Tij).value(xTij          ,1,2) += tij[8];
+            for(int i=0;i<3;i++)(*Tij).value(xTij,i,i)+=tii[8*i];
 
-            (*Tij)(xTij +0    +2 ,0,1) += tij[47];
-            (*Tij)(xTij +0    +2 ,0,2) += tij[34];
-            (*Tij)(xTij +0    +2 ,1,2) += tij[15];
-            for(int i=0;i<3;i++)(*Tij)(xTij+0+2,i,i)+=tii[5+8*i];
+            (*Tij).value(xTij       +2 ,0,1) += tij[45];
+            (*Tij).value(xTij       +2 ,0,2) += tij[32];
+            (*Tij).value(xTij       +2 ,1,2) += tij[14];
+            for(int i=0;i<3;i++)(*Tij).value(xTij+2,i,i)+=tii[1+8*i];
 
-            (*Tij)(xTij +0 +1 -2 ,0,2) += tij[23];
-            (*Tij)(xTij +0 +1 -2 ,1,2) += tij[5];
+            (*Tij).value(xTij    +1 -2 ,0,2) += tij[21];
+            (*Tij).value(xTij    +1 -2 ,1,2) += tij[4];
 
-            (*Tij)(xTij +0 +1    ,0,1) += tij[52];
-            (*Tij)(xTij +0 +1    ,0,2) += tij[29];
-            (*Tij)(xTij +0 +1    ,1,2) += tij[11];
-            for(int i=0;i<3;i++)(*Tij)(xTij+0+1,i,i)+=tii[6+8*i];
+            (*Tij).value(xTij    +1    ,0,1) += tij[50];
+            (*Tij).value(xTij    +1    ,0,2) += tij[27];
+            (*Tij).value(xTij    +1    ,1,2) += tij[10];
+            for(int i=0;i<3;i++)(*Tij).value(xTij+1,i,i)+=tii[2+8*i];
 
-            (*Tij)(xTij +0 +1 +2 ,0,1) += tij[53];
-            (*Tij)(xTij +0 +1 +2 ,0,2) += tij[35];
-            (*Tij)(xTij +0 +1 +2 ,1,2) += tij[17];
-            for(int i=0;i<3;i++)(*Tij)(xTij+0+1+2,i,i)+=tii[7+8*i];
+            (*Tij).value(xTij    +1 +2 ,0,1) += tij[51];
+            (*Tij).value(xTij    +1 +2 ,0,2) += tij[33];
+            (*Tij).value(xTij    +1 +2 ,1,2) += tij[16];
+            for(int i=0;i<3;i++)(*Tij).value(xTij+1+2,i,i)+=tii[3+8*i];
+
+            //--------------------------------------------
+
+            (*Tij).value(xTij +0 -1 -2 ,1,2) += tij[1];
+
+            (*Tij).value(xTij +0 -1    ,0,1) += tij[40];
+            (*Tij).value(xTij +0 -1    ,1,2) += tij[7];
+
+            (*Tij).value(xTij +0 -1 +2 ,0,1) += tij[41];
+            (*Tij).value(xTij +0 -1 +2 ,1,2) += tij[13];
+
+            (*Tij).value(xTij +0    -2 ,0,2) += tij[22];
+            (*Tij).value(xTij +0    -2 ,1,2) += tij[3];
+
+            (*Tij).value(xTij +0       ,0,1) += tij[46];
+            (*Tij).value(xTij +0       ,0,2) += tij[28];
+            (*Tij).value(xTij +0       ,1,2) += tij[9];
+            for(int i=0;i<3;i++)(*Tij).value(xTij+0,i,i)+=tii[4+8*i];
+
+            (*Tij).value(xTij +0    +2 ,0,1) += tij[47];
+            (*Tij).value(xTij +0    +2 ,0,2) += tij[34];
+            (*Tij).value(xTij +0    +2 ,1,2) += tij[15];
+            for(int i=0;i<3;i++)(*Tij).value(xTij+0+2,i,i)+=tii[5+8*i];
+
+            (*Tij).value(xTij +0 +1 -2 ,0,2) += tij[23];
+            (*Tij).value(xTij +0 +1 -2 ,1,2) += tij[5];
+
+            (*Tij).value(xTij +0 +1    ,0,1) += tij[52];
+            (*Tij).value(xTij +0 +1    ,0,2) += tij[29];
+            (*Tij).value(xTij +0 +1    ,1,2) += tij[11];
+            for(int i=0;i<3;i++)(*Tij).value(xTij+0+1,i,i)+=tii[6+8*i];
+
+            (*Tij).value(xTij +0 +1 +2 ,0,1) += tij[53];
+            (*Tij).value(xTij +0 +1 +2 ,0,2) += tij[35];
+            (*Tij).value(xTij +0 +1 +2 ,1,2) += tij[17];
+            for(int i=0;i<3;i++)(*Tij).value(xTij+0+1+2,i,i)+=tii[7+8*i];
 
         }
     }
@@ -1574,11 +1574,11 @@ void VecVecProjectionCIC_comm(Field<Real> * Tij)
     {
         for(int j=distHaloOne;j<sizeLocalOne[1]+distHaloOne;j++)
         {
-            for(int comp=0;comp<6;comp++)(*Tij)(setIndex(sizeLocalGross,halo,j,k),comp) += (*Tij)(setIndex(sizeLocalGross,iref1,j,k),comp);
+            for(int comp=0;comp<6;comp++)(*Tij).value(setIndex(sizeLocalGross,halo,j,k),comp) += (*Tij).value(setIndex(sizeLocalGross,iref1,j,k),comp);
 
-            (*Tij)(setIndex(sizeLocalGross,iref2,j,k),0,1) += (*Tij)(setIndex(sizeLocalGross,distHaloOne,j,k),0,1);
-            (*Tij)(setIndex(sizeLocalGross,iref2,j,k),0,2) += (*Tij)(setIndex(sizeLocalGross,distHaloOne,j,k),0,2);
-            (*Tij)(setIndex(sizeLocalGross,iref2,j,k),1,2) += (*Tij)(setIndex(sizeLocalGross,distHaloOne,j,k),1,2);
+            (*Tij).value(setIndex(sizeLocalGross,iref2,j,k),0,1) += (*Tij).value(setIndex(sizeLocalGross,distHaloOne,j,k),0,1);
+            (*Tij).value(setIndex(sizeLocalGross,iref2,j,k),0,2) += (*Tij).value(setIndex(sizeLocalGross,distHaloOne,j,k),0,2);
+            (*Tij).value(setIndex(sizeLocalGross,iref2,j,k),1,2) += (*Tij).value(setIndex(sizeLocalGross,distHaloOne,j,k),1,2);
         }
     }
 
@@ -1617,20 +1617,20 @@ void VecVecProjectionCIC_comm(Field<Real> * Tij)
     imax=sizeLocal[0];
     iref1 = sizeLocalGross[1]- halo;
 
-    //COUT<<(*Tij)(setIndex(sizeLocalGross,6+halo,iref1,6+halo),0)<<endl;
+    //COUT<<(*Tij).value(setIndex(sizeLocalGross,6+halo,iref1,6+halo),0)<<endl;
 
     for(int k=0;k<sizeLocalOne[2];k++)
     {
         for(int i=0;i<imax;i++)
         {
-            for(int comp =0;comp<6;comp++)bufferSendUp[comp + 6l * (i+k*imax)]=(*Tij)(setIndex(sizeLocalGross,i+halo,iref1,k+distHaloOne),comp);
+            for(int comp =0;comp<6;comp++)bufferSendUp[comp + 6l * (i+k*imax)]=(*Tij).value(setIndex(sizeLocalGross,i+halo,iref1,k+distHaloOne),comp);
         }
 
         for(int i=0;i<imax;i++)
         {
-            bufferSendDown[    3l * (i+k*imax)]=(*Tij)(setIndex(sizeLocalGross,i+halo,distHaloOne,k+distHaloOne),0,1);
-            bufferSendDown[1l + 3l * (i+k*imax)]=(*Tij)(setIndex(sizeLocalGross,i+halo,distHaloOne,k+distHaloOne),0,2);
-            bufferSendDown[2l + 3l * (i+k*imax)]=(*Tij)(setIndex(sizeLocalGross,i+halo,distHaloOne,k+distHaloOne),1,2);
+            bufferSendDown[    3l * (i+k*imax)]=(*Tij).value(setIndex(sizeLocalGross,i+halo,distHaloOne,k+distHaloOne),0,1);
+            bufferSendDown[1l + 3l * (i+k*imax)]=(*Tij).value(setIndex(sizeLocalGross,i+halo,distHaloOne,k+distHaloOne),0,2);
+            bufferSendDown[2l + 3l * (i+k*imax)]=(*Tij).value(setIndex(sizeLocalGross,i+halo,distHaloOne,k+distHaloOne),1,2);
         }
 
     }
@@ -1649,19 +1649,19 @@ void VecVecProjectionCIC_comm(Field<Real> * Tij)
     {
         for(int i=0;i<imax;i++)
         {
-            for(int comp =0;comp<6;comp++)(*Tij)(setIndex(sizeLocalGross,i+halo,halo,k+distHaloOne),comp) += bufferRecUp[comp + 6l * (i+k*imax)];
+            for(int comp =0;comp<6;comp++)(*Tij).value(setIndex(sizeLocalGross,i+halo,halo,k+distHaloOne),comp) += bufferRecUp[comp + 6l * (i+k*imax)];
         }
 
         for(int i=0;i<imax;i++)
         {
-            (*Tij)(setIndex(sizeLocalGross,i+halo,iref1,k+distHaloOne),0,1) += bufferRecDown[     3l * (i+k*imax)];
-            (*Tij)(setIndex(sizeLocalGross,i+halo,iref1,k+distHaloOne),0,2) += bufferRecDown[1l + 3l * (i+k*imax)];
-            (*Tij)(setIndex(sizeLocalGross,i+halo,iref1,k+distHaloOne),1,2) += bufferRecDown[2l + 3l * (i+k*imax)];
+            (*Tij).value(setIndex(sizeLocalGross,i+halo,iref1,k+distHaloOne),0,1) += bufferRecDown[     3l * (i+k*imax)];
+            (*Tij).value(setIndex(sizeLocalGross,i+halo,iref1,k+distHaloOne),0,2) += bufferRecDown[1l + 3l * (i+k*imax)];
+            (*Tij).value(setIndex(sizeLocalGross,i+halo,iref1,k+distHaloOne),1,2) += bufferRecDown[2l + 3l * (i+k*imax)];
         }
 
     }
 
-    //if(parallel.rank()==2)cout<<(*Tij)(setIndex(sizeLocalGross,6+halo,halo ,6+halo),0)<<endl;
+    //if(parallel.rank()==2)cout<<(*Tij).value(setIndex(sizeLocalGross,6+halo,halo ,6+halo),0)<<endl;
 
     //working on Z dimension;
 
@@ -1673,13 +1673,13 @@ void VecVecProjectionCIC_comm(Field<Real> * Tij)
     {
         for(int i=0;i<imax;i++)
         {
-            for(int comp =0;comp<6;comp++)bufferSendUp[comp + 6l * (i+j*imax)]=(*Tij)(setIndex(sizeLocalGross,i+halo,j+halo,iref1),comp);
+            for(int comp =0;comp<6;comp++)bufferSendUp[comp + 6l * (i+j*imax)]=(*Tij).value(setIndex(sizeLocalGross,i+halo,j+halo,iref1),comp);
         }
         for(int i=0;i<imax;i++)
         {
-            bufferSendDown[     3l * (i+j*imax)]=(*Tij)(setIndex(sizeLocalGross,i+halo,j+halo,distHaloOne),0,1);
-            bufferSendDown[1l + 3l * (i+j*imax)]=(*Tij)(setIndex(sizeLocalGross,i+halo,j+halo,distHaloOne),0,2);
-            bufferSendDown[2l + 3l * (i+j*imax)]=(*Tij)(setIndex(sizeLocalGross,i+halo,j+halo,distHaloOne),1,2);
+            bufferSendDown[     3l * (i+j*imax)]=(*Tij).value(setIndex(sizeLocalGross,i+halo,j+halo,distHaloOne),0,1);
+            bufferSendDown[1l + 3l * (i+j*imax)]=(*Tij).value(setIndex(sizeLocalGross,i+halo,j+halo,distHaloOne),0,2);
+            bufferSendDown[2l + 3l * (i+j*imax)]=(*Tij).value(setIndex(sizeLocalGross,i+halo,j+halo,distHaloOne),1,2);
         }
 
     }
@@ -1694,15 +1694,15 @@ void VecVecProjectionCIC_comm(Field<Real> * Tij)
     {
         for(int i=0;i<imax;i++)
         {
-            for(int comp =0;comp<6;comp++)(*Tij)(setIndex(sizeLocalGross,i+halo,j+halo,halo),comp) += bufferRecUp[comp + 6l * (i+j*imax)];
+            for(int comp =0;comp<6;comp++)(*Tij).value(setIndex(sizeLocalGross,i+halo,j+halo,halo),comp) += bufferRecUp[comp + 6l * (i+j*imax)];
         }
 
         for(int i=0;i<imax;i++)
         {
 
-            (*Tij)(setIndex(sizeLocalGross,i+halo,j+halo,iref1),0,1) += bufferRecDown[     3l * (i+j*imax)];
-            (*Tij)(setIndex(sizeLocalGross,i+halo,j+halo,iref1),0,2) += bufferRecDown[1l + 3l * (i+j*imax)];
-            (*Tij)(setIndex(sizeLocalGross,i+halo,j+halo,iref1),1,2) += bufferRecDown[2l + 3l * (i+j*imax)];
+            (*Tij).value(setIndex(sizeLocalGross,i+halo,j+halo,iref1),0,1) += bufferRecDown[     3l * (i+j*imax)];
+            (*Tij).value(setIndex(sizeLocalGross,i+halo,j+halo,iref1),0,2) += bufferRecDown[1l + 3l * (i+j*imax)];
+            (*Tij).value(setIndex(sizeLocalGross,i+halo,j+halo,iref1),1,2) += bufferRecDown[2l + 3l * (i+j*imax)];
         }
 
 
