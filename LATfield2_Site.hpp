@@ -21,14 +21,29 @@ void Site::initialize(Lattice& lattice, long index) { lattice_ = &lattice; index
 
 //NEIGHBOURING SITE OPERATORS==
 
-Site Site::operator+(int direction)
+long Site::operator+(int direction)
 {
-	return Site( *lattice_, index_ + lattice_->jump(direction) );
+	return index_ + lattice_->jump(direction) ;
 }
 
-Site Site::operator-(int direction)
+long Site::operator-(int direction)
 {
-	return Site( *lattice_, index_ - lattice_->jump(direction) );
+	return index_ - lattice_->jump(direction);
+}
+
+long Site::move(int direction, int step)
+{
+	return index_ + step * lattice_->jump(direction);
+}
+long Site::move(int * steps)
+{
+	double index = index_;
+	for(int i=0;i<lattice_->dim();i++)index += step[i]*lattice_->jump(i);
+	return index;
+}
+long Site:move3d(int sx, int sy, int sz)
+{
+	return index_ + (sx*lattice_->jump(0)) + (sy*lattice_->jump(2)) + (sz*lattice_->jump(2));
 }
 
 //LOOPING OPERATIONS====================

@@ -136,13 +136,17 @@ public:
    The + operator is used to make a displacement of +1 site the the asked direction.
    \param direction : direction of the displacement
    */
-		Site operator+(int direction);
+		long operator+(int direction);
   /*!
    Overloaded operator -
    The - operator is used to make a displacement of -1 site the the asked direction.
    \param direction : direction of the displacement
    */
-		Site operator-(int direction);
+		long operator-(int direction);
+
+		long move(int direction, int step);
+		long move(int * steps);
+		long move3d(int sx, int sy, int sz);
 
 		//SITE INDEX ADVANCE===========
   /*!
