@@ -1612,22 +1612,20 @@ void  Field<FieldType>::saveSliceHDF5(string filename, string dataset_name,int x
     }
     else
     {
-        for(int i=1;i<dim-1;i++)sSize[i]=this->lattice_->size(i+1);
-        slat.initialize(dim-1,sSize,0);
-        sfield.initialize(slat,rows_,cols_,symmetry_);
-        sfield.alloc();
+			for(int i=0;i<dim-1;i++)sSize_thin[i]=this->lattice_->size(i+1);
+			slat.initialize(dim-1,sSize_thin,0);
+			sfield.initialize(slat,rows_,cols_,symmetry_);
+			sfield.alloc();
 
-        sX.initialize(slat);
-
-        for(sX.first();sX.test();sX.next())
-        {
-            for(int l=1;l<dim;l++)r[l]=sX.coord(l-1);
-            r[0]=xcoord;
-
-            X.setCoord(r);
-
-            for(int i =0; i<components_;i++)sfield(sX,i)=this->operator()(X,i);
-        }
+			sX.initialize(slat);
+			
+			for(sX.first();sX.test();sX.next())
+			{
+					for(int l=1;l<dim;l++)r[l]=sX.coord(l-1);
+					r[0]=xcoord;
+					X.setCoord(r);
+					for(int i =0; i<components_;i++)sfield(sX,i)=this->operator()(X,i);
+			}
     }
 
     sfield.saveHDF5(filename,dataset_name);
