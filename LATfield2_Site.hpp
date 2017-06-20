@@ -3,8 +3,8 @@
 /*! \file LATfield2_Site.hpp
  \brief LATfield2_Site.hpp contains the Site, rKSite, and cKSite definition.
  \author David Daveio, Neil Bevis, with modifications by Wessel Valkenburg
-  
- */ 
+
+ */
 
 #include "LATfield2_Site_decl.hpp"
 
@@ -29,6 +29,21 @@ Site Site::operator+(int direction)
 Site Site::operator-(int direction)
 {
 	return Site( *lattice_, index_ - lattice_->jump(direction) );
+}
+
+Site Site::move(int direction, int step)
+{
+	return Site(*lattice_, index_ + step * lattice_->jump(direction));
+}
+Site Site::move(int * steps)
+{
+	double index = index_;
+	for(int i=0;i<lattice_->dim();i++)index += step[i]*lattice_->jump(i);
+	return Site(*lattice_,index);
+}
+Site Site:move3d(int sx, int sy, int sz)
+{
+	return Site(*lattice_,index_ + (sx*lattice_->jump(0)) + (sy*lattice_->jump(2)) + (sz*lattice_->jump(2)) );
 }
 
 //LOOPING OPERATIONS====================
@@ -83,7 +98,7 @@ bool Site::haloTest() { return index_ < lattice_->sitesLocalGross(); }
 void Site::haloNext()
 {
 	index_++;
-	
+
 	//Can only leave boundary by reaching coord(0)=0, so otherwise done
 	if(coordLocal(0)==0)
 	{
@@ -131,7 +146,7 @@ int Site::coordLocal(int direction)
 
 bool Site::setCoord(int* r)
 {
-	
+
 	this->first();
 	//Check site is local
 	if(r[lattice_->dim()-1]<this->coord(lattice_->dim()-1) || r[lattice_->dim()-1]>=this->coord(lattice_->dim()-1)+lattice_->sizeLocal(lattice_->dim()-1)
@@ -139,20 +154,20 @@ bool Site::setCoord(int* r)
 	{
 		return false;
 		//COUT<<"LATfield::Site::setCoord(int*) - Site desired non-local!"<<endl;
-	} 
+	}
 	else
 	{
-		
+
 		int jump=0;
 		for(int i=0; i<lattice_->dim(); i++)
 		{
 			jump+=(r[i]-coord(i))*lattice_->jump(i);
-		} 
-		
+		}
+
 		this->indexAdvance(jump);
 		return true;
 	}
-}    
+}
 
 bool Site::setCoord(int x, int y=0, int z=0)
 {
@@ -169,8 +184,8 @@ bool Site::setCoordLocal(int *r)
     for(int i=0; i<lattice_->dim(); i++)
     {
         jump+=r[i]*lattice_->jump(i);
-    } 
-    
+    }
+
     this->indexAdvance(jump);
     return true;
 }
@@ -212,7 +227,7 @@ cKSite cKSite::operator-(int asked_direction)
 int cKSite::coord(int asked_direction) ////////sensible a quelle dim est scatter (seul modif a faire ici)
 {
 	int direction= directions_[asked_direction] ;
-    
+
 	if(direction<lattice_->dim()-2) { return latCoordLocal(direction); }
 	else if (direction==lattice_->dim()-2) {return latCoordLocal(direction)+lattice_->coordSkip()[1]; }
 	else {return latCoordLocal(direction)+lattice_->coordSkip()[0]; }
@@ -220,7 +235,7 @@ int cKSite::coord(int asked_direction) ////////sensible a quelle dim est scatter
 
 int cKSite::latCoord(int direction) ////////sensible a quelle dim est scatter (seul modif a faire ici)
 {
-	
+
 	if(direction<lattice_->dim()-2) { return coordLocal(direction); }
 	else if (direction==lattice_->dim()-2) {return coordLocal(direction)+lattice_->coordSkip()[1]; }
 	else {return coordLocal(direction)+lattice_->coordSkip()[0]; }
@@ -229,7 +244,7 @@ int cKSite::latCoord(int direction) ////////sensible a quelle dim est scatter (s
 int cKSite::coordLocal(int asked_direction)
 {
 	int direction= directions_[asked_direction] ;
-	
+
 	if(direction==lattice_->dim()-1)
 	{
 		return index_/lattice_->jump(direction) - lattice_->halo();
@@ -245,7 +260,7 @@ int cKSite::coordLocal(int asked_direction)
 }
 int cKSite::latCoordLocal(int direction)
 {
-    
+
 	if(direction==lattice_->dim()-1)
 	{
 		return index_/lattice_->jump(direction) - lattice_->halo();
@@ -273,16 +288,16 @@ bool cKSite::setCoord(int* r_asked)
 	{
 		return false;
 		//COUT<<"LATfield::Site::setCoord(int*) - Site desired non-local!"<<endl;
-	} 
+	}
 	else
 	{
-		
+
 		int jump=0;
 		for(int i=0; i<lattice_->dim(); i++)
 		{
 			jump+=(r[i]-latCoord(i))*lattice_->jump(i);
-		} 
-		
+		}
+
 		this->indexAdvance(jump);
 		return true;
 	}
@@ -294,7 +309,7 @@ bool cKSite::setCoord(int x, int y=0, int z=0)
 	r[1]=y;
 	r[2]=z;
 	return this->setCoord(r);
-}   
+}
 
 /* rkSite implmentation */
 void rKSite::initialize(Lattice& lattice) { lattice_=&lattice; directions_[0]=0; directions_[1]=2; directions_[2]=1;}
@@ -312,7 +327,7 @@ rKSite rKSite::operator-(int asked_direction)
 int rKSite::coord(int asked_direction) ////////sensible a quelle dim est scatter (seul modif a faire ici)
 {
 	int direction= directions_[asked_direction] ;
-    
+
 	if(direction<lattice_->dim()-2) { return latCoordLocal(direction); }
 	else if (direction==lattice_->dim()-2) {return latCoordLocal(direction)+lattice_->coordSkip()[1]; }
 	else {return latCoordLocal(direction)+lattice_->coordSkip()[0]; }
@@ -320,7 +335,7 @@ int rKSite::coord(int asked_direction) ////////sensible a quelle dim est scatter
 
 int rKSite::latCoord(int direction) ////////sensible a quelle dim est scatter (seul modif a faire ici)
 {
-	
+
 	if(direction<lattice_->dim()-2) { return coordLocal(direction); }
 	else if (direction==lattice_->dim()-2) {return coordLocal(direction)+lattice_->coordSkip()[1]; }
 	else {return coordLocal(direction)+lattice_->coordSkip()[0]; }
@@ -329,7 +344,7 @@ int rKSite::latCoord(int direction) ////////sensible a quelle dim est scatter (s
 int rKSite::coordLocal(int asked_direction)
 {
 	int direction= directions_[asked_direction] ;
-	
+
 	if(direction==lattice_->dim()-1)
 	{
 		return index_/lattice_->jump(direction) - lattice_->halo();
@@ -345,7 +360,7 @@ int rKSite::coordLocal(int asked_direction)
 }
 int rKSite::latCoordLocal(int direction)
 {
-    
+
 	if(direction==lattice_->dim()-1)
 	{
 		return index_/lattice_->jump(direction) - lattice_->halo();
@@ -373,20 +388,20 @@ bool rKSite::setCoord(int* r_asked)
 	{
 		return false;
 		//COUT<<"LATfield::Site::setCoord(int*) - Site desired non-local!"<<endl;
-	} 
+	}
 	else
 	{
-		
+
 		int jump=0;
 		for(int i=0; i<lattice_->dim(); i++)
 		{
 			jump+=(r[i]-latCoord(i))*lattice_->jump(i);
-		} 
-		
+		}
+
 		this->indexAdvance(jump);
 		return true;
 	}
-}  
+}
 bool rKSite::setCoord(int x, int y=0, int z=0)
 {
 	int r[3];
@@ -394,12 +409,10 @@ bool rKSite::setCoord(int x, int y=0, int z=0)
 	r[1]=y;
 	r[2]=z;
 	return this->setCoord(r);
-} 
+}
 
 
 #endif
 
 
 #endif
-
-
