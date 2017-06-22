@@ -31,6 +31,11 @@ long Site::operator-(int direction)
 	return index_ - lattice_->jump(direction);
 }
 
+long Site::move(int direction)
+{
+	return index_ + lattice_->jump(direction);
+}
+
 long Site::move(int direction, int step)
 {
 	return index_ + step * lattice_->jump(direction);

@@ -133,6 +133,7 @@ public:
    */
 		Long operator-(int direction);
 
+		long move(int direction);
     long move(int direction, int step);
 		long move(int * steps);
     long move3d(int sx, int sy, int sz);
