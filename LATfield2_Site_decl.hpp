@@ -133,6 +133,7 @@ public:
    */
 		Site operator-(int direction);
 
+		Site move(int direction);
     Site move(int direction, int step);
 		Site move(int * steps);
     Site move3d(int sx, int sy, int sz);

@@ -35,6 +35,10 @@ Site Site::move(int direction, int step)
 {
 	return Site(*lattice_, index_ + step * lattice_->jump(direction));
 }
+Site Site::move(int direction)
+{
+	return Site( *lattice_, index_ + lattice_->jump(direction) );
+}
 Site Site::move(int * steps)
 {
 	double index = index_;
