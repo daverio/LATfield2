@@ -42,10 +42,10 @@ Site Site::move(int direction)
 Site Site::move(int * steps)
 {
 	double index = index_;
-	for(int i=0;i<lattice_->dim();i++)index += step[i]*lattice_->jump(i);
+	for(int i=0;i<lattice_->dim();i++)index += steps[i]*lattice_->jump(i);
 	return Site(*lattice_,index);
 }
-Site Site:move3d(int sx, int sy, int sz)
+Site Site::move3d(int sx, int sy, int sz)
 {
 	return Site(*lattice_,index_ + (sx*lattice_->jump(0)) + (sy*lattice_->jump(2)) + (sz*lattice_->jump(2)) );
 }

@@ -1587,6 +1587,7 @@ void  Field<FieldType>::saveSliceHDF5(string filename, string dataset_name,int x
     int dim = this->lattice_->dim();
 
     int sSize[dim];
+		int sSize_thin[dim];
     int r[dim];
 
     if(thickness>1)
@@ -1618,7 +1619,7 @@ void  Field<FieldType>::saveSliceHDF5(string filename, string dataset_name,int x
 			sfield.alloc();
 
 			sX.initialize(slat);
-			
+
 			for(sX.first();sX.test();sX.next())
 			{
 					for(int l=1;l<dim;l++)r[l]=sX.coord(l-1);
