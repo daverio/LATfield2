@@ -105,7 +105,9 @@ namespace LATfield2
         #include "LATfield2_catalyst.hpp"
         #endif
 
-
+        #ifdef MULTIGRID
+        #include "LATfield2_Multigrid.hpp"
+        #endif
 //macros
         #include  "looping_macro.hpp"
 

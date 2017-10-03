@@ -1,5 +1,5 @@
-#ifndef LATFIELD2_PARALLEL2D_DECL_HPP
-#define LATFIELD2_PARALLEL2D_DECL_HPP
+#ifndef LATFIELD2_PARALLEL2D_LAYER_DECL_HPP
+#define LATFIELD2_PARALLEL2D_LAYER_DECL_HPP
 
 /*! \file LATfield2_parallel2d_decl.hpp
  \brief LATfield2_parallel2d_decl.hpp contains the class Parallel2d declaration.
@@ -10,77 +10,32 @@
 #include <cstdlib>
 
 
-//=============================================
-//MPI PARALLELISM==============================
-//=============================================
-
-//#if PARALLEL_MPI   //Define for MPI parallelism
-
-#include "mpi.h"
-#define COUT if(parallel.isRoot())cout
-
-#include "LATfield2_parallel2d_layer.hpp"
 
 
-/*! \class Parallel2d
- \brief LATfield2d underliying class for paralleization
-
- The parallel2d class is the handler of the parallelization of LATfield2d.
- LATfield2d distribute n-dimensional lattices into a 2-dimensional cartesian grid of MPI processes, a rod decomposition. The last dimension of the lattice is scattered into the first dimension of the process grid and the last-but-one dimension of the lattice is scattered into the second dimension of the process grid. This choice have been made to increase data locality of the ghost cells (halo), increases the efficiency of method to update them. Due to his scheme of parallelization, LATfield2d is only able to work with lattice of dimension bigger or equal to two.
-
- The geometry of the process grid (the size of the 2 dimensions), two layers_ of MPI communicator and simple communication methods are enbended in the "parallel" object, which is an instance of the class Parallel. This object is instantiated but not initialized within the library header, hence the users should never declare an instance of the Parallel class. but rather use directly its pre/defined instance "parallel".
-
- */
-
-class Parallel2d{
+class Parallel2d_layer{
   public :
 
+
+
   //CONSTRUCTOR AND DESTRUCTOR================
-  Parallel2d();
-  //Parallel2d(int proc_size0, int proc_size1);
+  Parallel2d_layer();
+  //Parallel2d_layer(int proc_size0, int proc_size1);
 
-  ~Parallel2d();
-
-  //Communicators initialization (grid initialization)===================
+  ~Parallel2d_layer();
 
 
+  void initialize_topLevel(int lat_world_size, int*  grid_size, int lat_world_rank,int * grid_rank,
+                  int root, bool isRoot,bool * last_proc,
+  												MPI_Comm lat_world_comm, MPI_Comm dim0_comm, MPI_Comm dim1_comm,
+  												MPI_Group lat_world_group, MPI_Group dim0_group, MPI_Group dim1_group);
 
 
-
-  /*!
-   Overall LATfield2 initialization when the output server is used. Should be the first call in any LATfield2 based application, as it initialize MPI (preprocessor define: -DEXTERNAL_IO)
-
-   \param proc_size0    : size of the first dimension of the MPI process grid.
-   \param proc_size1    : size of the second dimension of the MPI process grid.
-   \param IO_total_size : number of MPI process reserved for the IO server.
-   \param IO_node_size  : size of 1 goupe of process reserved for the IO server. Each group will write in a seperated file.
-   */
-  void initialize(int proc_size0, int proc_size1,int IO_total_size, int IO_node_size);
-
-  /*!
-   Overall LATfield2 initialization used when the output server is not used. Should be the first call in any LATfield2 based application, as it initialize MPI.
-
-   \param proc_size0 : size of the first dimension of the MPI process grid.
-   \param proc_size1 : size of the second dimension of the MPI process grid.
-   */
-  void initialize(int proc_size0, int proc_size1);
-
-  //ABORT AND BARRIER===============================
-
-  /*!
-   Method to kill by force the executable. If one MPI process call this method the executable will be killed.
-   */
-  void abortForce();
-  /*!
-   Method to request to kill the executable. This method have to be call by every compute processes. It will wait every process had done the call before killing the executable.
-   */
-  void abortRequest();
-  /*!
-   Method to call MPI_Barrier. This barrier is only applied on the compute processes. Every compute process have to perform the call, otherwise the executable will not continue.
-   */
-  void barrier();
-
-  //GLOBAL and DIRECTIONAL COMPUTE PROCESSES COMMUNICATIONS
+  void initialize(int lat_world_size, int lat_world_rank,
+  								int * grid_size, int * grid_rank,
+  								MPI_Comm lat_world_comm_up, MPI_Comm  dim0_comm_up, MPI_Comm dim1_comm_up,
+  								MPI_Group lat_world_group_up, MPI_Group dim0_group_up, MPI_Group dim1_group_up,
+  								Parallel2d_layer * layer_up, int level,
+  								bool r_dim0_flag, bool r_dim1_flag);
 
 
   /*!
@@ -373,14 +328,6 @@ class Parallel2d{
    */
   int rank() { return lat_world_rank_; }
   /*!
-   \return world_size_  the number of MPI process (compute + IOserver)
-   */
-  int world_size(){ return world_size_; }
-  /*!
-   \return world_rank_  rank of this process (in the world = compute + IOserver)
-   */
-  int world_rank(){ return world_rank_; }
-  /*!
    \return grid_size_  array of size 2. Size of each dimension of the compute processes grid.
    */
   int *grid_size() { return grid_size_; }
@@ -411,19 +358,21 @@ class Parallel2d{
   /*!
    \return dim0_comm_  MPI_Comm array, array of directional communicator (dim 0, compute processes)
    */
-  MPI_Comm *dim0_comm() {return dim0_comm_;}
+  MPI_Comm dim0_comm() {return dim0_comm_;}
   /*!
    \return dim1_comm_  MPI_Comm array, array of directional communicator (dim 1, compute processes)
    */
-  MPI_Comm *dim1_comm() {return dim1_comm_;}
+  MPI_Comm dim1_comm() {return dim1_comm_;}
   /*!
    \return dim0_comm_  MPI_Group array, array of directional group (dim 0, compute processes)
    */
-  MPI_Group *dim0_group() {return dim0_group_;}
+  MPI_Group dim0_group() {return dim0_group_;}
   /*!
    \return dim1_comm_  MPI_Group array, array of directional group (dim 1, compute processes)
    */
-  MPI_Group *dim1_group() {return dim1_group_;}
+  MPI_Group dim1_group() {return dim1_group_;}
+
+  bool isPartLayer() {return isPartLayer_;}
 
   /*!
    \return int, the rank in lat_world_comm_ for a given process in grid.
@@ -431,42 +380,6 @@ class Parallel2d{
    \param m : rank in dim1_comm_
    */
   int grid2world(int n,int m) {return n + grid_size_[0]*m;}
-
-#ifdef EXTERNAL_IO
-  /*!
-   \return isIO_  true if the process is reserved to the IO server, false if the process is a compute process.
-   */
-  bool isIO(){return isIO_;}
-  MPI_Comm IOcomm(){return IO_comm_;}
-  MPI_Group IOgroup(){return IO_group_;}
-#endif
-
-  /* for compatibility with OS X, when this library is linked in e.g. FalconIC */
-  void PleaseNeverFinalizeMPI() { neverFinalizeMPI = true; }
-
-  Parallel2d_layer* layers(){return layers_;}
-
-  void MultiGrid_createLevels(int n_level)
-    {
-      layers_ = new  Parallel2d_layer[n_level];
-      //for(int i=0;i<n_level;i++)layers_[i] = new Parallel2d_layer;
-    }
-  void MultiGrid_initTopLevel()
-  {
-    layers_[0].initialize_topLevel(lat_world_size_, grid_size_,lat_world_rank_,grid_rank_,
-    root_, isRoot_, last_proc_,
-    lat_world_comm_, dim0_comm_[grid_rank_[1]], dim1_comm_[grid_rank_[0]],
-    lat_world_group_, dim0_group_[grid_rank_[1]], dim1_group_[grid_rank_[0]] );
-  }
-  void MultiGrid_initLevel(int n,bool f_dim0,bool f_dim1)
-  {
-
-    layers_[n].initialize(layers_[n-1].size(), layers_[n-1].rank(), layers_[n-1].grid_size(), layers_[n-1].grid_rank(),
-                           layers_[n-1].lat_world_comm(), layers_[n-1].dim0_comm(), layers_[n-1].dim1_comm(),
-                           layers_[n-1].lat_world_group(), layers_[n-1].dim0_group(), layers_[n-1].dim1_group(),
-                           &(layers_[n-1]), n,f_dim0,f_dim1);
-
-  }
 
 
 private:
@@ -481,31 +394,18 @@ private:
   bool isRoot_;
   bool last_proc_[2];
 
-  int world_rank_;
-  int world_size_;
 
-  MPI_Comm world_comm_,lat_world_comm_, *dim0_comm_, *dim1_comm_;
-  MPI_Group world_group_,lat_world_group_, *dim0_group_,*dim1_group_ ;
+  MPI_Comm lat_world_comm_, dim0_comm_, dim1_comm_;
+  MPI_Group lat_world_group_, dim0_group_, dim1_group_ ;
 
+  int level_;
+  Parallel2d_layer * layer_up_;
+  Parallel2d_layer * layer_down_;
 
-#ifdef EXTERNAL_IO
-  MPI_Comm IO_comm_;
-  MPI_Group IO_group_;
-#endif
-
-#ifdef EXTERNAL_IO
-  bool isIO_;
-#endif
-
-  /* for compatibility with OS X, when this library is linked in e.g. FalconIC */
-  bool neverFinalizeMPI;
-
-  Parallel2d_layer * layers_;
-
+  bool isPartLayer_;
 
 };
-/* again, this here is not the actual compiled object, just the reference to its existence elsewhere. */
-extern Parallel2d parallel;
+
 
 
 
