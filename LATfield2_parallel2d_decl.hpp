@@ -445,6 +445,7 @@ class Parallel2d{
   void PleaseNeverFinalizeMPI() { neverFinalizeMPI = true; }
 
   Parallel2d_layer* layers(){return layers_;}
+  Parallel2d_layer layer(int level){return layers_[level];}
 
   void MultiGrid_createLevels(int n_level)
     {

@@ -2,6 +2,20 @@
 #define LATFIELD2_MULTIGRID_DECL_HPP
 
 
+
+class MultiLAT : public Lattice
+{
+private:
+    int parallel_layer_;
+public:
+    void initialize(int dim, const int* size, int halo, int parallel_layer);
+    void initialize(int dim, const int size, int halo, int parallel_layer);
+
+    int parallel_layer(){return parallel_layer_;}
+
+};
+
+
 class MultiGrid
 {
 public:
@@ -12,17 +26,16 @@ public:
 
 private:
 
-  Lattice * lattice_;
+  MultiLAT * lattice_;
 
-  int  pl_number_, nl_;
-
+  int  npl_, nl_;
+  int * lLayer_;
 
   int dim_;
   int ** lat_size_;
-
-
-
 };
+
+
 
 
 
