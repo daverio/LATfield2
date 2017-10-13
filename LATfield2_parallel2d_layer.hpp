@@ -169,8 +169,10 @@ void Parallel2d_layer::initialize(int lat_world_size, int lat_world_rank,
 		}
 
 #ifdef DEBUG_MULTIGRID
+/*
 	cout<< "Multigrid parallel level: "<< level << " . ranks: ( " << this->grid_rank()[0]<<" , "<<this->grid_rank()[1]<<" )"
 			<< " uper layer ranks: ( " << layer_up_->grid_rank()[0]<<" , "<<layer_up_->grid_rank()[1] << " )"<< endl;
+*/
 #endif
 
 

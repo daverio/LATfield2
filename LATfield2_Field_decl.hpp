@@ -363,6 +363,7 @@ class Field
          Returns the number of columns of the component matrix at each sites.
          */
 		int   cols();
+		int 	nMatrix();
         /*!
          returns the symmetry of the component matrix at each sites.
          */
@@ -373,16 +374,16 @@ class Field
          */
 		FieldType*& data();
 
-	private:
+    FieldType* data_;
+
+	protected:
+
 		//PRIVATE FUNCTIONS
 		void updateHaloComms();
 
 #ifdef HDF5
-        void get_h5type();
+    void get_h5type();
 #endif
-    public:
-        FieldType* data_;
-	protected:
 		//MEMBER DATA
 		Lattice*   lattice_;
 
@@ -419,8 +420,8 @@ int Field<FieldType>::allocated = 2;          //Status flag for allocated memory
 //CONSTRUCTORS=================
 
 template <class FieldType>
-Field<FieldType>::Field() : data_memSize_(0), data_(NULL) {
-    status_=0;
+Field<FieldType>::Field() : data_memSize_(0), data_(NULL),status_(0) {
+
 #ifdef HDF5
     this->get_h5type();
 #endif
@@ -1897,6 +1898,9 @@ int Field<FieldType>::rows() { return rows_; }
 
 template <class FieldType>
 int Field<FieldType>::cols() { return cols_; }
+
+template <class FieldType>
+int Field<FieldType>::nMatrix() { return nMatrix_; }
 
 template <class FieldType>
 int Field<FieldType>::symmetry() { return symmetry_; }

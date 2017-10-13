@@ -3,17 +3,9 @@
 
 
 
-class MultiLAT : public Lattice
-{
-private:
-    int parallel_layer_;
-public:
-    void initialize(int dim, const int* size, int halo, int parallel_layer);
-    void initialize(int dim, const int size, int halo, int parallel_layer);
+#include "LATfield2_MultiLAT.hpp"
+#include "LATfield2_MultiField.hpp"
 
-    int parallel_layer(){return parallel_layer_;}
-
-};
 
 
 class MultiGrid
@@ -23,6 +15,23 @@ public:
       ~MultiGrid();
 
       void initialize(Lattice * lat_top, int levelNumber_max, int minGridperProc);
+
+      template<class FieldType>
+      void intitialize_Field(Field<FieldType> * FieldBase, MultiField<FieldType> *& field);
+
+
+      /*
+      restrict level to level + 1;
+      */
+      template<class FieldType>
+      void restrict(MultiField<FieldType> *& field, int level);
+
+      template<class FieldType>
+      void restrict3d_spl(MultiField<FieldType> *& field, int level);
+
+      template<class FieldType>
+      void restrict3d_dpl(MultiField<FieldType> *& field, int level);
+
 
 private:
 
