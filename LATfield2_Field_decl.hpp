@@ -9,6 +9,14 @@
 
 //Matrix-style component symmetry
 
+int getCompSym(int i,int j)
+{
+  int component;
+  if (i>j) component = i + j * 3 - (j * (1 + j)) / 2;
+  else component = j + i * 3 - (i * (1 + i)) / 2;
+  return component;
+}
+
 extern  int symmetric;
 extern  int unsymmetric;
 
