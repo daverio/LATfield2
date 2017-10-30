@@ -699,7 +699,7 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
         }
     }
 
-
+    part_simple partTest;
 
     for(x.first();x.test();x.next())
     {
@@ -711,6 +711,8 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
             {
                 itTemp = it;
                 ++it;
+
+                partTest = (*itTemp);
 
 #ifdef DEBUG_CONTROLSPEED
                 double sizeTest[3]={boxSize_[0], boxSize_[1]/parallel.grid_size()[1], boxSize_[2]/parallel.grid_size()[0]};
@@ -813,7 +815,8 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                     {
                         cout<< "particle : "<<(*itTemp).ID<<" have move to far away (more than 1 proc)."<<endl;
                         cout<< "particle position: "<< (*itTemp) <<endl;
-                        cout<< thisRanks[0]<<" , "<< thisRanks[1]<<" , "<< partRanks[0]<<" , "<< partRanks[1]<<endl;
+                        cout<< "particle position old: "<< partTest <<endl;
+                        cout<<"particle : "<<(*itTemp).ID<< " "<< thisRanks[0]<<" , "<< thisRanks[1]<<" , "<< partRanks[0]<<" , "<< partRanks[1]<<endl;
                     }
                 }
                 else if(partRanks[1]==thisRanks[1]+1)
@@ -837,7 +840,8 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                     {
                         cout<< "particle : "<<(*itTemp).ID<<" have move to far away (more than 1 proc)."<<endl;
                         cout<< "particle position: "<< (*itTemp) <<endl;
-                        cout<< thisRanks[0]<<" , "<< thisRanks[1]<<" , "<< partRanks[0]<<" , "<< partRanks[1]<<endl;
+                        cout<< "particle position old: "<< partTest <<endl;
+                        cout<<"particle : "<<(*itTemp).ID<< " "<< thisRanks[0]<<" , "<< thisRanks[1]<<" , "<< partRanks[0]<<" , "<< partRanks[1]<<endl;
                     }
                 }
                 else if(partRanks[1]==thisRanks[1])
@@ -854,16 +858,18 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                     }
                     else
                     {
-                        cout<< "particle : "<<(*itTemp).ID<<" have move to far away (more than 1 proc)."<<endl;
+                        cout<< "particle : "<<(*itTemp).ID<<" has moved too much (more than 1 proc)."<<endl;
                         cout<< "particle position: "<< (*itTemp) <<endl;
-                        cout<< thisRanks[0]<<" , "<< thisRanks[1]<<" , "<< partRanks[0]<<" , "<< partRanks[1]<<endl;
+                        cout<< "particle position old: "<< partTest <<endl;
+                        cout<<"particle : "<<(*itTemp).ID<< " "<< thisRanks[0]<<" , "<< thisRanks[1]<<" , "<< partRanks[0]<<" , "<< partRanks[1]<<endl;
                     }
                 }
                 else
                 {
-                    cout<< "particle : "<<(*itTemp).ID<<" have move to far away (more than 1 proc)."<<endl;
+                    cout<< "particle : "<<(*itTemp).ID<<" has moved too much (more than 1 proc)."<<endl;
                     cout<< "particle position: "<< (*itTemp) <<endl;
-                    cout<< thisRanks[0]<<" , "<< thisRanks[1]<<" , "<< partRanks[0]<<" , "<< partRanks[1]<<endl;
+                    cout<< "particle position old: "<< partTest <<endl;
+                    cout<<"particle : "<<(*itTemp).ID<< " "<< thisRanks[0]<<" , "<< thisRanks[1]<<" , "<< partRanks[0]<<" , "<< partRanks[1]<<endl;
                 }
 
             }
@@ -1661,7 +1667,7 @@ void Particles<part,part_info,part_dataType>::loadHDF5(string filename_base, int
             get_partInfo(filename_base + "_" + int2string(0,999)+".h5",part_info_file,part_datatype_);
         }
 
-
+    //cout<< fd[0].boxSize[0]<< " "<< fd[0].boxSize[1]<< " "<< fd[0].boxSize[2]<< endl;
 
     if(fd[0].boxSize[0]!=boxSize_[0] || fd[0].boxSize[1]!=boxSize_[1] || fd[0].boxSize[2]!=boxSize_[2]){
         cout<<"LATfield2::Particles::loadHDF5  :  wrong boxSize, exiting: "<< fd[0].boxSize[0] <<", "<< boxSize_[0] <<endl;
