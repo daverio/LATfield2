@@ -101,7 +101,7 @@ namespace LATfield2
         #ifdef FFT3D
             #include "LATfield2_PlanFFT.hpp"
         #endif
-        #include "particles/LATfield2_Particles.hpp"
+        //#include "particles/LATfield2_Particles.hpp"
 
 //macros
         #include  "looping_macro.hpp"

@@ -36,7 +36,7 @@ int main(int argc, char **argv)
 
     //------------   Declaration of a Lattice   --------------
     int dim = 3;
-    int latSize = 16;
+    int latSize = 18;
     int halo = 2;
     Lattice lat(dim,latSize,halo);
 
@@ -44,6 +44,13 @@ int main(int argc, char **argv)
     Field<Real> rho(lat,3);
     Field<Real> phi(lat);
     Field<Real> beta(lat,3);
+
+    #pragma omp parallel
+    {
+        int ID = omp_get_thread_num();
+        //cout << " "<<ID<< endl;
+        printf("MPI rank %d, openMP task %d \n", parallel.rank(),ID);
+    }
 
 
     //-----------------------   end   ------------------------
@@ -53,22 +60,18 @@ int main(int argc, char **argv)
     Site y(lat);
 
 
-    for(x.first();x.test();x.nextValue())
+    for(x.first();x.test();x.next())
     {
-      for(int i=0;i<3;i++)rho.value(x,i) = 2.0;
+      for(int i=0;i<3;i++)rho(x,i) = i;
     }
 
 
     for(x.first();x.test();x.next())
     {
-      for(int i=0;i<3;i++)
-      {
+      for(int i=0;i<3;i++)cout<<"comp "<< i <<" : " <<x<<rho(x,i)<<endl;
 
-        cout<<x<< " , comp: "<<i<<" : "<<vsum(vexp(rho(x,i)))<<endl;
-
-      }
     }
-    if(x.setCoord(0,0,0))cout<<rho(x,0)<<endl;
+    //if(x.setCoord(0,0,0))cout<<rho(x,0)<<endl;
     /*
     for(x.first();x.test();x.next())
     {

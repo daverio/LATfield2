@@ -17,54 +17,55 @@
 //#if PARALLEL_MPI   //Define for MPI parallelism
 
 #include "mpi.h"
+#include "omp.h"
 #define COUT if(parallel.isRoot())cout
 
 
 /*! \class Parallel2d
  \brief LATfield2d underliying class for paralleization
- 
+
  The parallel2d class is the handler of the parallelization of LATfield2d.
  LATfield2d distribute n-dimensional lattices into a 2-dimensional cartesian grid of MPI processes, a rod decomposition. The last dimension of the lattice is scattered into the first dimension of the process grid and the last-but-one dimension of the lattice is scattered into the second dimension of the process grid. This choice have been made to increase data locality of the ghost cells (halo), increases the efficiency of method to update them. Due to his scheme of parallelization, LATfield2d is only able to work with lattice of dimension bigger or equal to two.
- 
+
  The geometry of the process grid (the size of the 2 dimensions), two layers of MPI communicator and simple communication methods are enbended in the "parallel" object, which is an instance of the class Parallel. This object is instantiated but not initialized within the library header, hence the users should never declare an instance of the Parallel class. but rather use directly its pre/defined instance "parallel".
- 
+
  */
 
 class Parallel2d{
   public :
-  
+
   //CONSTRUCTOR AND DESTRUCTOR================
   Parallel2d();
   //Parallel2d(int proc_size0, int proc_size1);
-  
+
   ~Parallel2d();
-  
+
   //Communicators initialization (grid initialization)===================
-  
-  
-  
-  
-  
+
+
+
+
+
   /*!
    Overall LATfield2 initialization when the output server is used. Should be the first call in any LATfield2 based application, as it initialize MPI (preprocessor define: -DEXTERNAL_IO)
-   
+
    \param proc_size0    : size of the first dimension of the MPI process grid.
    \param proc_size1    : size of the second dimension of the MPI process grid.
    \param IO_total_size : number of MPI process reserved for the IO server.
    \param IO_node_size  : size of 1 goupe of process reserved for the IO server. Each group will write in a seperated file.
    */
   void initialize(int proc_size0, int proc_size1,int IO_total_size, int IO_node_size);
-  
+
   /*!
    Overall LATfield2 initialization used when the output server is not used. Should be the first call in any LATfield2 based application, as it initialize MPI.
-   
+
    \param proc_size0 : size of the first dimension of the MPI process grid.
    \param proc_size1 : size of the second dimension of the MPI process grid.
    */
   void initialize(int proc_size0, int proc_size1);
-  
+
   //ABORT AND BARRIER===============================
-  
+
   /*!
    Method to kill by force the executable. If one MPI process call this method the executable will be killed.
    */
@@ -77,10 +78,10 @@ class Parallel2d{
    Method to call MPI_Barrier. This barrier is only applied on the compute processes. Every compute process have to perform the call, otherwise the executable will not continue.
    */
   void barrier();
-  
+
   //GLOBAL and DIRECTIONAL COMPUTE PROCESSES COMMUNICATIONS
-  
-  
+
+
   /*!
    Method to broadcast to every compute process a variable. Performed in lat_world_comm_ (compute processes world communicator).
    \param message: variable to send. the receivers will receive the value in that variable.
@@ -120,10 +121,10 @@ class Parallel2d{
    \param from    : grid_rank_[1] of the sender.
    */
   template<class Type> void broadcast_dim1(Type* array, int len, int from);
-  
-  
-  
-  
+
+
+
+
   /*!
    Method to sum a number over all the compute processes. Each process will have the result assigned in the input variable.
    \param number : variable to sum.
@@ -135,7 +136,7 @@ class Parallel2d{
    \param len    : size of the array.
    */
   template<class Type> void sum(Type* array, int len);
-  
+
   /*!
    Method to perform a sum of a number over all the compute processes with same grid_rank_[1]. Each process will have the result assigned in the input variable.
    \param number : variable to sum.
@@ -159,7 +160,7 @@ class Parallel2d{
    */
   template<class Type> void sum_dim1(Type* array, int len);
   /////////////////
-  
+
   /*!
    Method to find the maximum value of a variable across all the compute processes.
    \param number : number to compare, the max value will be assignent to this variable.
@@ -193,7 +194,7 @@ class Parallel2d{
    \param len   : size of the array.
    */
   template<class Type> void max_dim1(Type* array, int len);
-  
+
   /*!
    Method to find the minimal value of a variable across all the compute processes.
    \param number : number to compare, the max value will be assignent to this variable.
@@ -227,8 +228,8 @@ class Parallel2d{
    \param len   : size of the array.
    */
   template<class Type> void min_dim1(Type* array, int len);
-  
-  
+
+
   /*!
    MPI send method on the compute processes. The method calls MPI_Send in the lat_world_comm communicator.
    \param message : variable to send.
@@ -268,8 +269,8 @@ class Parallel2d{
    \param to    : rank of the receiver. (grid_rank_[1])
    */
   template<class Type> void send_dim1(Type* array, int len, int to);
-  
-  
+
+
   /*!
    MPI receive method on the compute processes. The method calls MPI_Recv in the lat_world_comm communicator.
    \param message : variable which will be assigned to the receive message.
@@ -309,7 +310,7 @@ class Parallel2d{
    \param from    : rank of the sender. (grid_rank_[1])
    */
   template<class Type> void receive_dim1(Type* array, int len, int from);
-  
+
   /*!
    Method to send a message through dim0 of the process grid. Processes of grid_rank_[0]=N will send the message to the grid_rank_[0]=N+1, with a torus topology. Therefore each process will send and receive data.
    \param bufferSend : pointer to the data which will be sent.
@@ -358,9 +359,9 @@ class Parallel2d{
    \param lenDown        : size of the array bufferSendUp.
    */
   template<class Type> void sendUpDown_dim1(Type& bufferSendUp,Type& bufferRecUp, long lenUp, Type& bufferSendDown,Type& bufferRecDown, long lenDown );
-  
-  
-  
+
+
+
   //MISCELLANEOUS===================
   /*!
    \return lat_world_size_  the number of MPI process (compute processes)
@@ -422,14 +423,14 @@ class Parallel2d{
    \return dim1_comm_  MPI_Group array, array of directional group (dim 1, compute processes)
    */
   MPI_Group *dim1_group() {return dim1_group_;}
-  
+
   /*!
    \return int, the rank in lat_world_comm_ for a given process in grid.
    \param n : rank in dim0_comm_
    \param m : rank in dim1_comm_
    */
   int grid2world(int n,int m) {return n + grid_size_[0]*m;}
-  
+
 #ifdef EXTERNAL_IO
   /*!
    \return isIO_  true if the process is reserved to the IO server, false if the process is a compute process.
@@ -441,39 +442,39 @@ class Parallel2d{
 
   /* for compatibility with OS X, when this library is linked in e.g. FalconIC */
   void PleaseNeverFinalizeMPI() { neverFinalizeMPI = true; };
-  
+
 private:
   //MEMBER VARIABLES================
-  
+
   int lat_world_size_;//Number of processes
   int grid_size_[2]; //Number of processes for dim 0 and dim 1
   int lat_world_rank_; //Process ID
   int grid_rank_[2]; // Process ID in the 2d grid
-  
+
   int root_;
   bool isRoot_;
   bool last_proc_[2];
-  
+
   int world_rank_;
   int world_size_;
-  
+
   MPI_Comm world_comm_,lat_world_comm_, *dim0_comm_, *dim1_comm_;
   MPI_Group world_group_,lat_world_group_, *dim0_group_,*dim1_group_ ;
-  
-  
+
+
 #ifdef EXTERNAL_IO
   MPI_Comm IO_comm_;
   MPI_Group IO_group_;
 #endif
-  
+
 #ifdef EXTERNAL_IO
   bool isIO_;
 #endif
-  
+
   /* for compatibility with OS X, when this library is linked in e.g. FalconIC */
   bool neverFinalizeMPI;
-  
-  
+
+
 };
 /* again, this here is not the actual compiled object, just the reference to its existence elsewhere. */
 extern Parallel2d parallel;

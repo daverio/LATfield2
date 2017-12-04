@@ -145,62 +145,102 @@ inline T& LFvector<T>::operator[](int i)
 template<class T>
 LFvector<T>& LFvector<T>::operator=(const LFvector<T>& source)
 {
-  for(int i = 0;i<size_;i++) *(this->data_+i) = source.data_[i];
+  #pragma omp parallel for
+  for(int i = 0;i<size_;i++)
+  {
+    this->data_[i] = source.data_[i];
+  }
   return *this;
 }
 template<class T>
 LFvector<T>& LFvector<T>::operator=(const T& a)
 {
-  for(int i = 0;i<size_;i++) *(this->data_+i) = a;
+  #pragma omp parallel for
+  for(int i = 0;i<size_;i++)
+  {
+    this->data_[i] = a;
+  }
   return *this;
 }
 
 template<class T>
 LFvector<T>& LFvector<T>::operator+=(const LFvector<T>& source)
 {
-  for(int i = 0;i<size_;i++) *(this->data_+i) += source.data_[i];
+  #pragma omp parallel for
+  for(int i = 0;i<size_;i++)
+  {
+    this->data_[i] += source.data_[i];
+  }
   return *this;
 }
 template<class T>
 LFvector<T>& LFvector<T>::operator+=(const T& a)
 {
-  for(int i = 0;i<size_;i++) *(this->data_+i) += a;
+  #pragma omp parallel for
+  for(int i = 0;i<size_;i++)
+  {
+    this->data_[i] += a;
+  }
   return *this;
 }
 template<class T>
 LFvector<T>& LFvector<T>::operator-=(const LFvector<T>& source)
 {
-  for(int i = 0;i<size_;i++) *(this->data_+i) -= source.data_[i];
+  #pragma omp parallel for
+  for(int i = 0;i<size_;i++)
+  {
+    this->data_[i] -= source.data_[i];
+  }
   return *this;
 }
 template<class T>
 LFvector<T>& LFvector<T>::operator-=(const T& a)
 {
-  for(int i = 0;i<size_;i++) *(this->data_+i) -= a;
+  #pragma omp parallel for
+  for(int i = 0;i<size_;i++)
+  {
+    this->data_[i] -= a;
+  }
   return *this;
 }
 template<class T>
 LFvector<T>& LFvector<T>::operator*=(const LFvector<T>& source)
 {
-  for(int i = 0;i<size_;i++) *(this->data_+i) *= source.data_[i];
+  #pragma omp parallel for
+  for(int i = 0;i<size_;i++)
+  {
+    this->data_[i] *= source.data_[i];
+  }
   return *this;
 }
 template<class T>
 LFvector<T>& LFvector<T>::operator*=(const T& a)
 {
-  for(int i = 0;i<size_;i++) *(this->data_+i) *= a;
+  #pragma omp parallel for
+  for(int i = 0;i<size_;i++)
+  {
+    this->data_[i] *= a;
+  }
   return *this;
 }
 template<class T>
 LFvector<T>& LFvector<T>::operator/=(const LFvector<T>& source)
 {
-  for(int i = 0;i<size_;i++) *(this->data_+i) /= source.data_[i];
+  #pragma omp parallel for
+  for(int i = 0;i<size_;i++)
+  {
+    this->data_[i] /= source.data_[i];
+  }
   return *this;
 }
 template<class T>
 LFvector<T>& LFvector<T>::operator/=(const T& a)
 {
-  for(int i = 0;i<size_;i++) *(this->data_+i) /= a;
+  #pragma omp parallel for
+  for(int i = 0;i<size_;i++)
+  {
+    this->data_[i] /= a;
+  }
   return *this;
 }
 
@@ -212,7 +252,7 @@ LFvector<T> LFvector<T>::operator+(const LFvector<T>& v1)
   LFvector<T> result(this->size_,NULL);
   for(int i = 0;i<v1.size_;i++)
   {
-    result[i] = data_[i] + v1.data_[i];
+    result.data_[i] = this->data_[i] + v1.data_[i];
   }
   return result;
 }
@@ -223,7 +263,7 @@ LFvector<T> LFvector<T>::operator+(const T& a)
   LFvector<T> result(this->size_,NULL);
   for(int i = 0;i<size_;i++)
   {
-    result[i] = this->data_[i] + a;
+    result.data_[i] = this->data_[i] + a;
   }
   return result;
 }
@@ -233,7 +273,7 @@ LFvector<T> operator+( const T& a, const LFvector<T>& v1 ) {
   LFvector<T> result(v1.size_,NULL);
   for(int i = 0;i<v1.size_;i++)
   {
-    result[i] = v1.data_[i] + a;
+    result.data_[i] = v1.data_[i] + a;
   }
   return result;
 }
@@ -247,7 +287,7 @@ LFvector<T> LFvector<T>::operator-(const LFvector<T>& v1)
   LFvector<T> result(this->size_,NULL);
   for(int i = 0;i<size_;i++)
   {
-    result[i] = this->data_[i]-v1.data_[i];
+    result.data_[i] = this->data_[i]-v1.data_[i];
   }
   return result;
 }
@@ -257,7 +297,7 @@ LFvector<T> LFvector<T>::operator-(const T& a)
   LFvector<T> result(this->size_,NULL);
   for(int i = 0;i<size_;i++)
   {
-    result[i] = this->data_[i] - a;
+    result.data_[i] = this->data_[i] - a;
   }
   return result;
 }
@@ -266,7 +306,7 @@ LFvector<T> operator-( const T& a, const LFvector<T>& v1 ) {
   LFvector<T> result(v1.size_,NULL);
   for(int i = 0;i<v1.size_;i++)
   {
-    result[i] = a - v1.data_[i];
+    result.data_[i] = a - v1.data_[i];
   }
   return result;
 }
@@ -278,7 +318,7 @@ LFvector<T> LFvector<T>::operator*(const LFvector<T>& v1)
   LFvector<T> result(this->size_,NULL);
   for(int i = 0;i<size_;i++)
   {
-    result[i] = this->data_[i]*v1.data_[i];
+    result.data_[i] = this->data_[i]*v1.data_[i];
   }
   return result;
 }
@@ -288,7 +328,7 @@ LFvector<T> LFvector<T>::operator*(const T& a)
   LFvector<T> result(this->size_,NULL);
   for(int i = 0;i<size_;i++)
   {
-    result[i] = this->data_[i] * a;
+    result.data_[i] = this->data_[i] * a;
   }
   return result;
 }
@@ -298,7 +338,7 @@ LFvector<T> operator*( const T& a, const LFvector<T>& v1 ) {
   LFvector<T> result(v1.size_,NULL);
   for(int i = 0;i<v1.size_;i++)
   {
-    result[i] = v1.data_[i] * a;
+    result.data_[i] = v1.data_[i] * a;
   }
   return result;
 }
@@ -310,7 +350,7 @@ LFvector<T> LFvector<T>::operator/(const LFvector<T>& v1)
   LFvector<T> result(this->size_,NULL);
   for(int i = 0;i<size_;i++)
   {
-    result[i] = this->data_[i]/v1.data_[i];
+    result.data_[i] = this->data_[i]/v1.data_[i];
   }
   return result;
 }
@@ -320,7 +360,7 @@ LFvector<T> LFvector<T>::operator/(const T& a)
   LFvector<T> result(this->size_,NULL);
   for(int i = 0;i<size_;i++)
   {
-    result[i] = this->data_[i] / a;
+    result.data_[i] = this->data_[i] / a;
   }
   return result;
 }
@@ -330,7 +370,7 @@ LFvector<T> operator/( const T& a, const LFvector<T>& v1 ) {
   LFvector<T> result(v1.size_,NULL);
   for(int i = 0;i<v1.size_;i++)
   {
-    result[i] =  a / v1.data_[i];
+    result.data_[i] =  a / v1.data_[i];
   }
   return result;
 }
