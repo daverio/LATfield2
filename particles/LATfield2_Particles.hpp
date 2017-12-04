@@ -285,7 +285,11 @@ public:
      */
     size_t mass_offset(){return mass_offset_;};
 
-    long numParticles(){return numParticles_;};
+    long numParticles(){
+      long temp = numParticles_;
+      parallel.sum(temp);
+      return temp;
+    };
 
 protected:
 
