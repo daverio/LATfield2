@@ -250,6 +250,7 @@ template<class T>
 LFvector<T> LFvector<T>::operator+(const LFvector<T>& v1)
 {
   LFvector<T> result(this->size_,NULL);
+  #pragma omp parallel for
   for(int i = 0;i<v1.size_;i++)
   {
     result.data_[i] = this->data_[i] + v1.data_[i];
@@ -261,6 +262,7 @@ template<class T>
 LFvector<T> LFvector<T>::operator+(const T& a)
 {
   LFvector<T> result(this->size_,NULL);
+  #pragma omp parallel for
   for(int i = 0;i<size_;i++)
   {
     result.data_[i] = this->data_[i] + a;
@@ -271,6 +273,7 @@ LFvector<T> LFvector<T>::operator+(const T& a)
 template<class T>
 LFvector<T> operator+( const T& a, const LFvector<T>& v1 ) {
   LFvector<T> result(v1.size_,NULL);
+  #pragma omp parallel for
   for(int i = 0;i<v1.size_;i++)
   {
     result.data_[i] = v1.data_[i] + a;
@@ -285,6 +288,7 @@ template<class T>
 LFvector<T> LFvector<T>::operator-(const LFvector<T>& v1)
 {
   LFvector<T> result(this->size_,NULL);
+  #pragma omp parallel for
   for(int i = 0;i<size_;i++)
   {
     result.data_[i] = this->data_[i]-v1.data_[i];
@@ -295,6 +299,7 @@ template<class T>
 LFvector<T> LFvector<T>::operator-(const T& a)
 {
   LFvector<T> result(this->size_,NULL);
+  #pragma omp parallel for
   for(int i = 0;i<size_;i++)
   {
     result.data_[i] = this->data_[i] - a;
@@ -304,6 +309,7 @@ LFvector<T> LFvector<T>::operator-(const T& a)
 template<class T>
 LFvector<T> operator-( const T& a, const LFvector<T>& v1 ) {
   LFvector<T> result(v1.size_,NULL);
+  #pragma omp parallel for
   for(int i = 0;i<v1.size_;i++)
   {
     result.data_[i] = a - v1.data_[i];
@@ -316,6 +322,7 @@ template<class T>
 LFvector<T> LFvector<T>::operator*(const LFvector<T>& v1)
 {
   LFvector<T> result(this->size_,NULL);
+  #pragma omp parallel for
   for(int i = 0;i<size_;i++)
   {
     result.data_[i] = this->data_[i]*v1.data_[i];
@@ -326,6 +333,7 @@ template<class T>
 LFvector<T> LFvector<T>::operator*(const T& a)
 {
   LFvector<T> result(this->size_,NULL);
+  #pragma omp parallel for
   for(int i = 0;i<size_;i++)
   {
     result.data_[i] = this->data_[i] * a;
@@ -336,6 +344,7 @@ LFvector<T> LFvector<T>::operator*(const T& a)
 template<class T>
 LFvector<T> operator*( const T& a, const LFvector<T>& v1 ) {
   LFvector<T> result(v1.size_,NULL);
+  #pragma omp parallel for
   for(int i = 0;i<v1.size_;i++)
   {
     result.data_[i] = v1.data_[i] * a;
@@ -348,6 +357,7 @@ template<class T>
 LFvector<T> LFvector<T>::operator/(const LFvector<T>& v1)
 {
   LFvector<T> result(this->size_,NULL);
+  #pragma omp parallel for
   for(int i = 0;i<size_;i++)
   {
     result.data_[i] = this->data_[i]/v1.data_[i];
@@ -358,6 +368,7 @@ template<class T>
 LFvector<T> LFvector<T>::operator/(const T& a)
 {
   LFvector<T> result(this->size_,NULL);
+  #pragma omp parallel for
   for(int i = 0;i<size_;i++)
   {
     result.data_[i] = this->data_[i] / a;
@@ -368,6 +379,7 @@ LFvector<T> LFvector<T>::operator/(const T& a)
 template<class T>
 LFvector<T> operator/( const T& a, const LFvector<T>& v1 ) {
   LFvector<T> result(v1.size_,NULL);
+  #pragma omp parallel for
   for(int i = 0;i<v1.size_;i++)
   {
     result.data_[i] =  a / v1.data_[i];
