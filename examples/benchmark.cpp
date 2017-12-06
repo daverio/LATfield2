@@ -101,7 +101,7 @@ timer_udHalo_10comp = 0.0;
     Field<Real> lap(lat);
     Field<Real> mcomp(lat,10);
 
-    LFvector<Real> norm(lat);
+    double norm;
 
     double dx = 1.0/(double)boxsize;
     //-----------------------   end   ------------------------
@@ -121,9 +121,9 @@ timer_udHalo_10comp = 0.0;
       timer_ref =MPI_Wtime();
       SCOREP_USER_REGION_BEGIN( impl_1comp, "impl_1comp",
       SCOREP_USER_REGION_TYPE_COMMON )
-      for(x.first();x.test();x.nextValue())
+      for(x.first();x.test();x.next())
       {
-        phi.value(x) = cos( 2.0 * M_PI * (double)x.coord(0) * dx );
+        phi(x) = cos( 2.0 * M_PI * (double)x.coord(0) * dx );
       }
       SCOREP_USER_REGION_END( impl_1comp )
       timer = MPI_Wtime() - timer_ref;
@@ -132,9 +132,9 @@ timer_udHalo_10comp = 0.0;
       timer_ref =MPI_Wtime();
       SCOREP_USER_REGION_BEGIN( impl_10comp, "impl_10comp",
       SCOREP_USER_REGION_TYPE_COMMON )
-      for(x.first();x.test();x.nextValue())
+      for(x.first();x.test();x.next())
       {
-        for(int i=0;i<10;i++)mcomp.value(x,i) = (double)i*cos(2.0 * M_PI * (double)x.coord(0)*dx);
+        for(int i=0;i<10;i++)mcomp(x,i) = (double)i*cos(2.0 * M_PI * (double)x.coord(0)*dx);
       }
       SCOREP_USER_REGION_END( impl_10comp )
       timer = MPI_Wtime() - timer_ref;
@@ -148,7 +148,7 @@ timer_udHalo_10comp = 0.0;
       {
         norm = mcomp(x,0)* mcomp(x,0);
         for(int i=1;i<10;i++)norm += mcomp(x,i)* mcomp(x,i);
-        norm = vsqrt(norm);
+        norm = sqrt(norm);
       }
       SCOREP_USER_REGION_END( largenorm )
       timer = MPI_Wtime() - timer_ref;
