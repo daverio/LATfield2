@@ -21,6 +21,12 @@ public:
   void updateHalo();
   void updateHaloComms();
 
+  void saveHDF5(string filename, string dataset_name);
+  void saveHDF5(string filename){this->saveHDF5(filename, "data");}
+  void loadHDF5(string filename,string dataset_name);
+  void loadHDF5(string filename){this->loadHDF5(filename, "data");}
+
+
 protected:
 
   int parallel_layer_;
@@ -360,6 +366,32 @@ void MultiField<FieldType>::updateHaloComms()
   	delete[] buffer_send;
   	delete[] buffer_rec;
 }
+
+template <class FieldType>
+void  MultiField<FieldType>::saveHDF5(string filename, string dataset_name)
+{
+#ifdef HDF5
+
+	save_hdf5(data_,type_id,array_size,lattice_->coordSkip(),lattice_->size(),lattice_->sizeLocal(),lattice_->halo(),lattice_->dim(),components_,filename,dataset_name,parallel.layer(parallel_layer_).lat_world_comm());
+#else
+    COUT<<"LATfield2d must be compiled with HDF5 (flag HDF5 turn on!)"<<endl;
+    COUT<<"to be able to use hdf5 data format!!!)"<<endl;
+    COUT<<"saving file in binary: "<<filename<<"BIN"<<endl;
+    this->write(filename+"BIN");
+#endif
+}
+
+template <class FieldType>
+void  MultiField<FieldType>::loadHDF5(string filename, string dataset_name)
+{
+#ifdef HDF5
+	load_hdf5(data_,lattice_->coordSkip(),lattice_->size(),lattice_->sizeLocal(),lattice_->halo(),lattice_->dim(),components_,filename,dataset_name,parallel.layer(parallel_layer_).lat_world_comm());
+#else
+    COUT<<"LATfield2d must be compiled with HDF5 (flag HDF5 turn on!)"<<endl;
+    COUT<<"to be able to use hdf5 data format!!!)"<<endl;
+    COUT<<"aborting...."<<endl;
+#endif
+
 
 
 

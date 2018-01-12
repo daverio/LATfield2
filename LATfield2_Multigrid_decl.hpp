@@ -32,13 +32,24 @@ public:
       template<class FieldType>
       void restrict3d_dpl(MultiField<FieldType> *& field, int level);
 
+      template<class FieldType>
+      void prolonge3d(MultiField<FieldType> *& field, int level);
+
+      template<class FieldType>
+      void prolonge3d_spl(MultiField<FieldType> *& field, int level);
+
+      template<class FieldType>
+      void prolonge3d_dpl(MultiField<FieldType> *& field, int level);
+
 
 private:
 
   MultiLAT * lattice_;
 
   int  npl_, nl_;
-  int * lLayer_;
+  int * pLayer_;
+  bool * plr0_;
+  bool * plr1_;
 
   int dim_;
   int ** lat_size_;
