@@ -380,6 +380,12 @@ class Field
          Returns the pointer to the data_ array of the field.
          */
 		FieldType*& data();
+#ifdef HDF5
+    hid_t type_id();
+    int array_size();
+#endif
+
+
 
 	private:
 		//PRIVATE FUNCTIONS
@@ -408,8 +414,8 @@ class Field
 
     unsigned long long data_memSize_;
 #ifdef HDF5
-        hid_t type_id;
-        int array_size;
+        hid_t type_id_;
+        int array_size_;
 #endif
 #ifdef EXTERNAL_IO
         ioserver_file io_file_;
@@ -477,9 +483,9 @@ void Field<FieldType>::get_h5type()
 {
     string type_name;
 	type_name = typeid(FieldType).name();
-	char  str_array_size[20];
-	//string str_array_size;
-	array_size = 1;
+	char  str_array_size_[20];
+	//string str_array_size_;
+	array_size_ = 1;
 	int nt;
 
 	nt = 0;
@@ -489,10 +495,10 @@ void Field<FieldType>::get_h5type()
 
 		while(type_name[nt+1]!='_')
 		{
-			str_array_size[nt]=type_name[nt+1];
+			str_array_size_[nt]=type_name[nt+1];
 			nt++;
 		}
-		str_array_size[nt]='\0';
+		str_array_size_[nt]='\0';
 
 		nt = nt + 2;
 		if(type_name[nt]=='A')
@@ -507,77 +513,77 @@ void Field<FieldType>::get_h5type()
 
 		}
 
-		array_size=atoi(str_array_size);
+		array_size_=atoi(str_array_size_);
 	}
 	//get the type
 
 	if(type_name[nt]=='s')
 	{
-		//COUT << " type : short ; size : "<<array_size<<endl;
-		type_id = H5T_NATIVE_SHORT;
+		//COUT << " type : short ; size : "<<array_size_<<endl;
+		type_id_ = H5T_NATIVE_SHORT;
 	}
 	else if(type_name[nt]=='t')
 	{
-		//COUT << " type : unsigned short ; size : "<<array_size<<endl;
-		type_id = H5T_NATIVE_USHORT;
+		//COUT << " type : unsigned short ; size : "<<array_size_<<endl;
+		type_id_ = H5T_NATIVE_USHORT;
 	}
 
 	else if(type_name[nt]=='i')
 	{
-		//COUT << " type : int ; size : "<<array_size<<endl;
-		type_id = H5T_NATIVE_INT;
+		//COUT << " type : int ; size : "<<array_size_<<endl;
+		type_id_ = H5T_NATIVE_INT;
 	}
 	else if(type_name[nt]=='j')
 	{
-		//COUT << " type : unsigned int ; size : "<<array_size<<endl;
-		type_id = H5T_NATIVE_UINT;
+		//COUT << " type : unsigned int ; size : "<<array_size_<<endl;
+		type_id_ = H5T_NATIVE_UINT;
 	}
 
 	else if(type_name[nt]=='l')
 	{
-		//COUT << " type : long ; size : "<<array_size<<endl;
-		type_id = H5T_NATIVE_LONG;
+		//COUT << " type : long ; size : "<<array_size_<<endl;
+		type_id_ = H5T_NATIVE_LONG;
 	}
 	else if(type_name[nt]=='m')
 	{
-		//COUT << " type : unsigned long ; size : "<<array_size<<endl;
-		type_id = H5T_NATIVE_ULONG;
+		//COUT << " type : unsigned long ; size : "<<array_size_<<endl;
+		type_id_ = H5T_NATIVE_ULONG;
 	}
 	else if(type_name[nt]=='x')
 	{
-		//COUT << " type : long long ; size : "<<array_size<<endl;
-		type_id = H5T_NATIVE_LLONG;
+		//COUT << " type : long long ; size : "<<array_size_<<endl;
+		type_id_ = H5T_NATIVE_LLONG;
 	}
 	else if(type_name[nt]=='y')
 	{
-		//COUT << " type : unsigned long long ; size : "<<array_size<<endl;
-		type_id = H5T_NATIVE_ULLONG;
+		//COUT << " type : unsigned long long ; size : "<<array_size_<<endl;
+		type_id_ = H5T_NATIVE_ULLONG;
 	}
 	else if(type_name[nt]=='f')
 	{
-		//COUT << " type : float ; size : "<<array_size<<endl;
-		type_id = H5T_NATIVE_FLOAT;
+		//COUT << " type : float ; size : "<<array_size_<<endl;
+		type_id_ = H5T_NATIVE_FLOAT;
 	}
 	else if(type_name[nt]=='d')
 	{
-		//COUT << " type : double ; size : "<<array_size<<endl;
-		type_id = H5T_NATIVE_DOUBLE;
+		//COUT << " type : double ; size : "<<array_size_<<endl;
+		type_id_ = H5T_NATIVE_DOUBLE;
 	}
 
 	else if(type_name[nt]=='e')
 	{
-		//COUT << " type : long double ; size : "<<array_size<<endl;
-		type_id = H5T_NATIVE_LDOUBLE;
+		//COUT << " type : long double ; size : "<<array_size_<<endl;
+		type_id_ = H5T_NATIVE_LDOUBLE;
 	}
 	else if (type_name[nt]=='N'&&type_name[nt+12]=='I'&&type_name[nt+13]=='m'&&type_name[nt+14]=='a'&&type_name[nt+15]=='g')
 	{
-        type_id = H5Tcreate (H5T_COMPOUND, sizeof (Imag));
+        type_id_ = H5Tcreate (H5T_COMPOUND, sizeof (Imag));
 #ifdef SINGLE
-        H5Tinsert (type_id, "real", 0,H5T_NATIVE_FLOAT);
-        H5Tinsert (type_id, "imaginary", sizeof(Real),H5T_NATIVE_FLOAT);
+        H5Tinsert (type_id_, "real", 0,H5T_NATIVE_FLOAT);
+        H5Tinsert (type_id_, "imaginary", sizeof(Real),H5T_NATIVE_FLOAT);
 #else
-	    H5Tinsert (type_id, "real", 0,H5T_NATIVE_DOUBLE);
-        H5Tinsert (type_id, "imaginary", sizeof(Real),H5T_NATIVE_DOUBLE);
+	    H5Tinsert (type_id_, "real", 0,H5T_NATIVE_DOUBLE);
+        H5Tinsert (type_id_, "imaginary", sizeof(Real),H5T_NATIVE_DOUBLE);
 #endif
     }
     else if (type_name[nt+12]=='p' && type_name[nt+13]=='a' && type_name[nt+14]=='r' && type_name[nt+15]=='t' &&
@@ -1558,7 +1564,7 @@ void  Field<FieldType>::saveHDF5(string filename, string dataset_name)
 {
 #ifdef HDF5
 
-	save_hdf5(data_,type_id,array_size,lattice_->coordSkip(),lattice_->size(),lattice_->sizeLocal(),lattice_->halo(),lattice_->dim(),components_,filename,dataset_name);
+	save_hdf5(data_,type_id_,array_size_,lattice_->coordSkip(),lattice_->size(),lattice_->sizeLocal(),lattice_->halo(),lattice_->dim(),components_,filename,dataset_name);
 #else
     COUT<<"LATfield2d must be compiled with HDF5 (flag HDF5 turn on!)"<<endl;
     COUT<<"to be able to use hdf5 data format!!!)"<<endl;
@@ -1662,7 +1668,7 @@ void  Field<FieldType>::saveHDF5_coarseGrain3D(string filename, string dataset_n
     int sSize[dim];
     int slocalsize[dim];
 
-    long blocksize = array_size*components_;
+    long blocksize = array_size_*components_;
     long halo = lattice_->halo();
 
     int number_cg = ratio*ratio*ratio;
@@ -1750,7 +1756,7 @@ void Field<FieldType>:: saveHDF5_server_open(string filename_base,int offset,int
     if(lattice_->dim()==2)iof_thickness_=-1;
     if(iof_thickness_!=-1)size[0]=iof_thickness_;
     lat.initialize(lattice_->dim(),size,lattice_->halo());
-    io_file_ = ioserver.openFile(filename_base.c_str(),STRUCTURED_H5_FILE,type_id,type_id,&lat,components_,array_size);
+    io_file_ = ioserver.openFile(filename_base.c_str(),STRUCTURED_H5_FILE,type_id_,type_id_,&lat,components_,array_size_);
 }
 template <class FieldType>
 void Field<FieldType>:: saveHDF5_server_write(int number_of_message, string filename_base, int offset,int thickness)
@@ -1912,7 +1918,12 @@ int Field<FieldType>::symmetry() { return symmetry_; }
 template <class FieldType>
 FieldType*& Field<FieldType>::data() { return data_; }
 
-
+#ifdef HDF5
+template <class FieldType>
+hid_t Field<FieldType>::type_id(){return type_id_;}
+template <class FieldType>
+int Field<FieldType>::array_size(){return array_size_;}
+#endif
 
 //DEFAULT ASCII FIELD I/O FUNCTIONS======================
 template<class FieldType>
