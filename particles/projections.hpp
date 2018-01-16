@@ -299,6 +299,105 @@ void scalarProjectionCIC_comm(Field<Real> * rho)
 
 }
 
+void vertexProjectionCIC_comm(Field<Real> * vel)
+{
+
+      if(vel->lattice().halo() == 0)
+      {
+          cout<< "NBCC_CIC_vel_comm: the field has to have at least a halo of 1" <<endl;
+          cout<< "NBCC_CIC_vel_comm: aborting" <<endl;
+          exit(-1);
+      }
+
+      Real *bufferSend;
+      Real *bufferRec;
+
+
+      long bufferSizeY;
+      long bufferSizeZ;
+
+
+      int sizeLocal[3];
+      long sizeLocalGross[3];
+      int sizeLocalOne[3];
+      int halo = vel->lattice().halo();
+
+      for(int i=0;i<3;i++)
+      {
+          sizeLocal[i]=vel->lattice().sizeLocal(i);
+          sizeLocalGross[i] = sizeLocal[i] + 2 * halo;
+          sizeLocalOne[i]=sizeLocal[i]+2;
+      }
+
+      int distHaloOne = halo - 1;
+
+      int iref;
+      int imax;
+
+      bufferSizeY =  (long)(sizeLocalOne[2]-1) * (long)sizeLocal[0];
+      bufferSizeZ = (long)sizeLocal[0] * (long)sizeLocal[1] ;
+      if(bufferSizeY>bufferSizeZ)
+      {
+          bufferSend = (Real*)malloc(sizeof(Real)*bufferSizeY*3);
+          bufferRec = (Real*)malloc(sizeof(Real)*bufferSizeY*3);
+      }
+      else
+      {
+          bufferSend = (Real*)malloc(sizeof(Real)*bufferSizeZ*3);
+          bufferRec = (Real*)malloc(sizeof(Real)*bufferSizeZ*3);
+      }
+
+      //send halo in direction X
+      iref = sizeLocalGross[0] - halo;
+      for(int k=distHaloOne;k<sizeLocalOne[2]+distHaloOne;k++)
+      {
+          for(int j=distHaloOne;j<sizeLocalOne[1]+distHaloOne;j++)
+          {
+              for(int c=0;c<3;c++)(*vel)(setIndex(sizeLocalGross,halo,j,k),c) += (*vel)(setIndex(sizeLocalGross,iref,j,k),c);
+          }
+      }
+      //send halo in direction Y
+      imax = sizeLocal[0];
+      iref = sizeLocalGross[1]- halo;
+      for(int k=0;k<(sizeLocalOne[2]-1);k++)
+      {
+          for(int i=0;i<imax;i++)
+          {
+              for(int c=0;c<3;c++)bufferSend[c+3*(i+k*imax)]=(*vel)(setIndex(sizeLocalGross,i+halo,iref,k+halo),c);
+          }
+      }
+      parallel.sendUp_dim1(bufferSend,bufferRec,bufferSizeY*3);
+      for(int k=0;k<(sizeLocalOne[2]-1);k++)
+      {
+          for(int i=0;i<imax;i++)
+          {
+            for(int c=0;c<3;c++)(*vel)(setIndex(sizeLocalGross,i+halo,halo,k+halo),c)+=bufferRec[c+3*(i+k*imax)];
+          }
+
+      }
+
+      //send halo in direction Z
+      iref=sizeLocalGross[2]-halo;
+      for(int j=0;j<(sizeLocalOne[1]-2);j++)
+      {
+          for(int i=0;i<imax;i++)
+          {
+              for(int c=0;c<3;c++)bufferSend[c+3*(i+j*imax)]=(*vel)(setIndex(sizeLocalGross,i+halo,j+halo,iref),c);
+          }
+      }
+      parallel.sendUp_dim0(bufferSend,bufferRec,bufferSizeZ*3);
+      for(int j=0;j<(sizeLocalOne[1]-2);j++)
+      {
+          for(int i=0;i<imax;i++)
+          {
+            for(int c=0;c<3;c++)(*vel)(setIndex(sizeLocalGross,i+halo,j+halo,halo),c)+=bufferRec[c+3*(i+j*imax)];
+          }
+      }
+
+      free(bufferRec);
+      free(bufferSend);
+}
+
 //////vector projection
 
 
