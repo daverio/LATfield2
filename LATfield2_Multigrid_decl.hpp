@@ -33,15 +33,20 @@ public:
       void restrict3d_dpl(MultiField<FieldType> *& field, int level);
 
       template<class FieldType>
-      void prolonge3d(MultiField<FieldType> *& field, int level);
+      void prolong(MultiField<FieldType> *& field, int level);
 
       template<class FieldType>
-      void prolonge3d_spl(MultiField<FieldType> *& field, int level);
+      void prolong3d_spl(MultiField<FieldType> *& field, int level);
 
       template<class FieldType>
-      void prolonge3d_dpl(MultiField<FieldType> *& field, int level);
+      void prolong3d_dpl(MultiField<FieldType> *& field, int level);
 
 
+      int nl(){return nl_;}
+      int npl(){return npl_;}
+      int player(int level){return pLayer_[level];}
+      bool isPartLayer(int i){return parallel.layer(pLayer_[i]).isPartLayer();}
+      MultiLAT lattice(int i){return lattice_[i];}
 private:
 
   MultiLAT * lattice_;

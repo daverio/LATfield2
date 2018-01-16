@@ -30,7 +30,8 @@ int main(int argc, char **argv)
 
     parallel.initialize(n,m);
 
-    COUT << "Parallel grid size: ("<<parallel.grid_size()[0]<<","<<parallel.grid_size()[1]<<"). "<<endl;
+
+    COUT << "Parallel grid size: ("<<parallel.grid_size()[0]<<","<<parallel.grid_size()[0]<<"). "<<endl;
     //-----------------------   end   ------------------------
 
 

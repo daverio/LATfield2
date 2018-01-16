@@ -23,6 +23,7 @@ public:
 
   void saveHDF5(string filename, string dataset_name);
   void saveHDF5(string filename){this->saveHDF5(filename, "data");}
+
   void loadHDF5(string filename,string dataset_name);
   void loadHDF5(string filename){this->loadHDF5(filename, "data");}
 
@@ -372,26 +373,35 @@ void  MultiField<FieldType>::saveHDF5(string filename, string dataset_name)
 {
 #ifdef HDF5
 
-	save_hdf5(data_,type_id,array_size,lattice_->coordSkip(),lattice_->size(),lattice_->sizeLocal(),lattice_->halo(),lattice_->dim(),components_,filename,dataset_name,parallel.layer(parallel_layer_).lat_world_comm());
+  MPI_Barrier(parallel.lat_world_comm());
+
+  if(parallel.layer(parallel_layer_).isPartLayer())
+  {
+
+    save_hdf5(this->data_,this->type_id,this->array_size,this->lattice_->coordSkip(),this->lattice_->size(),this->lattice_->sizeLocal(),this->lattice_->halo(),this->lattice_->dim(),this->components_,filename,dataset_name,parallel.layer(parallel_layer_).lat_world_comm());
+  }
 #else
     COUT<<"LATfield2d must be compiled with HDF5 (flag HDF5 turn on!)"<<endl;
     COUT<<"to be able to use hdf5 data format!!!)"<<endl;
     COUT<<"saving file in binary: "<<filename<<"BIN"<<endl;
     this->write(filename+"BIN");
 #endif
+
+  MPI_Barrier(parallel.lat_world_comm());
 }
+
 
 template <class FieldType>
 void  MultiField<FieldType>::loadHDF5(string filename, string dataset_name)
 {
 #ifdef HDF5
-	load_hdf5(data_,lattice_->coordSkip(),lattice_->size(),lattice_->sizeLocal(),lattice_->halo(),lattice_->dim(),components_,filename,dataset_name,parallel.layer(parallel_layer_).lat_world_comm());
+	if(parallel.layer(parallel_layer_).isPartLayer())load_hdf5(this->data_,this->lattice_->coordSkip(),this->lattice_->size(),this->lattice_->sizeLocal(),this->lattice_->halo(),this->lattice_->dim(),this->components_,this->filename,this->dataset_name,this->parallel.layer(parallel_layer_).lat_world_comm());
 #else
     COUT<<"LATfield2d must be compiled with HDF5 (flag HDF5 turn on!)"<<endl;
     COUT<<"to be able to use hdf5 data format!!!)"<<endl;
     COUT<<"aborting...."<<endl;
 #endif
-
+}
 
 
 

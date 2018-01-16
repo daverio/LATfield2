@@ -299,6 +299,9 @@ void scalarProjectionCIC_comm(Field<Real> * rho)
 
 }
 
+
+
+
 //////vector projection
 
 

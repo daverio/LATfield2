@@ -124,7 +124,7 @@ void Parallel2d_layer::initialize(int lat_world_size, int lat_world_rank,
 			lat_world_rank_ = comm_rank;
 			isPartLayer_ = true;
 			root_=0;
-			if(lat_world_rank_=root_)isRoot_=true;
+			if(lat_world_rank_==root_)isRoot_=true;
 			else isRoot_=false;
 
 			MPI_Group_rank(dim0_group_, &comm_rank0);

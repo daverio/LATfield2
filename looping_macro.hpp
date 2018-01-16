@@ -12,7 +12,7 @@ Site xxxx(latttt); \
 for(xxxx.haloFirst();xxxx.haloTest();xxxx.haloNext()) \
 { \
 bool inBoundary = false; \
-for(int i=0; i<latttt.dim(); i++)if(xxxx.coord(i)>=latttt.size(i) || xxxx.coord(i)<0)inBoundary=true; \
+for(int iii=0; iii<latttt.dim(); iii++)if(xxxx.coord(iii)>=latttt.size(iii) || xxxx.coord(iii)<0)inBoundary=true; \
 if(inBoundary==true) \
 {
 

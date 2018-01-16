@@ -185,6 +185,9 @@ public:
    */
 		bool setCoord(int x, int y, int z);
 
+		bool setCoordHalo(int* r);
+		bool setCoordHalo(int x, int y, int z);
+
   bool setCoordLocal(int *r);
 
   /*!

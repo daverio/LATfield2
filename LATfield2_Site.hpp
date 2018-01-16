@@ -165,7 +165,7 @@ bool Site::setCoord(int* r)
 		int jump=0;
 		for(int i=0; i<lattice_->dim(); i++)
 		{
-			jump+=(r[i]-coord(i))*lattice_->jump(i);
+			jump+=(r[i]-this->coord(i))*lattice_->jump(i);
 		}
 
 		this->indexAdvance(jump);
@@ -181,6 +181,42 @@ bool Site::setCoord(int x, int y=0, int z=0)
 	r[2]=z;
 	return this->setCoord(r);
 }
+
+bool Site::setCoordHalo(int* r)
+{
+	this->first();
+	//Check site is local
+	if(r[lattice_->dim()-1]<this->coord(lattice_->dim()-1)-lattice_->halo()
+			|| r[lattice_->dim()-1]>=this->coord(lattice_->dim()-1)+lattice_->sizeLocal(lattice_->dim()-1)+lattice_->halo()
+	   	|| r[lattice_->dim()-2]<this->coord(lattice_->dim()-2)-lattice_->halo()
+			|| r[lattice_->dim()-2]>=this->coord(lattice_->dim()-2)+lattice_->sizeLocal(lattice_->dim()-2)+lattice_->halo() )
+	{
+		return false;
+		//COUT<<"LATfield::Site::setCoord(int*) - Site desired non-local!"<<endl;
+	}
+	else
+	{
+
+		int jump=0;
+		for(int i=0; i<lattice_->dim(); i++)
+		{
+			jump+=(r[i]-this->coord(i))*lattice_->jump(i);
+		}
+
+		this->indexAdvance(jump);
+		return true;
+	}
+}
+bool Site::setCoordHalo(int x, int y=0, int z=0)
+{
+	int r[3];
+	r[0]=x;
+	r[1]=y;
+	r[2]=z;
+	return this->setCoordHalo(r);
+}
+
+
 bool Site::setCoordLocal(int *r)
 {
     this->first();

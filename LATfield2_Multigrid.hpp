@@ -51,8 +51,8 @@ void MultiGrid::initialize(Lattice * lat_top, int levelNumber_max, int minGridpe
 	if(flag_ok==true)nl_=levelNumber_max;
 
 	pLayer_ = new int[nl_];
-	plr0_ = new int[nl_];
-	plr1_ = new int[nl_];
+	plr0_ = new bool[nl_];
+	plr1_ = new bool[nl_];
 	pLayer_[0] = 0;
 
 	npl_=1;
@@ -164,8 +164,14 @@ void MultiGrid::restrict(MultiField<FieldType> *& field, int level)
 template<class FieldType>
 void MultiGrid::restrict3d_spl(MultiField<FieldType> *& field, int level)
 {
+	MPI_Barrier(MPI_COMM_WORLD);
+	/*COUT<<"call MultiGrid::restrict3d_spl, level :"
+			<< level<< " , layer: "<< pLayer_[level]
+			<< ", level up:"<< level+1<< " , layer: "<< pLayer_[level+1] << endl;*/
+
 	if(parallel.layer(pLayer_[level]).isPartLayer())
 	{
+
 		int lup = level+1;
 
 		Site xc(lattice_[lup]);
@@ -175,9 +181,9 @@ void MultiGrid::restrict3d_spl(MultiField<FieldType> *& field, int level)
 
 		for(xc.first();xc.test();xc.next())
 		{
-			if(xf.setcoord(xc.coord(0)*2,xc.coord(1)*2,xc.coord(2)*2))
+			if( xf.setCoord(xc.coord(0)*2,xc.coord(1)*2,xc.coord(2)*2) )
 			{
-				for(int c = 0; c< components;c++)field[lup](xc,c) = field[level](xf,c)
+				for(int c = 0; c< components;c++)field[lup](xc,c) = field[level](xf,c);
 			}
 			else
 			{
@@ -186,24 +192,24 @@ void MultiGrid::restrict3d_spl(MultiField<FieldType> *& field, int level)
 
 		}
 	}
+	//COUT<<"call MultiGrid::restrict3d_spl end"<<endl;
 }
 
 template<class FieldType>
 void MultiGrid::restrict3d_dpl(MultiField<FieldType> *& field, int level)
 {
+	//COUT<<"call MultiGrid::restrict3d_dpl"<<endl;
 	if(parallel.layer(pLayer_[level]).isPartLayer())
 	{
+
 		int lup = level+1;
 
 		int iref,jref,kref;
 
-		int buffer_dimension[3]
+		int buffer_dimension[3];
 		buffer_dimension[0] = lattice_[level].sizeLocal(0)/2;
 		buffer_dimension[1] = lattice_[level].sizeLocal(1)/2;
 		buffer_dimension[2] = lattice_[level].sizeLocal(2)/2;
-
-		if(plr1_[pLayer_[lup]]==true)buffer_dimension[1]/2;
-		if(plr0_[pLayer_[lup]]==true)buffer_dimension[2]/2;
 
 		int components = field[level].components();
 
@@ -214,24 +220,38 @@ void MultiGrid::restrict3d_dpl(MultiField<FieldType> *& field, int level)
 		int send_rank;
 
 		FieldType * buffer;
-		long bufferSize = buffer_dimension[0]*buffer_dimension[1]*buffer_dimension[3];
+		long bufferSize = buffer_dimension[0]*buffer_dimension[1]*buffer_dimension[2]*components;
 
-		buffer = (FieldType *)malloc(sizeof(FieldType));
+		buffer = (FieldType *)malloc(bufferSize * sizeof(FieldType));
 
+		/*
+		cout<< "player:" << pLayer_[level]
+				<< " ,rank : " << parallel.layer(pLayer_[level]).rank()
+				<< " ,grid_rank[0] : " << parallel.layer(pLayer_[level]).grid_rank()[0]
+				<< " ,grid_rank[1] : " << parallel.layer(pLayer_[level]).grid_rank()[1]
+				<< " ,buffer size: "<<bufferSize << " ,comp: "<<components
+				<< " ,buffer_dimension[0] : "<< buffer_dimension[0]
+				<< " ,buffer_dimension[1] : "<< buffer_dimension[1]
+				<< " ,buffer_dimension[2] : "<< buffer_dimension[2]
+				<< " ,sizeLocal(0) : "<< lattice_[level].sizeLocal(0)
+				<< " ,sizeLocal(1) : "<< lattice_[level].sizeLocal(1)
+				<< " ,sizeLocal(2) : "<< lattice_[level].sizeLocal(2)
+				<<endl;
+				*/
 
 		if(parallel.layer(pLayer_[lup]).isPartLayer())
 		{
-			for(int i = 0;i<buffer_dimension[0],i++)
+			for(int i = 0;i<buffer_dimension[0];i++)
 			{
 				for(int j = lattice_[lup].coordSkip()[1];j<lattice_[lup].coordSkip()[1] + buffer_dimension[1];j++)
 				{
-					for(int k = lattice_[lup].coordSkip()[0]; k<lattice_[lup].coordSkip()[0] + buffer_dimension[2],k++)
+					for(int k = lattice_[lup].coordSkip()[0]; k<lattice_[lup].coordSkip()[0] + buffer_dimension[2];k++)
 					{
 						if(xc.setCoord(i,j,k))
 						{
 							if(xf.setCoord(2*i,2*j,2*k))
 							{
-								for(int c = 0; c< components;c++)field[lup](xc,c) = field[level](xf,c)
+								for(int c = 0; c< components;c++)field[lup](xc,c) = field[level](xf,c);
 							}
 							else
 							{
@@ -245,21 +265,43 @@ void MultiGrid::restrict3d_dpl(MultiField<FieldType> *& field, int level)
 					}
 				}
 			}
+			/*
+			cout<< "player up: " << pLayer_[lup]
+					<< " ,rank up : " << parallel.layer(pLayer_[lup]).rank()
+					<< " ,grid_rank[0] up : " << parallel.layer(pLayer_[lup]).grid_rank()[0]
+					<< " ,grid_rank[1] up : " << parallel.layer(pLayer_[lup]).grid_rank()[1]
+					<< " ,player:" << pLayer_[level]
+					<< " ,rank : " << parallel.layer(pLayer_[level]).rank()
+					<< " ,grid_rank[0] : " << parallel.layer(pLayer_[level]).grid_rank()[0]
+					<< " ,grid_rank[1] : " << parallel.layer(pLayer_[level]).grid_rank()[1]
+					<<endl;*/
 
-
+			//cout<< plr0_[pLayer_[lup]] << "  "<<plr1_[pLayer_[lup]]<<endl;
 
 			if(plr0_[pLayer_[lup]] == true)
 			{
-				grid_rec_ranks[0] = parallel.level(pLayer_[lup]).grid_rank()[0]*2 + 1;
-				if(plr1_[pLayer_[lup]] == true) grid_rec_ranks[1] = parallel.level(pLayer_[lup]).grid_rank()[1]*2 + 1;
-				else grid_rec_ranks[1] = parallel.level(pLayer_[lup]).grid_rank()[1];
+				grid_rec_ranks[0] = parallel.layer(pLayer_[lup]).grid_rank()[0]*2 + 1;
+				grid_rec_ranks[1] = parallel.layer(pLayer_[level]).grid_rank()[1];
 				send_rank = grid_rec_ranks[0] +  parallel.layer(pLayer_[level]).grid_size()[0] * grid_rec_ranks[1];
+				/*cout<< "  level up: " << pLayer_[lup]
+						<< " ,rank up : " << parallel.layer(pLayer_[lup]).rank()
+						<< " ,grid_rank[0] up : " << parallel.layer(pLayer_[lup]).grid_rank()[0]
+						<< " ,grid_rank[1] up : " << parallel.layer(pLayer_[lup]).grid_rank()[1]
+						<< " ,level:" << pLayer_[level]
+						<< " ,rank : " << parallel.layer(pLayer_[level]).rank()
+						<< " ,grid_rank[0] : " << parallel.layer(pLayer_[level]).grid_rank()[0]
+						<< " ,grid_rank[1] : " << parallel.layer(pLayer_[level]).grid_rank()[1]
+						<< " ,rank from : " << send_rank
+						<< " ,grid_rec_ranks[0] : " << grid_rec_ranks[0]
+						<< " ,grid_rec_ranks[1] : " << grid_rec_ranks[1]
+						<<endl;*/
 				parallel.layer(pLayer_[level]).receive(buffer,bufferSize,send_rank);
-				for(int i = 0;i<buffer_dimension[0],i++)
+
+				for(int i = 0;i<buffer_dimension[0];i++)
 				{
 					for(int j = 0;j<buffer_dimension[1];j++)
 					{
-						for(int k = 0;k<buffer_dimension[2],k++)
+						for(int k = 0;k<buffer_dimension[2];k++)
 						{
 							iref = i;
 							jref = j + lattice_[lup].coordSkip()[1];
@@ -268,7 +310,7 @@ void MultiGrid::restrict3d_dpl(MultiField<FieldType> *& field, int level)
 							if(xc.setCoord(iref,jref,kref))
 							{
 								for(int c = 0; c< components;c++)
-									field[level](xc,c) = buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))];
+									field[lup](xc,c) = buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))];
 							}
 							else
 							{
@@ -277,19 +319,32 @@ void MultiGrid::restrict3d_dpl(MultiField<FieldType> *& field, int level)
 						}
 					}
 				}
+
 			}
 			if(plr1_[pLayer_[lup]] == true)
 			{
-				grid_rec_ranks[1] = parallel.level(pLayer_[lup]).grid_rank()[1]*2 + 1;
-				if(plr0_[pLayer_[lup]] == true) grid_rec_ranks[0] = parallel.level(pLayer_[lup]).grid_rank()[0]*2 + 1;
-				else grid_rec_ranks[0] = parallel.level(pLayer_[lup]).grid_rank()[0];
+				grid_rec_ranks[1] = parallel.layer(pLayer_[lup]).grid_rank()[1]*2 + 1;
+				grid_rec_ranks[0] = parallel.layer(pLayer_[level]).grid_rank()[0];
 				send_rank = grid_rec_ranks[0] +  parallel.layer(pLayer_[level]).grid_size()[0] * grid_rec_ranks[1];
+				/*cout<< "level up: " << pLayer_[lup]
+						<< " ,rank up : " << parallel.layer(pLayer_[lup]).rank()
+						<< " ,grid_rank[0] up : " << parallel.layer(pLayer_[lup]).grid_rank()[0]
+						<< " ,grid_rank[1] up : " << parallel.layer(pLayer_[lup]).grid_rank()[1]
+						<< " ,level:" << pLayer_[level]
+						<< " ,rank : " << parallel.layer(pLayer_[level]).rank()
+						<< " ,grid_rank[0] : " << parallel.layer(pLayer_[level]).grid_rank()[0]
+						<< " ,grid_rank[1] : " << parallel.layer(pLayer_[level]).grid_rank()[1]
+						<< " ,rank from : " << send_rank
+						<< " ,grid_rec_ranks[0] : " << grid_rec_ranks[0]
+						<< " ,grid_rec_ranks[1] : " << grid_rec_ranks[1]
+						<<endl;*/
 				parallel.layer(pLayer_[level]).receive(buffer,bufferSize,send_rank);
-				for(int i = 0;i<buffer_dimension[0],i++)
+
+				for(int i = 0;i<buffer_dimension[0];i++)
 				{
 					for(int j = 0;j<buffer_dimension[1];j++)
 					{
-						for(int k = 0;k<buffer_dimension[2],k++)
+						for(int k = 0;k<buffer_dimension[2];k++)
 						{
 							iref = i;
 							jref = j + lattice_[lup].coordSkip()[1] + buffer_dimension[1];
@@ -298,7 +353,10 @@ void MultiGrid::restrict3d_dpl(MultiField<FieldType> *& field, int level)
 							if(xc.setCoord(iref,jref,kref))
 							{
 								for(int c = 0; c< components;c++)
-									field[level](xc,c) = buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))];
+								{
+									field[lup](xc,c) = buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))];
+
+								}
 							}
 							else
 							{
@@ -307,18 +365,32 @@ void MultiGrid::restrict3d_dpl(MultiField<FieldType> *& field, int level)
 						}
 					}
 				}
+
 			}
 			if(plr0_[pLayer_[lup]] == true && plr1_[pLayer_[lup]] == true)
 			{
-				grid_rec_ranks[0] = parallel.level(pLayer_[lup]).grid_rank()[0]*2 + 1;
-				grid_rec_ranks[1] = parallel.level(pLayer_[lup]).grid_rank()[1]*2 + 1;
+				grid_rec_ranks[0] = parallel.layer(pLayer_[lup]).grid_rank()[0]*2 + 1;
+				grid_rec_ranks[1] = parallel.layer(pLayer_[lup]).grid_rank()[1]*2 + 1;
 				send_rank = grid_rec_ranks[0] +  parallel.layer(pLayer_[level]).grid_size()[0] * grid_rec_ranks[1];
+				/*cout<< "level up: " << pLayer_[lup]
+						<< " ,rank up : " << parallel.layer(pLayer_[lup]).rank()
+						<< " ,grid_rank[0] up : " << parallel.layer(pLayer_[lup]).grid_rank()[0]
+						<< " ,grid_rank[1] up : " << parallel.layer(pLayer_[lup]).grid_rank()[1]
+						<< " ,level:" << pLayer_[level]
+						<< " ,rank : " << parallel.layer(pLayer_[level]).rank()
+						<< " ,grid_rank[0] : " << parallel.layer(pLayer_[level]).grid_rank()[0]
+						<< " ,grid_rank[1] : " << parallel.layer(pLayer_[level]).grid_rank()[1]
+						<< " ,rank from : " << send_rank
+						<< " ,grid_rec_ranks[0] : " << grid_rec_ranks[0]
+						<< " ,grid_rec_ranks[1] : " << grid_rec_ranks[1]
+						<<endl;*/
 				parallel.layer(pLayer_[level]).receive(buffer,bufferSize,send_rank);
-				for(int i = 0;i<buffer_dimension[0],i++)
+
+				for(int i = 0;i<buffer_dimension[0];i++)
 				{
 					for(int j = 0;j<buffer_dimension[1];j++)
 					{
-						for(int k = 0;k<buffer_dimension[2],k++)
+						for(int k = 0;k<buffer_dimension[2];k++)
 						{
 							iref = i;
 							jref = j + lattice_[lup].coordSkip()[1] + buffer_dimension[1];
@@ -327,7 +399,7 @@ void MultiGrid::restrict3d_dpl(MultiField<FieldType> *& field, int level)
 							if(xc.setCoord(iref,jref,kref))
 							{
 								for(int c = 0; c< components;c++)
-									field[level](xc,c) = buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))];
+									field[lup](xc,c) = buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))];
 							}
 							else
 							{
@@ -336,59 +408,74 @@ void MultiGrid::restrict3d_dpl(MultiField<FieldType> *& field, int level)
 						}
 					}
 				}
+
 			}
+
 		}
 		else
 		{
-			for(int i = 0;i<buffer_dimension[0],i++)
+
+			for(int i = 0;i<buffer_dimension[0];i++)
 			{
 				for(int j = 0;j<buffer_dimension[1];j++)
 				{
-					for(int k = 0;k<buffer_dimension[2],k++)
+					for(int k = 0;k<buffer_dimension[2];k++)
 					{
 						iref = i*2;
 						jref = lattice_[level].coordSkip()[1]+j*2;
 						kref = lattice_[level].coordSkip()[0]+k*2;
 
-						if(xc.setCoord(iref,jref,kref))
+						if(xf.setCoord(iref,jref,kref))
 						{
-							for(int c = 0; c< components;c++)
-								field[level](xc,c) = buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))];
+							for(int c = 0; c<components ; c++)
+								buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))] = field[level](xf,c);
 						}
 						else
 						{
 							cout<< "MultiGrid::restrict3d_dpl : restriction error 4"<<endl;
 						}
+
 					}
 				}
 			}
 
-			if(parallel.layer(pLayer_[level]).grid_rank() )
 
-			if(plr0_[pLayer_[lup]] == true) grid_rec_ranks[0] = ( parallel.layer(pLayer_[level]).grid_rank()[0]  - (parallel.layer(pLayer_[level]).grid_rank()[0]%2) ) / 2.0);
+			if(plr0_[pLayer_[lup]] == true) grid_rec_ranks[0] = parallel.layer(pLayer_[level]).grid_rank()[0]  - parallel.layer(pLayer_[level]).grid_rank()[0]%2;
 			else grid_rec_ranks[0] = parallel.layer(pLayer_[level]).grid_rank()[0];
 
-			if(plr1_[pLayer_[lup]] == true) grid_rec_ranks[1] = ( parallel.layer(pLayer_[level]).grid_rank()[1]  - (parallel.layer(pLayer_[level]).grid_rank()[1]%2) ) / 2.0);
+			if(plr1_[pLayer_[lup]] == true) grid_rec_ranks[1] = parallel.layer(pLayer_[level]).grid_rank()[1]  - parallel.layer(pLayer_[level]).grid_rank()[1]%2;
 			else grid_rec_ranks[1] = parallel.layer(pLayer_[level]).grid_rank()[1];
 
 			send_rank = grid_rec_ranks[0] +  parallel.layer(pLayer_[level]).grid_size()[0] * grid_rec_ranks[1];
 
+			/*cout<< "--SENDER: "
+					<< " ,level:" << pLayer_[level]
+					<< " ,rank : " << parallel.layer(pLayer_[level]).rank()
+					<< " ,grid_rank[0] : " << parallel.layer(pLayer_[level]).grid_rank()[0]
+					<< " ,grid_rank[1] : " << parallel.layer(pLayer_[level]).grid_rank()[1]
+					<< " ,rank to : " << send_rank
+					<< " ,grid_rec_ranks[0] : " << grid_rec_ranks[0]
+					<< " ,grid_rec_ranks[1] : " << grid_rec_ranks[1]
+					<<endl;*/
+
 			parallel.layer(pLayer_[level]).send(buffer,bufferSize,send_rank);
 
 		}
-		free(buffer);
+		//free(buffer);
 	}
+
+
 }
 
 template<class FieldType>
-void MultiGrid::prolonge3d(MultiField<FieldType> *& field, int level)
+void MultiGrid::prolong(MultiField<FieldType> *& field, int level)
 {
-	if(pLayer_[level]==pLayer_[level-1])restrict3d_spl(field,level);
-	else restrict3d_dpl(field,level);
+	if(pLayer_[level]==pLayer_[level-1])prolong3d_spl(field,level);
+	else prolong3d_dpl(field,level);
 }
 
 template<class FieldType>
-void MultiGrid::prolonge3d_spl(MultiField<FieldType> *& field, int level)
+void MultiGrid::prolong3d_spl(MultiField<FieldType> *& field, int level)
 {
 	if(parallel.layer(pLayer_[level]).isPartLayer())
 	{
@@ -397,43 +484,408 @@ void MultiGrid::prolonge3d_spl(MultiField<FieldType> *& field, int level)
 		Site xc(lattice_[level]);
 		Site xf(lattice_[ldown]);
 
-		field[level].updateHalo();
+		int components = field[level].components();
+
+		//field[level].updateHalo();
 
 		for(xc.first();xc.test();xc.next())
 		{
 			if(xf.setCoord(xc.coord(0)*2,xc.coord(1)*2,xc.coord(2)*2))
 			{
+
+				for(int c = 0; c< components;c++)
+					field[ldown](xf,c) = field[level](xc,c);
+
 				for(int i=0;i<3;i++)
 					for(int c = 0; c< components;c++)
 						field[ldown](xf+i,c) = (field[level](xc,c) + field[level](xc+i,c))/2.0;
 
-				for(int i=0;i<2;i++)
-					for(int j=i+1;j<3;j++)
-						for(int c = 0; c< components;c++)
-							field[ldown](xf+i+j,c) = (field[level](xc,c) + field[level](xc+i,c)
-																			+ field[level](xc+j,c) + field[level](xc+i+j,c))/4.0;
 
 				for(int c = 0; c< components;c++)
-					field[ldown](xf+0+1+2,c) = (field[level](xc-0,c) + field[level](xc-0+1,c)
-																		+ field[level](xc-0+2,c) + field[level](xc-0+1+2,c)
+						field[ldown](xf+0+1,c) = (field[level](xc,c) + field[level](xc+0,c)
+																			+ field[level](xc+1,c) + field[level](xc+0+1,c))/4.0;
+
+				for(int c = 0; c< components;c++)
+						field[ldown](xf+0+2,c) = (field[level](xc,c) + field[level](xc+0,c)
+																			+ field[level](xc+2,c) + field[level](xc+0+2,c))/4.0;
+
+				for(int c = 0; c< components;c++)
+							field[ldown](xf+1+2,c) = (field[level](xc,c) + field[level](xc+1,c)
+																				+ field[level](xc+2,c) + field[level](xc+1+2,c))/4.0;
+
+
+				for(int c = 0; c< components;c++)
+					field[ldown](xf+0+1+2,c) = (field[level](xc,c) + field[level](xc+1,c)
+																		+ field[level](xc+2,c) + field[level](xc+1+2,c)
 																		+ field[level](xc+0,c) + field[level](xc+0+1,c)
 																		+ field[level](xc+0+2,c) + field[level](xc+0+1+2,c))/8.0;
+
 			}
 			else
 			{
-				cout<< "MultiGrid::prolonge3d_spl : restriction error 1"<<endl;
+				cout<< "MultiGrid::prolong3d_spl : restriction error 1"<<endl;
 			}
 		}
-
-
-
 	}
 }
 
 template<class FieldType>
-void MultiGrid::prolonge3d_dpl(MultiField<FieldType> *& field, int level)
+void MultiGrid::prolong3d_dpl(MultiField<FieldType> *& field, int level)
 {
+	if(parallel.layer(pLayer_[level-1]).isPartLayer())
+	{
+		int ldown = level-1;
 
+		int iref,jref,kref;
+		int irefc,jrefc,krefc;
+
+		int buffer_dimension[3];
+		buffer_dimension[0] = lattice_[ldown].sizeLocal(0)/2+1;
+		buffer_dimension[1] = lattice_[ldown].sizeLocal(1)/2+1;
+		buffer_dimension[2] = lattice_[ldown].sizeLocal(2)/2+1;
+
+		int components = field[ldown].components();
+
+		Site xf(lattice_[ldown]);
+
+
+		int grid_rec_ranks[2];
+		int send_rank;
+
+		FieldType * buffer;
+		FieldType * buffer1;
+		FieldType * buffer2;
+
+		long bufferSize = buffer_dimension[0]*buffer_dimension[1]*buffer_dimension[2]*components;
+
+		buffer  = (FieldType *)malloc(bufferSize * sizeof(FieldType));
+		buffer1 = (FieldType *)malloc(bufferSize * sizeof(FieldType));
+		buffer2 = (FieldType *)malloc(bufferSize * sizeof(FieldType));
+
+		/*
+		cout<< "player:" << pLayer_[level]
+				<< " ,rank : " << parallel.layer(pLayer_[level]).rank()
+				<< " ,grid_rank[0] : " << parallel.layer(pLayer_[level]).grid_rank()[0]
+				<< " ,grid_rank[1] : " << parallel.layer(pLayer_[level]).grid_rank()[1]
+				<< " ,buffer size: "<<bufferSize << " ,comp: "<<components
+				<< " ,buffer_dimension[0] : "<< buffer_dimension[0]
+				<< " ,buffer_dimension[1] : "<< buffer_dimension[1]
+				<< " ,buffer_dimension[2] : "<< buffer_dimension[2]
+				<<endl;
+				*/
+
+		if(parallel.layer(pLayer_[level]).isPartLayer())
+		{
+			//field[level].updateHalo();
+
+			Site xc(lattice_[level]);
+			//Site xf(lattice_[ldown]);
+
+			for(int i=0;i<buffer_dimension[0]-1;i++)
+			{
+				for(int j=lattice_[level].coordSkip()[1];j<lattice_[level].coordSkip()[1]+buffer_dimension[1]-1;j++)
+				{
+					for(int k=lattice_[level].coordSkip()[0];k<lattice_[level].coordSkip()[0]+buffer_dimension[2]-1;k++)
+					{
+						if(xc.setCoord(i,j,k))
+						{
+							if(xf.setCoord(i*2,j*2,k*2))
+							{
+								for(int c = 0; c< components;c++)
+									field[ldown](xf,c) = field[level](xc,c);
+
+								for(int i=0;i<3;i++)
+									for(int c = 0; c< components;c++)
+										field[ldown](xf+i,c) = (field[level](xc,c) + field[level](xc+i,c))/2.0;
+
+
+								for(int c = 0; c< components;c++)
+										field[ldown](xf+0+1,c) = (field[level](xc,c) + field[level](xc+0,c)
+																							+ field[level](xc+1,c) + field[level](xc+0+1,c))/4.0;
+
+								for(int c = 0; c< components;c++)
+										field[ldown](xf+0+2,c) = (field[level](xc,c) + field[level](xc+0,c)
+																							+ field[level](xc+2,c) + field[level](xc+0+2,c))/4.0;
+
+								for(int c = 0; c< components;c++)
+											field[ldown](xf+1+2,c) = (field[level](xc,c) + field[level](xc+1,c)
+																								+ field[level](xc+2,c) + field[level](xc+1+2,c))/4.0;
+
+								for(int c = 0; c< components;c++)
+									field[ldown](xf+0+1+2,c) = (field[level](xc,c) + field[level](xc+1,c)
+																						+ field[level](xc+2,c) + field[level](xc+1+2,c)
+																						+ field[level](xc+0,c) + field[level](xc+0+1,c)
+																						+ field[level](xc+0+2,c) + field[level](xc+0+1+2,c))/8.0;
+							}
+							else
+							{
+								cout<< "MultiGrid::prolong3d_dpl : prologation error 2"<<endl;
+							}
+						}
+						else
+						{
+							cout<< "MultiGrid::prolong3d_dpl : prologation error 1"<<endl;
+						}
+					}
+				}
+			}
+			if(plr0_[pLayer_[level]] == true)
+			{
+				grid_rec_ranks[0] = parallel.layer(pLayer_[level]).grid_rank()[0]*2 + 1;
+				grid_rec_ranks[1] = parallel.layer(pLayer_[ldown]).grid_rank()[1];
+				send_rank = grid_rec_ranks[0] +  parallel.layer(pLayer_[ldown]).grid_size()[0] * grid_rec_ranks[1];
+				/*cout<< "level up: " << pLayer_[level]
+						<< " ,rank up : " << parallel.layer(pLayer_[level]).rank()
+						<< " ,grid_rank[0] up : " << parallel.layer(pLayer_[level]).grid_rank()[0]
+						<< " ,grid_rank[1] up : " << parallel.layer(pLayer_[level]).grid_rank()[1]
+						<< " ,level:" << pLayer_[ldown]
+						<< " ,rank : " << parallel.layer(pLayer_[ldown]).rank()
+						<< " ,grid_rank[0] : " << parallel.layer(pLayer_[ldown]).grid_rank()[0]
+						<< " ,grid_rank[1] : " << parallel.layer(pLayer_[ldown]).grid_rank()[1]
+						<< " ,rank from : " << send_rank
+						<< " ,grid_rec_ranks[0] : " << grid_rec_ranks[0]
+						<< " ,grid_rec_ranks[1] : " << grid_rec_ranks[1]
+						<<endl;*/
+
+				for(int i=0;i<buffer_dimension[0];i++)
+				{
+					for(int j=0;j<buffer_dimension[1];j++)
+					{
+						for(int k=0;k<buffer_dimension[2];k++)
+						{
+							iref = i;
+							jref = j+lattice_[level].coordSkip()[1];
+							kref = k+lattice_[level].coordSkip()[0] + buffer_dimension[2] - 1;
+							if(xc.setCoordHalo(iref,jref,kref))
+							{
+								for(int c = 0; c< components;c++)
+									buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))]=field[level](xc,c);
+							}
+							else
+							{
+								cout<< "MultiGrid::prolong3d_dpl : prologation error 3"<<endl;
+							}
+						}
+					}
+				}
+				parallel.layer(pLayer_[ldown]).send(buffer,bufferSize,send_rank);
+			}
+
+			if(plr1_[pLayer_[level]] == true)
+			{
+				grid_rec_ranks[1] = parallel.layer(pLayer_[level]).grid_rank()[1]*2 + 1;
+				grid_rec_ranks[0] = parallel.layer(pLayer_[ldown]).grid_rank()[0];
+				send_rank = grid_rec_ranks[0] +  parallel.layer(pLayer_[ldown]).grid_size()[0] * grid_rec_ranks[1];
+				/*cout<< "level up: " << pLayer_[level]
+						<< " ,rank up : " << parallel.layer(pLayer_[level]).rank()
+						<< " ,grid_rank[0] up : " << parallel.layer(pLayer_[level]).grid_rank()[0]
+						<< " ,grid_rank[1] up : " << parallel.layer(pLayer_[level]).grid_rank()[1]
+						<< " ,level:" << pLayer_[ldown]
+						<< " ,rank : " << parallel.layer(pLayer_[ldown]).rank()
+						<< " ,grid_rank[0] : " << parallel.layer(pLayer_[ldown]).grid_rank()[0]
+						<< " ,grid_rank[1] : " << parallel.layer(pLayer_[ldown]).grid_rank()[1]
+						<< " ,rank from : " << send_rank
+						<< " ,grid_rec_ranks[0] : " << grid_rec_ranks[0]
+						<< " ,grid_rec_ranks[1] : " << grid_rec_ranks[1]
+						<<endl;*/
+				for(int i=0;i<buffer_dimension[0];i++)
+				{
+					for(int j=0;j<buffer_dimension[1];j++)
+					{
+						for(int k=0;k<buffer_dimension[2];k++)
+						{
+							iref = i;
+							jref = j+lattice_[level].coordSkip()[1] + buffer_dimension[1] - 1;
+							kref = k+lattice_[level].coordSkip()[0];
+							if(xc.setCoordHalo(iref,jref,kref))
+							{
+								for(int c = 0; c< components;c++)
+									buffer1[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))]=field[level](xc,c);
+							}
+							else
+							{
+								cout<< "MultiGrid::prolong3d_dpl : prologation error 4"<<endl;
+							}
+						}
+					}
+				}
+				parallel.layer(pLayer_[ldown]).send(buffer1,bufferSize,send_rank);
+			}
+
+			if(plr0_[pLayer_[level]] == true && plr1_[pLayer_[level]] == true)
+			{
+				grid_rec_ranks[0] = parallel.layer(pLayer_[level]).grid_rank()[0]*2 + 1;
+				grid_rec_ranks[1] = parallel.layer(pLayer_[level]).grid_rank()[1]*2 + 1;
+				send_rank = grid_rec_ranks[0] +  parallel.layer(pLayer_[ldown]).grid_size()[0] * grid_rec_ranks[1];
+				/*cout<< "level up: " << pLayer_[level]
+						<< " ,rank up : " << parallel.layer(pLayer_[level]).rank()
+						<< " ,grid_rank[0] up : " << parallel.layer(pLayer_[level]).grid_rank()[0]
+						<< " ,grid_rank[1] up : " << parallel.layer(pLayer_[level]).grid_rank()[1]
+						<< " ,level:" << pLayer_[ldown]
+						<< " ,rank : " << parallel.layer(pLayer_[ldown]).rank()
+						<< " ,grid_rank[0] : " << parallel.layer(pLayer_[ldown]).grid_rank()[0]
+						<< " ,grid_rank[1] : " << parallel.layer(pLayer_[ldown]).grid_rank()[1]
+						<< " ,rank from : " << send_rank
+						<< " ,grid_rec_ranks[0] : " << grid_rec_ranks[0]
+						<< " ,grid_rec_ranks[1] : " << grid_rec_ranks[1]
+						<<endl;*/
+				for(int i=0;i<buffer_dimension[0];i++)
+				{
+					for(int j=0;j<buffer_dimension[1];j++)
+					{
+						for(int k=0;k<buffer_dimension[2];k++)
+						{
+							iref = i;
+							jref = j+lattice_[level].coordSkip()[1] + buffer_dimension[1] - 1;
+							kref = k+lattice_[level].coordSkip()[0] + buffer_dimension[2] - 1;
+							if(xc.setCoordHalo(iref,jref,kref))
+							{
+								for(int c = 0; c< components;c++)
+									buffer2[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))]=field[level](xc,c);
+							}
+							else
+							{
+								cout<< "MultiGrid::prolong3d_dpl : prologation error 5"<<endl;
+							}
+						}
+					}
+				}
+				parallel.layer(pLayer_[ldown]).send(buffer2,bufferSize,send_rank);
+			}
+		}
+		else
+		{
+			if(plr0_[pLayer_[level]] == true) grid_rec_ranks[0] = parallel.layer(pLayer_[ldown]).grid_rank()[0]  - parallel.layer(pLayer_[ldown]).grid_rank()[0]%2;
+			else grid_rec_ranks[0] = parallel.layer(pLayer_[ldown]).grid_rank()[0];
+
+			if(plr1_[pLayer_[level]] == true) grid_rec_ranks[1] = parallel.layer(pLayer_[ldown]).grid_rank()[1]  - parallel.layer(pLayer_[ldown]).grid_rank()[1]%2;
+			else grid_rec_ranks[1] = parallel.layer(pLayer_[ldown]).grid_rank()[1];
+
+			send_rank = grid_rec_ranks[0] +  parallel.layer(pLayer_[ldown]).grid_size()[0] * grid_rec_ranks[1];
+
+			//cout<<"hihi"<<endl;
+/*
+			cout<< "== Receiver: "
+					<< " ,level:" << pLayer_[ldown]
+					<< " ,rank : " << parallel.layer(pLayer_[ldown]).rank()
+					<< " ,grid_rank[0] : " << parallel.layer(pLayer_[ldown]).grid_rank()[0]
+					<< " ,grid_rank[1] : " << parallel.layer(pLayer_[ldown]).grid_rank()[1]
+					<< " ,rank to : " << send_rank
+					<< " ,grid_rec_ranks[0] : " << grid_rec_ranks[0]
+					<< " ,grid_rec_ranks[1] : " << grid_rec_ranks[1]
+					<<endl;
+*/
+			parallel.layer(pLayer_[ldown]).receive(buffer,bufferSize,send_rank);
+
+			int map[7];
+			int index;
+			//c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))
+			map[0]=components; //+0
+			map[1]=components * buffer_dimension[0]; //+1
+			map[2]=components * buffer_dimension[0] * buffer_dimension[1]; //+2
+			map[3]=components*(1+buffer_dimension[0]); //+0+1
+			map[4]=components*(1+buffer_dimension[0]*buffer_dimension[1]); //+0+2
+			map[5]=components*(buffer_dimension[0]*(1+buffer_dimension[1])); //+1+2
+			map[6]=components*(1+buffer_dimension[0]*(1+buffer_dimension[1])); //+0+1+2
+			/*
+			for(int i=0;i<buffer_dimension[0];i++)
+			{
+				for(int j=0;j<buffer_dimension[1];j++)
+				{
+					for(int k=0;k<buffer_dimension[2];k++)
+					{
+						iref = i*2;
+						jref = lattice_[ldown].coordSkip()[1] + 2*j;
+						kref = lattice_[ldown].coordSkip()[0] + 2*k;
+						index = components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k));
+
+						if(iref*pow(2,ldown) != buffer[index] || jref*pow(2,ldown) != buffer[1+index] || kref*pow(2,ldown) != buffer[2+index] )
+						cout<<"buffer error 0: "
+								<< i<<" "<<j<<" "<<k<<" ; "
+								<< iref<<" "<<jref<<" "<<kref<< " ; "
+								<<buffer[index]<<" "<<buffer[1+index]<<" "<<buffer[2+index]
+								<<endl;
+					}
+				}
+			}*/
+			for(int i=0;i<buffer_dimension[0]-1;i++)
+			{
+				for(int j=0;j<buffer_dimension[1]-1;j++)
+				{
+					for(int k=0;k<buffer_dimension[2]-1;k++)
+					{
+						iref = i*2;
+						jref = lattice_[ldown].coordSkip()[1] + 2*j;
+						kref = lattice_[ldown].coordSkip()[0] + 2*k;
+						if(xf.setCoord(iref,jref,kref))
+						{
+							index = components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k));
+							/*
+							cout<<"buffer: "
+									<< i<<" "<<j<<" "<<k<<" ; "
+									<< iref<<" "<<jref<<" "<<kref<< " ; "
+									<<buffer[index]<<" "<<buffer[1+index]<<" "<<buffer[2+index]<<" , "
+									<<buffer[index+map[0]]<<" "<<buffer[1+index+map[1]]<<" "<<buffer[2+index+map[2]]
+									<<endl;
+							*/
+
+							for(int c = 0; c< components;c++)
+								field[ldown](xf,c) = buffer[c+index];
+								//field[ldown](xf,c) = field[level](xc,c);
+
+							for(int i=0;i<3;i++)
+								for(int c = 0; c< components;c++)
+								field[ldown](xf+i,c) = (buffer[c+index] + buffer[c+index+map[i]])/2.0;
+							//		field[ldown](xf+i,c) = (field[level](xc,c) + field[level](xc+i,c))/2.0;
+
+
+							for(int c = 0; c< components;c++)
+								field[ldown](xf+0+1,c) = (buffer[c+index] + buffer[c+index+map[0]]
+																				 	+ buffer[c+index+map[1]] + buffer[c+index+map[3]])/4.0;
+							//		field[ldown](xf+0+1,c) = (field[level](xc,c) + field[level](xc+0,c)
+							//															+ field[level](xc+1,c) + field[level](xc+0+1,c))/4.0;
+
+							for(int c = 0; c< components;c++)
+								field[ldown](xf+0+2,c) = (buffer[c+index] + buffer[c+index+map[0]]
+																				 	+ buffer[c+index+map[2]] + buffer[c+index+map[4]])/4.0;
+							//		field[ldown](xf+0+2,c) = (field[level](xc,c) + field[level](xc+0,c)
+							//															+ field[level](xc+2,c) + field[level](xc+0+2,c))/4.0;
+
+							for(int c = 0; c< components;c++)
+								field[ldown](xf+1+2,c) = (buffer[c+index] + buffer[c+index+map[1]]
+																				 	+ buffer[c+index+map[2]] + buffer[c+index+map[5]])/4.0;
+							//			field[ldown](xf+1+2,c) = (field[level](xc,c) + field[level](xc+1,c)
+							//																+ field[level](xc+2,c) + field[level](xc+1+2,c))/4.0;
+
+							for(int c = 0; c< components;c++)
+								field[ldown](xf+0+1+2,c) = (buffer[c+index] + buffer[c+index+map[0]]
+																						+ buffer[c+index+map[1]] + buffer[c+index+map[2]]
+																						+ buffer[c+index+map[3]] + buffer[c+index+map[4]]
+																				 		+ buffer[c+index+map[5]] + buffer[c+index+map[6]])/8.0;
+							//	field[ldown](xf+0+1+2,c) = (field[level](xc,c) + field[level](xc+1,c)
+							//														+ field[level](xc+2,c) + field[level](xc+1+2,c)
+							//														+ field[level](xc+0,c) + field[level](xc+0+1,c)
+							//														+ field[level](xc+0+2,c) + field[level](xc+0+1+2,c))/8.0;
+						}
+						else
+						{
+							cout<< "MultiGrid::prolong3d_dpl : prologation error 6 : "
+							<< i<<" "<<j<<" "<<k
+							<< iref<<" "<<jref<<" "<<kref<<endl;
+						}
+					}
+				}
+			}
+
+		}
+
+
+		free(buffer);
+		free(buffer1);
+		free(buffer2);
+
+
+	}
 }
 
 
