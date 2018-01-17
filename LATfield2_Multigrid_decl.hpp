@@ -17,7 +17,7 @@ public:
       void initialize(Lattice * lat_top, int levelNumber_max, int minGridperProc);
 
       template<class FieldType>
-      void intitialize_Field(Field<FieldType> * FieldBase, MultiField<FieldType> *& field);
+      void initialize_Field(Field<FieldType> * FieldBase, MultiField<FieldType> *& field);
 
 
       /*

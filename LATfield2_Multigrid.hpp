@@ -126,7 +126,7 @@ void MultiGrid::initialize(Lattice * lat_top, int levelNumber_max, int minGridpe
 }
 
 template<class FieldType>
-void MultiGrid::intitialize_Field(Field<FieldType> * fieldBase, MultiField<FieldType> *& field)
+void MultiGrid::initialize_Field(Field<FieldType> * fieldBase, MultiField<FieldType> *& field)
 {
 
 	field = new MultiField<FieldType>[nl_];
