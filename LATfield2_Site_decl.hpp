@@ -84,6 +84,7 @@ public:
    */
 		void next();
 
+
   void nextInSlice(int offset,int thickness);
 
 		//HALO OPERATIONS==============

@@ -94,7 +94,7 @@ int main(int argc, char **argv)
 
         parallel.layer(mg_engine.player(i)).sum(error,3);
 
-        if(parallel.layer(mg_engine.player(i)).isRoot())cout<<"error restiction level["<<i<<"] :"<< error[0] <<" "<< error[1] <<" "<< error[2] <<endl;
+        if(parallel.layer(mg_engine.player(i)).isRoot())cout<<"error restriction level["<<i<<"] :"<< error[0] <<" "<< error[1] <<" "<< error[2] <<endl;
       }
     }
 

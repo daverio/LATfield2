@@ -4,8 +4,8 @@ INCLUDE      := -I../
 LIB          := -lfftw3 -lm -lhdf5 -lgsl -lgslcblas
 
 # target and source
-EXEC         := mulit
-SOURCE       := multigrid.cpp
+EXEC         := rd
+SOURCE       := redblack.cpp
 HEADERS      := $(wildcard *.hpp ../*.hpp ../*.h)
 
 # mandatory compiler settings (LATfield2)

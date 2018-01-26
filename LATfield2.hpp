@@ -96,6 +96,7 @@ namespace LATfield2
         #include "Imag.hpp"
         #include "LATfield2_Lattice.hpp"
         #include "LATfield2_Site.hpp"
+        #include "LATfield2_SiteRedBlack.hpp"
         #include "LATfield2_Field.hpp"
         #ifdef FFT3D
             #include "LATfield2_PlanFFT.hpp"
