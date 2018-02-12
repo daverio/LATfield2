@@ -155,90 +155,119 @@ void MultiGrid::initialize_Field(Field<FieldType> * fieldBase, MultiField<FieldT
 
 
 template<class FieldType>
-void MultiGrid::restrict(MultiField<FieldType> *& field, int level)
+void MultiGrid::restrict(MultiField<FieldType> *& src, MultiField<FieldType> *& dst, int level, int method)
 {
-	if(pLayer_[level]==pLayer_[level+1])restrict3d_spl(field,level);
-	else restrict3d_dpl(field,level);
+	if(method  == 0)
+	{
+		if(pLayer_[level]==pLayer_[level+1])restrict3d_spl(src,dst,level);
+		else restrict3d_dpl(src,dst,level);
+	}
+	else
+	{
+		if(pLayer_[level]==pLayer_[level+1])restrict3d_spl_fw(src,dst,level);
+		else restrict3d_dpl_fw(src,dst,level);
+	}
 }
 
 template<class FieldType>
-void MultiGrid::restrict3d_spl(MultiField<FieldType> *& field, int level)
+void MultiGrid::restrict3d_spl(MultiField<FieldType> *& src, MultiField<FieldType> *& dst, int level)
 {
 	MPI_Barrier(MPI_COMM_WORLD);
-	/*COUT<<"call MultiGrid::restrict3d_spl, level :"
-			<< level<< " , layer: "<< pLayer_[level]
-			<< ", level up:"<< level+1<< " , layer: "<< pLayer_[level+1] << endl;*/
-
 	if(parallel.layer(pLayer_[level]).isPartLayer())
 	{
-
 		int lup = level+1;
-
 		Site xc(lattice_[lup]);
 		Site xf(lattice_[level]);
-
-		int components = field[level].components();
-
+		int components = src[level].components();
 		for(xc.first();xc.test();xc.next())
 		{
 			if( xf.setCoord(xc.coord(0)*2,xc.coord(1)*2,xc.coord(2)*2) )
 			{
-				for(int c = 0; c< components;c++)field[lup](xc,c) = field[level](xf,c);
+				for(int c = 0; c< components;c++)dst[lup](xc,c) = src[level](xf,c);
 			}
 			else
 			{
 				cout<<"restriction issues...."<<endl;
 			}
-
 		}
 	}
-	//COUT<<"call MultiGrid::restrict3d_spl end"<<endl;
 }
 
 template<class FieldType>
-void MultiGrid::restrict3d_dpl(MultiField<FieldType> *& field, int level)
+void MultiGrid::restrict3d_spl_fw(MultiField<FieldType> *& src, MultiField<FieldType> *& dst, int level)
 {
-	//COUT<<"call MultiGrid::restrict3d_dpl"<<endl;
+	MPI_Barrier(MPI_COMM_WORLD);
+	if(parallel.layer(pLayer_[level]).isPartLayer())
+	{
+		int lup = level+1;
+		Site xc(lattice_[lup]);
+		Site xf(lattice_[level]);
+		int components = src[level].components();
+		for(xc.first();xc.test();xc.next())
+		{
+			if( xf.setCoord(xc.coord(0)*2,xc.coord(1)*2,xc.coord(2)*2) )
+			{
+				for(int c = 0; c< components;c++)dst[lup](xc,c) = src[level](xf,c) * 0.125;
+
+				for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf+0,c) * 0.0625;
+				for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf-0,c) * 0.0625;
+				for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf+1,c) * 0.0625;
+				for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf-1,c) * 0.0625;
+				for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf+2,c) * 0.0625;
+				for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf-2,c) * 0.0625;
+
+				for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf+0+1,c) * 0.03125;
+				for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf+0-1,c) * 0.03125;
+				for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf-0+1,c) * 0.03125;
+				for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf-0-1,c) * 0.03125;
+				for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf+1+2,c) * 0.03125;
+				for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf+1-2,c) * 0.03125;
+				for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf-1+2,c) * 0.03125;
+				for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf-1-2,c) * 0.03125;
+				for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf+0+2,c) * 0.03125;
+				for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf+0-2,c) * 0.03125;
+				for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf-0+2,c) * 0.03125;
+				for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf-0-2,c) * 0.03125;
+
+				for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf+0+1+2,c) * 0.015625;
+				for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf+0+1-2,c) * 0.015625;
+				for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf+0-1+2,c) * 0.015625;
+				for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf+0-1-2,c) * 0.015625;
+				for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf-0+1+2,c) * 0.015625;
+				for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf-0+1-2,c) * 0.015625;
+				for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf-0-1+2,c) * 0.015625;
+				for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf-0-1-2,c) * 0.015625;
+			}
+			else
+			{
+				cout<<"restriction issues...."<<endl;
+			}
+		}
+	}
+}
+
+
+template<class FieldType>
+void MultiGrid::restrict3d_dpl(MultiField<FieldType> *& src, MultiField<FieldType> *& dst, int level)
+{
+	MPI_Barrier(MPI_COMM_WORLD);
 	if(parallel.layer(pLayer_[level]).isPartLayer())
 	{
 
 		int lup = level+1;
-
 		int iref,jref,kref;
-
 		int buffer_dimension[3];
 		buffer_dimension[0] = lattice_[level].sizeLocal(0)/2;
 		buffer_dimension[1] = lattice_[level].sizeLocal(1)/2;
 		buffer_dimension[2] = lattice_[level].sizeLocal(2)/2;
-
-		int components = field[level].components();
-
+		int components = src[level].components();
 		Site xc(lattice_[lup]);
 		Site xf(lattice_[level]);
-
 		int grid_rec_ranks[2];
 		int send_rank;
-
 		FieldType * buffer;
 		long bufferSize = buffer_dimension[0]*buffer_dimension[1]*buffer_dimension[2]*components;
-
 		buffer = (FieldType *)malloc(bufferSize * sizeof(FieldType));
-
-		/*
-		cout<< "player:" << pLayer_[level]
-				<< " ,rank : " << parallel.layer(pLayer_[level]).rank()
-				<< " ,grid_rank[0] : " << parallel.layer(pLayer_[level]).grid_rank()[0]
-				<< " ,grid_rank[1] : " << parallel.layer(pLayer_[level]).grid_rank()[1]
-				<< " ,buffer size: "<<bufferSize << " ,comp: "<<components
-				<< " ,buffer_dimension[0] : "<< buffer_dimension[0]
-				<< " ,buffer_dimension[1] : "<< buffer_dimension[1]
-				<< " ,buffer_dimension[2] : "<< buffer_dimension[2]
-				<< " ,sizeLocal(0) : "<< lattice_[level].sizeLocal(0)
-				<< " ,sizeLocal(1) : "<< lattice_[level].sizeLocal(1)
-				<< " ,sizeLocal(2) : "<< lattice_[level].sizeLocal(2)
-				<<endl;
-				*/
-
 		if(parallel.layer(pLayer_[lup]).isPartLayer())
 		{
 			for(int i = 0;i<buffer_dimension[0];i++)
@@ -251,7 +280,7 @@ void MultiGrid::restrict3d_dpl(MultiField<FieldType> *& field, int level)
 						{
 							if(xf.setCoord(2*i,2*j,2*k))
 							{
-								for(int c = 0; c< components;c++)field[lup](xc,c) = field[level](xf,c);
+								for(int c = 0; c< components;c++)dst[lup](xc,c) = src[level](xf,c);
 							}
 							else
 							{
@@ -265,38 +294,12 @@ void MultiGrid::restrict3d_dpl(MultiField<FieldType> *& field, int level)
 					}
 				}
 			}
-			/*
-			cout<< "player up: " << pLayer_[lup]
-					<< " ,rank up : " << parallel.layer(pLayer_[lup]).rank()
-					<< " ,grid_rank[0] up : " << parallel.layer(pLayer_[lup]).grid_rank()[0]
-					<< " ,grid_rank[1] up : " << parallel.layer(pLayer_[lup]).grid_rank()[1]
-					<< " ,player:" << pLayer_[level]
-					<< " ,rank : " << parallel.layer(pLayer_[level]).rank()
-					<< " ,grid_rank[0] : " << parallel.layer(pLayer_[level]).grid_rank()[0]
-					<< " ,grid_rank[1] : " << parallel.layer(pLayer_[level]).grid_rank()[1]
-					<<endl;*/
-
-			//cout<< plr0_[pLayer_[lup]] << "  "<<plr1_[pLayer_[lup]]<<endl;
-
 			if(plr0_[pLayer_[lup]] == true)
 			{
 				grid_rec_ranks[0] = parallel.layer(pLayer_[lup]).grid_rank()[0]*2 + 1;
 				grid_rec_ranks[1] = parallel.layer(pLayer_[level]).grid_rank()[1];
 				send_rank = grid_rec_ranks[0] +  parallel.layer(pLayer_[level]).grid_size()[0] * grid_rec_ranks[1];
-				/*cout<< "  level up: " << pLayer_[lup]
-						<< " ,rank up : " << parallel.layer(pLayer_[lup]).rank()
-						<< " ,grid_rank[0] up : " << parallel.layer(pLayer_[lup]).grid_rank()[0]
-						<< " ,grid_rank[1] up : " << parallel.layer(pLayer_[lup]).grid_rank()[1]
-						<< " ,level:" << pLayer_[level]
-						<< " ,rank : " << parallel.layer(pLayer_[level]).rank()
-						<< " ,grid_rank[0] : " << parallel.layer(pLayer_[level]).grid_rank()[0]
-						<< " ,grid_rank[1] : " << parallel.layer(pLayer_[level]).grid_rank()[1]
-						<< " ,rank from : " << send_rank
-						<< " ,grid_rec_ranks[0] : " << grid_rec_ranks[0]
-						<< " ,grid_rec_ranks[1] : " << grid_rec_ranks[1]
-						<<endl;*/
 				parallel.layer(pLayer_[level]).receive(buffer,bufferSize,send_rank);
-
 				for(int i = 0;i<buffer_dimension[0];i++)
 				{
 					for(int j = 0;j<buffer_dimension[1];j++)
@@ -310,7 +313,7 @@ void MultiGrid::restrict3d_dpl(MultiField<FieldType> *& field, int level)
 							if(xc.setCoord(iref,jref,kref))
 							{
 								for(int c = 0; c< components;c++)
-									field[lup](xc,c) = buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))];
+									dst[lup](xc,c) = buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))];
 							}
 							else
 							{
@@ -319,27 +322,13 @@ void MultiGrid::restrict3d_dpl(MultiField<FieldType> *& field, int level)
 						}
 					}
 				}
-
 			}
 			if(plr1_[pLayer_[lup]] == true)
 			{
 				grid_rec_ranks[1] = parallel.layer(pLayer_[lup]).grid_rank()[1]*2 + 1;
 				grid_rec_ranks[0] = parallel.layer(pLayer_[level]).grid_rank()[0];
 				send_rank = grid_rec_ranks[0] +  parallel.layer(pLayer_[level]).grid_size()[0] * grid_rec_ranks[1];
-				/*cout<< "level up: " << pLayer_[lup]
-						<< " ,rank up : " << parallel.layer(pLayer_[lup]).rank()
-						<< " ,grid_rank[0] up : " << parallel.layer(pLayer_[lup]).grid_rank()[0]
-						<< " ,grid_rank[1] up : " << parallel.layer(pLayer_[lup]).grid_rank()[1]
-						<< " ,level:" << pLayer_[level]
-						<< " ,rank : " << parallel.layer(pLayer_[level]).rank()
-						<< " ,grid_rank[0] : " << parallel.layer(pLayer_[level]).grid_rank()[0]
-						<< " ,grid_rank[1] : " << parallel.layer(pLayer_[level]).grid_rank()[1]
-						<< " ,rank from : " << send_rank
-						<< " ,grid_rec_ranks[0] : " << grid_rec_ranks[0]
-						<< " ,grid_rec_ranks[1] : " << grid_rec_ranks[1]
-						<<endl;*/
 				parallel.layer(pLayer_[level]).receive(buffer,bufferSize,send_rank);
-
 				for(int i = 0;i<buffer_dimension[0];i++)
 				{
 					for(int j = 0;j<buffer_dimension[1];j++)
@@ -354,7 +343,7 @@ void MultiGrid::restrict3d_dpl(MultiField<FieldType> *& field, int level)
 							{
 								for(int c = 0; c< components;c++)
 								{
-									field[lup](xc,c) = buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))];
+									dst[lup](xc,c) = buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))];
 
 								}
 							}
@@ -365,27 +354,13 @@ void MultiGrid::restrict3d_dpl(MultiField<FieldType> *& field, int level)
 						}
 					}
 				}
-
 			}
 			if(plr0_[pLayer_[lup]] == true && plr1_[pLayer_[lup]] == true)
 			{
 				grid_rec_ranks[0] = parallel.layer(pLayer_[lup]).grid_rank()[0]*2 + 1;
 				grid_rec_ranks[1] = parallel.layer(pLayer_[lup]).grid_rank()[1]*2 + 1;
 				send_rank = grid_rec_ranks[0] +  parallel.layer(pLayer_[level]).grid_size()[0] * grid_rec_ranks[1];
-				/*cout<< "level up: " << pLayer_[lup]
-						<< " ,rank up : " << parallel.layer(pLayer_[lup]).rank()
-						<< " ,grid_rank[0] up : " << parallel.layer(pLayer_[lup]).grid_rank()[0]
-						<< " ,grid_rank[1] up : " << parallel.layer(pLayer_[lup]).grid_rank()[1]
-						<< " ,level:" << pLayer_[level]
-						<< " ,rank : " << parallel.layer(pLayer_[level]).rank()
-						<< " ,grid_rank[0] : " << parallel.layer(pLayer_[level]).grid_rank()[0]
-						<< " ,grid_rank[1] : " << parallel.layer(pLayer_[level]).grid_rank()[1]
-						<< " ,rank from : " << send_rank
-						<< " ,grid_rec_ranks[0] : " << grid_rec_ranks[0]
-						<< " ,grid_rec_ranks[1] : " << grid_rec_ranks[1]
-						<<endl;*/
 				parallel.layer(pLayer_[level]).receive(buffer,bufferSize,send_rank);
-
 				for(int i = 0;i<buffer_dimension[0];i++)
 				{
 					for(int j = 0;j<buffer_dimension[1];j++)
@@ -399,7 +374,7 @@ void MultiGrid::restrict3d_dpl(MultiField<FieldType> *& field, int level)
 							if(xc.setCoord(iref,jref,kref))
 							{
 								for(int c = 0; c< components;c++)
-									field[lup](xc,c) = buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))];
+									dst[lup](xc,c) = buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))];
 							}
 							else
 							{
@@ -408,13 +383,10 @@ void MultiGrid::restrict3d_dpl(MultiField<FieldType> *& field, int level)
 						}
 					}
 				}
-
 			}
-
 		}
 		else
 		{
-
 			for(int i = 0;i<buffer_dimension[0];i++)
 			{
 				for(int j = 0;j<buffer_dimension[1];j++)
@@ -428,55 +400,321 @@ void MultiGrid::restrict3d_dpl(MultiField<FieldType> *& field, int level)
 						if(xf.setCoord(iref,jref,kref))
 						{
 							for(int c = 0; c<components ; c++)
-								buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))] = field[level](xf,c);
+								buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))] = src[level](xf,c);
 						}
 						else
 						{
 							cout<< "MultiGrid::restrict3d_dpl : restriction error 4"<<endl;
 						}
-
 					}
 				}
 			}
-
-
 			if(plr0_[pLayer_[lup]] == true) grid_rec_ranks[0] = parallel.layer(pLayer_[level]).grid_rank()[0]  - parallel.layer(pLayer_[level]).grid_rank()[0]%2;
 			else grid_rec_ranks[0] = parallel.layer(pLayer_[level]).grid_rank()[0];
-
 			if(plr1_[pLayer_[lup]] == true) grid_rec_ranks[1] = parallel.layer(pLayer_[level]).grid_rank()[1]  - parallel.layer(pLayer_[level]).grid_rank()[1]%2;
 			else grid_rec_ranks[1] = parallel.layer(pLayer_[level]).grid_rank()[1];
-
 			send_rank = grid_rec_ranks[0] +  parallel.layer(pLayer_[level]).grid_size()[0] * grid_rec_ranks[1];
-
-			/*cout<< "--SENDER: "
-					<< " ,level:" << pLayer_[level]
-					<< " ,rank : " << parallel.layer(pLayer_[level]).rank()
-					<< " ,grid_rank[0] : " << parallel.layer(pLayer_[level]).grid_rank()[0]
-					<< " ,grid_rank[1] : " << parallel.layer(pLayer_[level]).grid_rank()[1]
-					<< " ,rank to : " << send_rank
-					<< " ,grid_rec_ranks[0] : " << grid_rec_ranks[0]
-					<< " ,grid_rec_ranks[1] : " << grid_rec_ranks[1]
-					<<endl;*/
-
 			parallel.layer(pLayer_[level]).send(buffer,bufferSize,send_rank);
-
 		}
-		//free(buffer);
+		free(buffer);
 	}
-
-
 }
 
 template<class FieldType>
-void MultiGrid::prolong(MultiField<FieldType> *& field, int level)
+void MultiGrid::restrict3d_dpl_fw(MultiField<FieldType> *& src, MultiField<FieldType> *& dst, int level)
 {
-	if(pLayer_[level]==pLayer_[level-1])prolong3d_spl(field,level);
-	else prolong3d_dpl(field,level);
+	MPI_Barrier(MPI_COMM_WORLD);
+	if(parallel.layer(pLayer_[level]).isPartLayer())
+	{
+
+		int lup = level+1;
+		int iref,jref,kref;
+		int buffer_dimension[3];
+		buffer_dimension[0] = lattice_[level].sizeLocal(0)/2;
+		buffer_dimension[1] = lattice_[level].sizeLocal(1)/2;
+		buffer_dimension[2] = lattice_[level].sizeLocal(2)/2;
+		int components = src[level].components();
+		Site xc(lattice_[lup]);
+		Site xf(lattice_[level]);
+		int grid_rec_ranks[2];
+		int send_rank;
+		FieldType * buffer;
+		long bufferSize = buffer_dimension[0]*buffer_dimension[1]*buffer_dimension[2]*components;
+		buffer = (FieldType *)malloc(bufferSize * sizeof(FieldType));
+		if(parallel.layer(pLayer_[lup]).isPartLayer())
+		{
+			for(int i = 0;i<buffer_dimension[0];i++)
+			{
+				for(int j = lattice_[lup].coordSkip()[1];j<lattice_[lup].coordSkip()[1] + buffer_dimension[1];j++)
+				{
+					for(int k = lattice_[lup].coordSkip()[0]; k<lattice_[lup].coordSkip()[0] + buffer_dimension[2];k++)
+					{
+						if(xc.setCoord(i,j,k))
+						{
+							if(xf.setCoord(2*i,2*j,2*k))
+							{
+								for(int c = 0; c< components;c++)dst[lup](xc,c) = src[level](xf,c) * 0.125;
+
+								for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf+0,c) * 0.0625;
+								for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf-0,c) * 0.0625;
+								for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf+1,c) * 0.0625;
+								for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf-1,c) * 0.0625;
+								for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf+2,c) * 0.0625;
+								for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf-2,c) * 0.0625;
+
+								for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf+0+1,c) * 0.03125;
+								for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf+0-1,c) * 0.03125;
+								for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf-0+1,c) * 0.03125;
+								for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf-0-1,c) * 0.03125;
+								for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf+1+2,c) * 0.03125;
+								for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf+1-2,c) * 0.03125;
+								for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf-1+2,c) * 0.03125;
+								for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf-1-2,c) * 0.03125;
+								for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf+0+2,c) * 0.03125;
+								for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf+0-2,c) * 0.03125;
+								for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf-0+2,c) * 0.03125;
+								for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf-0-2,c) * 0.03125;
+
+								for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf+0+1+2,c) * 0.015625;
+								for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf+0+1-2,c) * 0.015625;
+								for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf+0-1+2,c) * 0.015625;
+								for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf+0-1-2,c) * 0.015625;
+								for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf-0+1+2,c) * 0.015625;
+								for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf-0+1-2,c) * 0.015625;
+								for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf-0-1+2,c) * 0.015625;
+								for(int c = 0; c< components;c++)dst[lup](xc,c) += src[level](xf-0-1-2,c) * 0.015625;
+							}
+							else
+							{
+								cout<< "MultiGrid::restrict3d_dpl : restriction error 2"<<endl;
+							}
+						}
+						else
+						{
+							cout<< "MultiGrid::restrict3d_dpl : restriction error 1"<<endl;
+						}
+					}
+				}
+			}
+			if(plr0_[pLayer_[lup]] == true)
+			{
+				grid_rec_ranks[0] = parallel.layer(pLayer_[lup]).grid_rank()[0]*2 + 1;
+				grid_rec_ranks[1] = parallel.layer(pLayer_[level]).grid_rank()[1];
+				send_rank = grid_rec_ranks[0] +  parallel.layer(pLayer_[level]).grid_size()[0] * grid_rec_ranks[1];
+				parallel.layer(pLayer_[level]).receive(buffer,bufferSize,send_rank);
+				for(int i = 0;i<buffer_dimension[0];i++)
+				{
+					for(int j = 0;j<buffer_dimension[1];j++)
+					{
+						for(int k = 0;k<buffer_dimension[2];k++)
+						{
+							iref = i;
+							jref = j + lattice_[lup].coordSkip()[1];
+							kref = k + lattice_[lup].coordSkip()[0] + buffer_dimension[2];
+
+							if(xc.setCoord(iref,jref,kref))
+							{
+								for(int c = 0; c< components;c++)
+									dst[lup](xc,c) = buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))];
+							}
+							else
+							{
+								cout<< "MultiGrid::restrict3d_dpl : restriction error 4"<<endl;
+							}
+						}
+					}
+				}
+			}
+			if(plr1_[pLayer_[lup]] == true)
+			{
+				grid_rec_ranks[1] = parallel.layer(pLayer_[lup]).grid_rank()[1]*2 + 1;
+				grid_rec_ranks[0] = parallel.layer(pLayer_[level]).grid_rank()[0];
+				send_rank = grid_rec_ranks[0] +  parallel.layer(pLayer_[level]).grid_size()[0] * grid_rec_ranks[1];
+				parallel.layer(pLayer_[level]).receive(buffer,bufferSize,send_rank);
+				for(int i = 0;i<buffer_dimension[0];i++)
+				{
+					for(int j = 0;j<buffer_dimension[1];j++)
+					{
+						for(int k = 0;k<buffer_dimension[2];k++)
+						{
+							iref = i;
+							jref = j + lattice_[lup].coordSkip()[1] + buffer_dimension[1];
+							kref = k + lattice_[lup].coordSkip()[0];
+
+							if(xc.setCoord(iref,jref,kref))
+							{
+								for(int c = 0; c< components;c++)
+								{
+									dst[lup](xc,c) = buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))];
+
+								}
+							}
+							else
+							{
+								cout<< "MultiGrid::restrict3d_dpl : restriction error 4"<<endl;
+							}
+						}
+					}
+				}
+			}
+			if(plr0_[pLayer_[lup]] == true && plr1_[pLayer_[lup]] == true)
+			{
+				grid_rec_ranks[0] = parallel.layer(pLayer_[lup]).grid_rank()[0]*2 + 1;
+				grid_rec_ranks[1] = parallel.layer(pLayer_[lup]).grid_rank()[1]*2 + 1;
+				send_rank = grid_rec_ranks[0] +  parallel.layer(pLayer_[level]).grid_size()[0] * grid_rec_ranks[1];
+				parallel.layer(pLayer_[level]).receive(buffer,bufferSize,send_rank);
+				for(int i = 0;i<buffer_dimension[0];i++)
+				{
+					for(int j = 0;j<buffer_dimension[1];j++)
+					{
+						for(int k = 0;k<buffer_dimension[2];k++)
+						{
+							iref = i;
+							jref = j + lattice_[lup].coordSkip()[1] + buffer_dimension[1];
+							kref = k + lattice_[lup].coordSkip()[0] + buffer_dimension[2];
+
+							if(xc.setCoord(iref,jref,kref))
+							{
+								for(int c = 0; c< components;c++)
+									dst[lup](xc,c) = buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))];
+							}
+							else
+							{
+								cout<< "MultiGrid::restrict3d_dpl : restriction error 4"<<endl;
+							}
+						}
+					}
+				}
+			}
+		}
+		else
+		{
+			for(int i = 0;i<buffer_dimension[0];i++)
+			{
+				for(int j = 0;j<buffer_dimension[1];j++)
+				{
+					for(int k = 0;k<buffer_dimension[2];k++)
+					{
+						iref = i*2;
+						jref = lattice_[level].coordSkip()[1]+j*2;
+						kref = lattice_[level].coordSkip()[0]+k*2;
+
+						if(xf.setCoord(iref,jref,kref))
+						{
+								for(int c = 0; c< components;c++)
+								 	buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))]
+																	= src[level](xf,c) * 0.125;
+
+								for(int c = 0; c< components;c++)
+								 	buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))]
+																	+= src[level](xf+0,c) * 0.0625;
+								for(int c = 0; c< components;c++)
+								 	buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))]
+																	+= src[level](xf-0,c) * 0.0625;
+								for(int c = 0; c< components;c++)
+								 	buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))]
+																	+= src[level](xf+1,c) * 0.0625;
+								for(int c = 0; c< components;c++)
+								 	buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))]
+																	+= src[level](xf-1,c) * 0.0625;
+								for(int c = 0; c< components;c++)
+								 	buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))]
+																	+= src[level](xf+2,c) * 0.0625;
+								for(int c = 0; c< components;c++)
+								 	buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))]
+																	+= src[level](xf-2,c) * 0.0625;
+
+								for(int c = 0; c< components;c++)
+								 	buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))]
+																	+= src[level](xf+0+1,c) * 0.03125;
+								for(int c = 0; c< components;c++)
+								 	buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))]
+																	+= src[level](xf+0-1,c) * 0.03125;
+								for(int c = 0; c< components;c++)
+								 	buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))]
+																	+= src[level](xf-0+1,c) * 0.03125;
+								for(int c = 0; c< components;c++)
+								 	buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))]
+																	+= src[level](xf-0-1,c) * 0.03125;
+								for(int c = 0; c< components;c++)
+								 	buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))]
+																	+= src[level](xf+1+2,c) * 0.03125;
+								for(int c = 0; c< components;c++)
+								 	buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))]
+																	+= src[level](xf+1-2,c) * 0.03125;
+								for(int c = 0; c< components;c++)
+								 	buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))]
+																	+= src[level](xf-1+2,c) * 0.03125;
+								for(int c = 0; c< components;c++)
+								 	buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))]
+																	+= src[level](xf-1-2,c) * 0.03125;
+								for(int c = 0; c< components;c++)
+								 	buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))]
+																	+= src[level](xf+0+2,c) * 0.03125;
+								for(int c = 0; c< components;c++)
+								 	buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))]
+																	+= src[level](xf+0-2,c) * 0.03125;
+								for(int c = 0; c< components;c++)
+								 	buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))]
+																	+= src[level](xf-0+2,c) * 0.03125;
+								for(int c = 0; c< components;c++)
+								 	buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))]
+																	+= src[level](xf-0-2,c) * 0.03125;
+
+								for(int c = 0; c< components;c++)
+								 	buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))]
+																	+= src[level](xf+0+1+2,c) * 0.015625;
+								for(int c = 0; c< components;c++)
+								 	buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))]
+																	+= src[level](xf+0+1-2,c) * 0.015625;
+								for(int c = 0; c< components;c++)
+								 	buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))]
+																	+= src[level](xf+0-1+2,c) * 0.015625;
+								for(int c = 0; c< components;c++)
+								 	buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))]
+																	+= src[level](xf+0-1-2,c) * 0.015625;
+								for(int c = 0; c< components;c++)
+								 	buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))]
+																	+= src[level](xf-0+1+2,c) * 0.015625;
+								for(int c = 0; c< components;c++)
+								 	buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))]
+																	+= src[level](xf-0+1-2,c) * 0.015625;
+								for(int c = 0; c< components;c++)
+								 	buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))]
+																	+= src[level](xf-0-1+2,c) * 0.015625;
+								for(int c = 0; c< components;c++)
+								 	buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))]
+																	+= src[level](xf-0-1-2,c) * 0.015625;
+						}
+						else
+						{
+							cout<< "MultiGrid::restrict3d_dpl : restriction error 4"<<endl;
+						}
+					}
+				}
+			}
+			if(plr0_[pLayer_[lup]] == true) grid_rec_ranks[0] = parallel.layer(pLayer_[level]).grid_rank()[0]  - parallel.layer(pLayer_[level]).grid_rank()[0]%2;
+			else grid_rec_ranks[0] = parallel.layer(pLayer_[level]).grid_rank()[0];
+			if(plr1_[pLayer_[lup]] == true) grid_rec_ranks[1] = parallel.layer(pLayer_[level]).grid_rank()[1]  - parallel.layer(pLayer_[level]).grid_rank()[1]%2;
+			else grid_rec_ranks[1] = parallel.layer(pLayer_[level]).grid_rank()[1];
+			send_rank = grid_rec_ranks[0] +  parallel.layer(pLayer_[level]).grid_size()[0] * grid_rec_ranks[1];
+			parallel.layer(pLayer_[level]).send(buffer,bufferSize,send_rank);
+		}
+		free(buffer);
+	}
 }
 
 template<class FieldType>
-void MultiGrid::prolong3d_spl(MultiField<FieldType> *& field, int level)
+void MultiGrid::prolong(MultiField<FieldType> *& src, MultiField<FieldType> *& dst, int level)
 {
+	if(pLayer_[level]==pLayer_[level-1])prolong3d_spl(src,dst,level);
+	else prolong3d_dpl(src,dst,level);
+}
+
+template<class FieldType>
+void MultiGrid::prolong3d_spl(MultiField<FieldType> *& src, MultiField<FieldType> *& dst, int level)
+{
+	MPI_Barrier(MPI_COMM_WORLD);
 	if(parallel.layer(pLayer_[level]).isPartLayer())
 	{
 		int ldown = level-1;
@@ -484,7 +722,7 @@ void MultiGrid::prolong3d_spl(MultiField<FieldType> *& field, int level)
 		Site xc(lattice_[level]);
 		Site xf(lattice_[ldown]);
 
-		int components = field[level].components();
+		int components = src[level].components();
 
 		//field[level].updateHalo();
 
@@ -494,31 +732,31 @@ void MultiGrid::prolong3d_spl(MultiField<FieldType> *& field, int level)
 			{
 
 				for(int c = 0; c< components;c++)
-					field[ldown](xf,c) = field[level](xc,c);
+					dst[ldown](xf,c) = src[level](xc,c);
 
 				for(int i=0;i<3;i++)
 					for(int c = 0; c< components;c++)
-						field[ldown](xf+i,c) = (field[level](xc,c) + field[level](xc+i,c))/2.0;
+						dst[ldown](xf+i,c) = (src[level](xc,c) + src[level](xc+i,c))/2.0;
 
 
 				for(int c = 0; c< components;c++)
-						field[ldown](xf+0+1,c) = (field[level](xc,c) + field[level](xc+0,c)
-																			+ field[level](xc+1,c) + field[level](xc+0+1,c))/4.0;
+						dst[ldown](xf+0+1,c) = (src[level](xc,c) + src[level](xc+0,c)
+																			+ src[level](xc+1,c) + src[level](xc+0+1,c))/4.0;
 
 				for(int c = 0; c< components;c++)
-						field[ldown](xf+0+2,c) = (field[level](xc,c) + field[level](xc+0,c)
-																			+ field[level](xc+2,c) + field[level](xc+0+2,c))/4.0;
+						dst[ldown](xf+0+2,c) = (src[level](xc,c) + src[level](xc+0,c)
+																			+ src[level](xc+2,c) + src[level](xc+0+2,c))/4.0;
 
 				for(int c = 0; c< components;c++)
-							field[ldown](xf+1+2,c) = (field[level](xc,c) + field[level](xc+1,c)
-																				+ field[level](xc+2,c) + field[level](xc+1+2,c))/4.0;
+							dst[ldown](xf+1+2,c) = (src[level](xc,c) + src[level](xc+1,c)
+																				+ src[level](xc+2,c) + src[level](xc+1+2,c))/4.0;
 
 
 				for(int c = 0; c< components;c++)
-					field[ldown](xf+0+1+2,c) = (field[level](xc,c) + field[level](xc+1,c)
-																		+ field[level](xc+2,c) + field[level](xc+1+2,c)
-																		+ field[level](xc+0,c) + field[level](xc+0+1,c)
-																		+ field[level](xc+0+2,c) + field[level](xc+0+1+2,c))/8.0;
+					dst[ldown](xf+0+1+2,c) = (src[level](xc,c) + src[level](xc+1,c)
+																		+ src[level](xc+2,c) + src[level](xc+1+2,c)
+																		+ src[level](xc+0,c) + src[level](xc+0+1,c)
+																		+ src[level](xc+0+2,c) + src[level](xc+0+1+2,c))/8.0;
 
 			}
 			else
@@ -530,8 +768,9 @@ void MultiGrid::prolong3d_spl(MultiField<FieldType> *& field, int level)
 }
 
 template<class FieldType>
-void MultiGrid::prolong3d_dpl(MultiField<FieldType> *& field, int level)
+void MultiGrid::prolong3d_dpl(MultiField<FieldType> *& src, MultiField<FieldType> *& dst, int level)
 {
+	MPI_Barrier(MPI_COMM_WORLD);
 	if(parallel.layer(pLayer_[level-1]).isPartLayer())
 	{
 		int ldown = level-1;
@@ -544,7 +783,7 @@ void MultiGrid::prolong3d_dpl(MultiField<FieldType> *& field, int level)
 		buffer_dimension[1] = lattice_[ldown].sizeLocal(1)/2+1;
 		buffer_dimension[2] = lattice_[ldown].sizeLocal(2)/2+1;
 
-		int components = field[ldown].components();
+		int components = src[ldown].components();
 
 		Site xf(lattice_[ldown]);
 
@@ -592,30 +831,30 @@ void MultiGrid::prolong3d_dpl(MultiField<FieldType> *& field, int level)
 							if(xf.setCoord(i*2,j*2,k*2))
 							{
 								for(int c = 0; c< components;c++)
-									field[ldown](xf,c) = field[level](xc,c);
+									dst[ldown](xf,c) = src[level](xc,c);
 
 								for(int i=0;i<3;i++)
 									for(int c = 0; c< components;c++)
-										field[ldown](xf+i,c) = (field[level](xc,c) + field[level](xc+i,c))/2.0;
+										dst[ldown](xf+i,c) = (src[level](xc,c) + src[level](xc+i,c))/2.0;
 
 
 								for(int c = 0; c< components;c++)
-										field[ldown](xf+0+1,c) = (field[level](xc,c) + field[level](xc+0,c)
-																							+ field[level](xc+1,c) + field[level](xc+0+1,c))/4.0;
+										dst[ldown](xf+0+1,c) = (src[level](xc,c) + src[level](xc+0,c)
+																							+ src[level](xc+1,c) + src[level](xc+0+1,c))/4.0;
 
 								for(int c = 0; c< components;c++)
-										field[ldown](xf+0+2,c) = (field[level](xc,c) + field[level](xc+0,c)
-																							+ field[level](xc+2,c) + field[level](xc+0+2,c))/4.0;
+										dst[ldown](xf+0+2,c) = (src[level](xc,c) + src[level](xc+0,c)
+																							+ src[level](xc+2,c) + src[level](xc+0+2,c))/4.0;
 
 								for(int c = 0; c< components;c++)
-											field[ldown](xf+1+2,c) = (field[level](xc,c) + field[level](xc+1,c)
-																								+ field[level](xc+2,c) + field[level](xc+1+2,c))/4.0;
+											dst[ldown](xf+1+2,c) = (src[level](xc,c) + src[level](xc+1,c)
+																								+ src[level](xc+2,c) + src[level](xc+1+2,c))/4.0;
 
 								for(int c = 0; c< components;c++)
-									field[ldown](xf+0+1+2,c) = (field[level](xc,c) + field[level](xc+1,c)
-																						+ field[level](xc+2,c) + field[level](xc+1+2,c)
-																						+ field[level](xc+0,c) + field[level](xc+0+1,c)
-																						+ field[level](xc+0+2,c) + field[level](xc+0+1+2,c))/8.0;
+									dst[ldown](xf+0+1+2,c) = (src[level](xc,c) + src[level](xc+1,c)
+																						+ src[level](xc+2,c) + src[level](xc+1+2,c)
+																						+ src[level](xc+0,c) + src[level](xc+0+1,c)
+																						+ src[level](xc+0+2,c) + src[level](xc+0+1+2,c))/8.0;
 							}
 							else
 							{
@@ -659,7 +898,7 @@ void MultiGrid::prolong3d_dpl(MultiField<FieldType> *& field, int level)
 							if(xc.setCoordHalo(iref,jref,kref))
 							{
 								for(int c = 0; c< components;c++)
-									buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))]=field[level](xc,c);
+									buffer[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))]=src[level](xc,c);
 							}
 							else
 							{
@@ -700,7 +939,7 @@ void MultiGrid::prolong3d_dpl(MultiField<FieldType> *& field, int level)
 							if(xc.setCoordHalo(iref,jref,kref))
 							{
 								for(int c = 0; c< components;c++)
-									buffer1[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))]=field[level](xc,c);
+									buffer1[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))]=src[level](xc,c);
 							}
 							else
 							{
@@ -741,7 +980,7 @@ void MultiGrid::prolong3d_dpl(MultiField<FieldType> *& field, int level)
 							if(xc.setCoordHalo(iref,jref,kref))
 							{
 								for(int c = 0; c< components;c++)
-									buffer2[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))]=field[level](xc,c);
+									buffer2[c+components*(i+buffer_dimension[0]*(j+buffer_dimension[1]*k))]=src[level](xc,c);
 							}
 							else
 							{
@@ -830,35 +1069,35 @@ void MultiGrid::prolong3d_dpl(MultiField<FieldType> *& field, int level)
 							*/
 
 							for(int c = 0; c< components;c++)
-								field[ldown](xf,c) = buffer[c+index];
+								dst[ldown](xf,c) = buffer[c+index];
 								//field[ldown](xf,c) = field[level](xc,c);
 
 							for(int i=0;i<3;i++)
 								for(int c = 0; c< components;c++)
-								field[ldown](xf+i,c) = (buffer[c+index] + buffer[c+index+map[i]])/2.0;
+								dst[ldown](xf+i,c) = (buffer[c+index] + buffer[c+index+map[i]])/2.0;
 							//		field[ldown](xf+i,c) = (field[level](xc,c) + field[level](xc+i,c))/2.0;
 
 
 							for(int c = 0; c< components;c++)
-								field[ldown](xf+0+1,c) = (buffer[c+index] + buffer[c+index+map[0]]
+								dst[ldown](xf+0+1,c) = (buffer[c+index] + buffer[c+index+map[0]]
 																				 	+ buffer[c+index+map[1]] + buffer[c+index+map[3]])/4.0;
 							//		field[ldown](xf+0+1,c) = (field[level](xc,c) + field[level](xc+0,c)
 							//															+ field[level](xc+1,c) + field[level](xc+0+1,c))/4.0;
 
 							for(int c = 0; c< components;c++)
-								field[ldown](xf+0+2,c) = (buffer[c+index] + buffer[c+index+map[0]]
+								dst[ldown](xf+0+2,c) = (buffer[c+index] + buffer[c+index+map[0]]
 																				 	+ buffer[c+index+map[2]] + buffer[c+index+map[4]])/4.0;
 							//		field[ldown](xf+0+2,c) = (field[level](xc,c) + field[level](xc+0,c)
 							//															+ field[level](xc+2,c) + field[level](xc+0+2,c))/4.0;
 
 							for(int c = 0; c< components;c++)
-								field[ldown](xf+1+2,c) = (buffer[c+index] + buffer[c+index+map[1]]
+								dst[ldown](xf+1+2,c) = (buffer[c+index] + buffer[c+index+map[1]]
 																				 	+ buffer[c+index+map[2]] + buffer[c+index+map[5]])/4.0;
 							//			field[ldown](xf+1+2,c) = (field[level](xc,c) + field[level](xc+1,c)
 							//																+ field[level](xc+2,c) + field[level](xc+1+2,c))/4.0;
 
 							for(int c = 0; c< components;c++)
-								field[ldown](xf+0+1+2,c) = (buffer[c+index] + buffer[c+index+map[0]]
+								dst[ldown](xf+0+1+2,c) = (buffer[c+index] + buffer[c+index+map[0]]
 																						+ buffer[c+index+map[1]] + buffer[c+index+map[2]]
 																						+ buffer[c+index+map[3]] + buffer[c+index+map[4]]
 																				 		+ buffer[c+index+map[5]] + buffer[c+index+map[6]])/8.0;

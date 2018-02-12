@@ -24,22 +24,34 @@ public:
       restrict level to level + 1;
       */
       template<class FieldType>
-      void restrict(MultiField<FieldType> *& field, int level);
+      void restrict(MultiField<FieldType> *& field, int level, int method=1){this->restrict(field,field,level,method);}
 
       template<class FieldType>
-      void restrict3d_spl(MultiField<FieldType> *& field, int level);
+      void restrict(MultiField<FieldType> *& src, MultiField<FieldType> *& dst, int level, int method = 1);
 
       template<class FieldType>
-      void restrict3d_dpl(MultiField<FieldType> *& field, int level);
+      void restrict3d_spl(MultiField<FieldType> *& src, MultiField<FieldType> *& dst, int level);
 
       template<class FieldType>
-      void prolong(MultiField<FieldType> *& field, int level);
+      void restrict3d_dpl(MultiField<FieldType> *& src, MultiField<FieldType> *& dst, int level);
 
       template<class FieldType>
-      void prolong3d_spl(MultiField<FieldType> *& field, int level);
+      void restrict3d_spl_fw(MultiField<FieldType> *& src, MultiField<FieldType> *& dst, int level);
 
       template<class FieldType>
-      void prolong3d_dpl(MultiField<FieldType> *& field, int level);
+      void restrict3d_dpl_fw(MultiField<FieldType> *& src, MultiField<FieldType> *& dst, int level);
+
+      template<class FieldType>
+      void prolong(MultiField<FieldType> *& field, int level){this->prolong(field,field,level);}
+
+      template<class FieldType>
+      void prolong(MultiField<FieldType> *& src, MultiField<FieldType> *& dst, int level);
+
+      template<class FieldType>
+      void prolong3d_spl(MultiField<FieldType> *& src, MultiField<FieldType> *& dst, int level);
+
+      template<class FieldType>
+      void prolong3d_dpl(MultiField<FieldType> *& src, MultiField<FieldType> *& dst, int level);
 
 
       int nl(){return nl_;}
