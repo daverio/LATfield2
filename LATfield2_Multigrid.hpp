@@ -199,6 +199,7 @@ void MultiGrid::restrict3d_spl_fw(MultiField<FieldType> *& src, MultiField<Field
 	MPI_Barrier(MPI_COMM_WORLD);
 	if(parallel.layer(pLayer_[level]).isPartLayer())
 	{
+		src[level].updateHalo();
 		int lup = level+1;
 		Site xc(lattice_[lup]);
 		Site xf(lattice_[level]);
@@ -426,7 +427,7 @@ void MultiGrid::restrict3d_dpl_fw(MultiField<FieldType> *& src, MultiField<Field
 	MPI_Barrier(MPI_COMM_WORLD);
 	if(parallel.layer(pLayer_[level]).isPartLayer())
 	{
-
+		src[level].updateHalo();
 		int lup = level+1;
 		int iref,jref,kref;
 		int buffer_dimension[3];
