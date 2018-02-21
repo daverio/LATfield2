@@ -381,6 +381,8 @@ class Parallel2d_layer{
    */
   int grid2world(int n,int m) {return n + grid_size_[0]*m;}
 
+  void abortForce(){MPI_Abort( lat_world_comm_, EXIT_FAILURE);}
+
 
 private:
   //MEMBER VARIABLES================

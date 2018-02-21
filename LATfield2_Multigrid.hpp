@@ -30,9 +30,10 @@ void MultiGrid::initialize(Lattice * lat_top, int levelNumber_max, int minGridpe
 	for(int l = 1;l<levelNumber_max;l++)
 	{
 		flag_ok=true;
+		
 		for(int i=0;i<dim_;i++)
 		{
-			if(lat_size_[l-1][i] % 2 != 0 || lat_size_[l-1][i]/2 < minGridperProc)
+			if(lat_size_[l-1][i] % 2 != 0 || lat_size_[l-1][i]/2 <= 1)
 			{
 				flag_ok=false;
 			}
@@ -72,7 +73,7 @@ void MultiGrid::initialize(Lattice * lat_top, int levelNumber_max, int minGridpe
 	{
 		if(lat_size_[l][dim_-1] / pl_size[0]  < minGridperProc)
 		{
-				if( pl_size[0]/2 >=2)
+				if( pl_size[0]/2 >=1)
 				{
 					pl_size[0] /= 2;
 					plr0_[npl_]=true;
@@ -80,7 +81,7 @@ void MultiGrid::initialize(Lattice * lat_top, int levelNumber_max, int minGridpe
 		}
 		if(lat_size_[l][dim_-2] / pl_size[1]  < minGridperProc)
 		{
-			if( pl_size[1]/2 >=2)
+			if( pl_size[1]/2 >=1)
 			{
 				pl_size[1] /= 2;
 				plr1_[npl_]=true;
@@ -121,7 +122,12 @@ void MultiGrid::initialize(Lattice * lat_top, int levelNumber_max, int minGridpe
 	for(int i=0;i<nl_;i++)
 	{
 		if(parallel.layer(pLayer_[i]).isPartLayer())lattice_[i].initialize(lat_top->dim(),lat_size_[i],lat_top->halo(),pLayer_[i]);
+		COUT << "Lattice size: level["<< i <<"] ("<< lattice_[i].size(0)<<","<< lattice_[i].size(1)<<","<< lattice_[i].size(2)<<");"<<endl;
+		COUT << "Parallel layer: ["<<pLayer_[i]<<"], size: "<< parallel.layer(pLayer_[i]).size()<<endl;
 	}
+
+
+
 
 }
 
@@ -139,10 +145,6 @@ void MultiGrid::initialize_Field(Field<FieldType> * fieldBase, MultiField<FieldT
 																																			fieldBase->rows(),
 																																			fieldBase->cols(),
 																																			fieldBase->symmetry());
-
-			COUT << "Lattice size: layer["<< i <<"] ("<< lattice_[i].size(0)<<","<< lattice_[i].size(1)<<","<< lattice_[i].size(2)<<");"<<endl;
-
-
 
 	}
 	for(int i=1;i<nl_;i++)

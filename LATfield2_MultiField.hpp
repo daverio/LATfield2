@@ -91,15 +91,13 @@ void MultiField<FieldType>::updateHalo()
   		for(int i=0; i<this->components_; i++)
   		{
   			this->data_[site.index()*this->components_+i] = this->data_[copyfrom*this->components_+i];
-  			//memcpy(data_[site.index()*components_+i],data_[copyfrom*components_+i],sizeof_fieldType_);
-
   		}
   	}
 
   	delete[] jump;
   	delete[] size;
 
-  	this->updateHaloComms();
+  	if(parallel.layer(parallel_layer_).size()!=1)this->updateHaloComms();
 }
 
 template<class FieldType>
