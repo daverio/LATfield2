@@ -19,124 +19,78 @@ const int FFT_OUT_OF_PLACE = -16;
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
-
 temporaryMemFFT::temporaryMemFFT()
 {
-    allocated_=0;
-#pragma acc enter data create(this)
-    
+	temp1_=NULL;
+	temp2_=NULL;
+	allocated_=0;
 }
 temporaryMemFFT::~temporaryMemFFT()
 {
-  
-    freeTemp();
-    
-    freeTempReal();
-  
-#pragma acc exit data delete(this)
-    
+
+	if(allocated_>0)
+	{
+#ifdef SINGLE
+		//if(temp1_!=NULL)fftwf_free(temp1_);
+		//if(temp2_!=NULL)fftwf_free(temp2_);
+#endif
+#ifndef SINGLE
+		//if(temp1_!=NULL)fftw_free(temp1_);
+		//if(temp2_!=NULL)fftw_free(temp2_);
+#endif
+		//allocated_ = 0;
+		//temp1_=NULL;
+		//temp2_=NULL;
+	}
+
 }
 
 temporaryMemFFT::temporaryMemFFT(long size)
 {
-
-  setTemp(size);
-#pragma acc enter data copyin(this)
-#pragma acc enter data create(temp1_[0:alocSize][0:2])
-#pragma acc enter data create(temp2_[0:alocSize][0:2])
-}
-
-void temporaryMemFFT::freeTemp() {
-  if(allocated_!=0){
-    
-#pragma acc exit data delete(temp1_)
-#pragma acc exit data delete(temp2_)
-    
-#ifndef FFT3D_ACC
 #ifdef SINGLE
-    fftwf_free(temp1_);
-    fftwf_free(temp2_);
+	temp1_ = (fftwf_complex *)fftwf_malloc(size*sizeof(fftwf_complex));
+	temp2_ = (fftwf_complex *)fftwf_malloc(size*sizeof(fftwf_complex));
 #endif
+
 #ifndef SINGLE
-    fftw_free(temp1_);
-    fftw_free(temp2_);
+	temp1_ = (fftw_complex *)fftw_malloc(size*sizeof(fftw_complex));
+	temp2_ = (fftw_complex *)fftw_malloc(size*sizeof(fftw_complex));
 #endif
-#else
-    free(temp1_);
-    free(temp2_);
-#endif
-  }
-  allocated_ = 0;
-}
-
-
-void temporaryMemFFT::freeTempReal() {
-  if(allocatedReal_!=0)
-  {
-#pragma acc exit data delete(tempReal_)
-    
-    free(tempReal_);
-  }
-  allocatedReal_ = 0;
-}
-
-int temporaryMemFFT::setTempReal(long size)
-{
-    if(size>allocatedReal_)
-    {
-      
-        long alocSize;
-        alocSize = 2*size;
-        
-#ifdef SINGLE
-        tempReal_ = (float*)malloc(alocSize * sizeof(float));
-#else
-        tempReal_ = (double*)malloc(alocSize * sizeof(double));
-#endif
-        
-#pragma acc enter data create(tempReal_[0:alocSize])
-        
-    }
+	allocated_=size;
 }
 int temporaryMemFFT::setTemp(long size)
 {
-    if(size>allocated_)
-    {
-        freeTemp();
-      
-        long alocSize;
-        alocSize = 2*size;
-        
-#ifndef FFT3D_ACC
+	if(size>allocated_)
+	{
 #ifdef SINGLE
-        temp1_ = (fftwf_complex *)fftwf_malloc(alocSize*sizeof(fftwf_complex));
-        temp2_ = (fftwf_complex *)fftwf_malloc(alocSize*sizeof(fftwf_complex));
-#endif
-        
-#ifndef SINGLE
-        temp1_ = (fftw_complex *)fftw_malloc(alocSize*sizeof(fftw_complex));
-        temp2_ = (fftw_complex *)fftw_malloc(alocSize*sizeof(fftw_complex));
-#endif
-#else
-#ifdef SINGLE
-        temp1_ = (fftwf_complex *)malloc(alocSize*sizeof(fftwf_complex));
-        temp2_ = (fftwf_complex *)malloc(alocSize*sizeof(fftwf_complex));
-#endif
-        
-#ifndef SINGLE
-        temp1_ = (fftw_complex *)malloc(alocSize*sizeof(fftw_complex));
-        temp2_ = (fftw_complex *)malloc(alocSize*sizeof(fftw_complex));
-#endif
-#endif
-        /// maybe add temp2_ if segfault
-#pragma acc enter data create(temp1_[0:alocSize][0:2])
-#pragma acc enter data create(temp2_[0:alocSize][0:2])
-    }
+		if(allocated_)
+		{
+			if(temp1_!=NULL)fftwf_free(temp1_);
+			if(temp2_!=NULL)fftwf_free(temp2_);
+		}
+		temp1_ = (fftwf_complex *)fftwf_malloc(size*sizeof(fftwf_complex));
+		temp2_ = (fftwf_complex *)fftwf_malloc(size*sizeof(fftwf_complex));
 
-    allocated_=size;
+		//debug cout<<"("<< parallel.grid_rank()[0]<< ","<<parallel.grid_rank()[1] <<"): called temporary resize. Old size: " <<allocated_<<" , new size: "<< size<<endl;
 
-    return 1;
+#endif
+
+#ifndef SINGLE
+		if(allocated_)
+		{
+			if(temp1_!=NULL)fftw_free(temp1_);
+			if(temp2_!=NULL)fftw_free(temp2_);
+		}
+		temp1_ = (fftw_complex *)fftw_malloc(size*sizeof(fftw_complex));
+		temp2_ = (fftw_complex *)fftw_malloc(size*sizeof(fftw_complex));
+#endif
+		allocated_ = size ;
+
+
+	}
+	return 1;
 }
+
 
 #endif
 //////////////////////Temp memory///////////////////////////

@@ -3,8 +3,8 @@
 /*! \file Imag.hpp
     \brief Imag.hpp Contains the Imag class definition
     \author Neil Bevis
- 
- */ 
+
+ */
 
 #ifdef SINGLE
 typedef float Real; /*! \typedef Real
@@ -16,9 +16,9 @@ typedef double Real;
 
 /*! \class Imag
     \brief A utility class for complex arithmetic, invested from LATfield 1.0
- 
+
     Complex number, defined as Real[2] if FFT capability of latfield are not used, and with FFTW complex if it is use. Commun operation over complex number are also defined.
- 
+
  */
 
 class Imag
@@ -27,19 +27,20 @@ class Imag
 
 
  private:
-	
-#ifndef FFT
+
+#ifndef FFT3D
 	Real data[2];
 #endif
-#ifdef FFT
+#ifdef FFT3D
 #ifdef SINGLE
+  //Real data[2];
 	fftwf_complex data;
-#endif
-#ifndef SINGLE
+#else
+  //Real data[2];
 	fftw_complex data;
-#endif	
 #endif
-	
+#endif
+
  public:
   //CONSTRUCTORS
   Imag() {;};
@@ -47,7 +48,7 @@ class Imag
 
   //NEGATION OPERATOR
   Imag operator-() { return Imag(-data[0],-data[1]); }
-  
+
   //IMAGINARY-IMAGINARY ADDITION, ETC OPERATORS
   Imag operator+(Imag z) { return Imag( data[0]+z.real(), data[1]+z.imag() ); }
   Imag operator-(Imag z) { return Imag( data[0]-z.real(), data[1]-z.imag() ); }
@@ -97,12 +98,12 @@ class Imag
   friend std::istream& operator>>(istream& is, Imag& z) { is>>z.data[0]>>z.data[1]; return is; }
 
   /* WV added conversion operators to oldschool double[2] */
-#ifdef FFT
+#ifdef FFT3D
 #ifdef SINGLE
-  operator fftwf_complex& () { return data };
+  operator fftwf_complex& () { return data;};
 #endif
 #ifndef SINGLE
-  operator fftw_complex& () { return data };
+  operator fftw_complex& () { return data;};
 #endif
 #endif
 
