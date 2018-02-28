@@ -21,6 +21,9 @@ Parallel2d::Parallel2d() : neverFinalizeMPI(false)
 	int argc=1;
 	char** argv = new char*[argc];
 	for(int i=0; i<argc; i++) { argv[i]=new char[20]; }
+	node_grid_size_[0] = -1;
+	node_grid_size_[1] = -1;
+	node_size_ = -1;
 #ifndef EXTERNAL_IO
 	lat_world_comm_ = MPI_COMM_WORLD;
     world_comm_ = MPI_COMM_WORLD;
@@ -38,6 +41,12 @@ Parallel2d::Parallel2d() : neverFinalizeMPI(false)
 #endif
 
 }
+void Parallel2d::setNodeGeometry(int size0,int size1)
+{
+	node_size_ = size0*size1;
+	node_grid_size_[0] = size0;
+	node_grid_size_[1] = size1;
+}
 
 void Parallel2d::initialize(int proc_size0, int proc_size1)
 {
@@ -47,8 +56,8 @@ void Parallel2d::initialize(int proc_size0, int proc_size1)
 
 void Parallel2d::initialize(int proc_size0, int proc_size1,int IO_total_size, int IO_node_size)
 {
-
-    grid_size_[0]=proc_size0;
+	if(lat_world_rank_==0)cout<<"init parallel"<<endl;
+  grid_size_[0]=proc_size0;
 	grid_size_[1]=proc_size1;
 
 	dim0_comm_ = (MPI_Comm *)malloc(grid_size_[1]*sizeof(MPI_Comm));
@@ -168,31 +177,112 @@ void Parallel2d::initialize(int proc_size0, int proc_size1,int IO_total_size, in
 		}
 	}
 
-    MPI_Comm_group(lat_world_comm_,&lat_world_group_);
+
+  MPI_Comm_group(lat_world_comm_,&lat_world_group_);
 
 
-
-
-	rang[2]=1;
-	for(j=0;j<grid_size_[1];j++)
+	if(node_size_ == -1)
 	{
-		rang[0] = j * grid_size_[0];
-		rang[1] = grid_size_[0] - 1 + j*grid_size_[0];
-		MPI_Group_range_incl(lat_world_group_,1,&rang,&dim0_group_[j]);
-		MPI_Comm_create(lat_world_comm_, dim0_group_[j], &dim0_comm_[j]);
+		rang[2]=1;
+		for(j=0;j<grid_size_[1];j++)
+		{
+			rang[0] = j * grid_size_[0];
+			rang[1] = grid_size_[0] - 1 + j*grid_size_[0];
+			MPI_Group_range_incl(lat_world_group_,1,&rang,&dim0_group_[j]);
+			MPI_Comm_create(lat_world_comm_, dim0_group_[j], &dim0_comm_[j]);
+		}
+
+
+		rang[2]=grid_size_[0];
+		for(i=0;i<grid_size_[0];i++)
+		{
+			rang[0]=i;
+			rang[1]=i+(grid_size_[1]-1)*grid_size_[0];
+			MPI_Group_range_incl(lat_world_group_,1,&rang,&dim1_group_[i]);
+			MPI_Comm_create(lat_world_comm_, dim1_group_[i], &dim1_comm_[i]);
+		}
 	}
-
-
-	rang[2]=grid_size_[0];
-	for(i=0;i<grid_size_[0];i++)
+	else
 	{
-		rang[0]=i;
-		rang[1]=i+(grid_size_[1]-1)*grid_size_[0];
-		MPI_Group_range_incl(lat_world_group_,1,&rang,&dim1_group_[i]);
-		MPI_Comm_create(lat_world_comm_, dim1_group_[i], &dim1_comm_[i]);
+		if(lat_world_rank_==0)cout<<"initializing parallel object with node geometry"<<endl;
+		if(grid_size_[0]%node_grid_size_[0]!=0 ||grid_size_[1]%node_grid_size_[1]!=0 )
+		{
+			if(lat_world_rank_==0)
+			{
+				cerr << "node geometry not well suited... aborting"<<endl;
+			}
+			this->abortForce();
+		}
+		int n_nodes[2];
+		n_nodes[0] = grid_size_[0] / node_grid_size_[0];
+		n_nodes[1] = grid_size_[1] / node_grid_size_[1];
+
+		int rangs0[n_nodes[0]][3];
+		int rangs1[n_nodes[1]][3];
+
+		int icomm;
+		int first_in_comm;
+
+		//setting dim0 comm
+		for(int i = 0;i<n_nodes[1];i++)
+		{
+			for(int j = 0;j<node_grid_size_[1];j++)
+			{
+				icomm = j + i*node_grid_size_[1];
+				first_in_comm  = j*node_grid_size_[0] + i*n_nodes[0]*node_size_;
+
+				rangs0[0][0]=first_in_comm;
+				rangs0[0][1]=first_in_comm + node_grid_size_[0]-1;
+				rangs0[0][2]=1;
+				for(int k = 1;k<n_nodes[0];k++)
+				{
+					rangs0[k][0]=rangs0[k-1][0]+node_size_;
+					rangs0[k][1]=rangs0[k-1][1]+node_size_;
+					rangs0[k][2]=1;
+				}
+				/*
+				if(lat_world_rank_==0)
+				{
+					cout<<"comm0 :"<<icomm<< " rangs: ";
+					for(int k = 0;k<n_nodes[0];k++)cout<<"("<<rangs0[k][0]<<","<<rangs0[k][1]<<","<<rangs0[k][2]<<")";
+					cout<<endl;
+				}
+				*/
+				MPI_Group_range_incl(lat_world_group_,n_nodes[0],rangs0,&dim0_group_[icomm]);
+				MPI_Comm_create(lat_world_comm_, dim0_group_[icomm], &dim0_comm_[icomm]);
+			}
+		}
+
+		for(int i = 0;i<n_nodes[0];i++)
+		{
+			for(int j = 0;j<node_grid_size_[0];j++)
+			{
+				icomm = j + i*node_grid_size_[0];
+				first_in_comm  = j + i*node_size_;
+
+				rangs1[0][0]=first_in_comm;
+				rangs1[0][1]=first_in_comm + node_grid_size_[0]*(node_grid_size_[1]-1);
+				rangs1[0][2]=node_grid_size_[0];
+				for(int k = 1;k<n_nodes[1];k++)
+				{
+					rangs1[k][0]=rangs1[k-1][0]+node_size_*n_nodes[0];
+					rangs1[k][1]=rangs1[k-1][1]+node_size_*n_nodes[0];
+					rangs1[k][2]=node_grid_size_[0];
+				}
+				/*
+				if(lat_world_rank_==0)
+				{
+					cout<<"comm1 :"<<icomm<< " rangs: ";
+					for(int k = 0;k<n_nodes[1];k++)cout<<"("<<rangs1[k][0]<<","<<rangs1[k][1]<<","<<rangs1[k][2]<<")";
+					cout<<endl;
+				}
+				*/
+				MPI_Group_range_incl(lat_world_group_,n_nodes[1],rangs1,&dim1_group_[icomm]);
+				MPI_Comm_create(lat_world_comm_, dim1_group_[icomm], &dim1_comm_[icomm]);
+			}
+		}
+
 	}
-
-
 
 	for(i=0;i<grid_size_[0];i++)
 	{
@@ -205,7 +295,6 @@ void Parallel2d::initialize(int proc_size0, int proc_size1,int IO_total_size, in
 		MPI_Group_rank(dim0_group_[j], &comm_rank);
 		if(comm_rank!=MPI_UNDEFINED)grid_rank_[0]=comm_rank;
 	}
-
 
 	root_=0;
 

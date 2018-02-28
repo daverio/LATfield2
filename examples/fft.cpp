@@ -18,7 +18,7 @@ using namespace LATfield2;
 int main(int argc, char **argv)
 {
     int n,m;
-    int BoxSize = 64;
+    int BoxSize = 192;
     int halo = 1;
     int khalo =0;
     int dim = 3;

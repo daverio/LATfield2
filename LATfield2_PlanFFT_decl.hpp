@@ -1,6 +1,11 @@
 #ifndef LATFIELD2_PLANFFT_DECL_HPP
 #define LATFIELD2_PLANFFT_DECL_HPP
 
+#include "mpi_alltoallv_general.c"
+
+
+
+
 #ifdef SINGLE
 #define MPI_DATA_PREC MPI_FLOAT
 #endif
@@ -79,6 +84,8 @@ extern  temporaryMemFFT tempMemory;
  \sa void Lattice::initializeComplexFFT(Lattice & lat_real, int halo);
  For more detail see the QuickStart guide.
  */
+
+
 template<class compType>
 class PlanFFT
 {
@@ -193,6 +200,9 @@ private:
   int r2cSizeLocal_as_;
   int rHalo_;
   int kHalo_;
+
+  int alltoall_handler_forward[3];
+  int alltoall_handler_backward[3];
 
 #ifdef SINGLE
   float * rData_; //pointer to start of data (halo skip)
@@ -530,6 +540,191 @@ void PlanFFT<compType>::initialize(Field<float>*  rfield,Field<compType>*   kfie
 
     }
     parallel.abortForce();
+  }
+
+  //alltoall_handler:
+  for(int i=0;i<3;i++)
+  {
+    alltoall_handler_forward[i]=-1;
+    alltoall_handler_backward[i]=-1;
+  }
+
+
+  if(parallel.node_size() != -1)
+  {
+    int min;
+    int blocksize[max(parallel.grid_size()[0],parallel.grid_size()[1])];
+    int sdispls[max(parallel.grid_size()[0],parallel.grid_size()[1])];
+    int rdispls[max(parallel.grid_size()[0],parallel.grid_size()[1])];
+    //MPI_Alltoall(temp_, 2* rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_, MPI_DATA_PREC, temp1_, 2* rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_, MPI_DATA_PREC, parallel.dim1_comm()[parallel.grid_rank()[0]]);
+
+    for(int i = 0;i<parallel.grid_size()[1];i++)
+    {
+      blocksize[i] = 2*rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_;
+      sdispls[i] = i*blocksize[i];
+      rdispls[i] = parallel.grid_rank()[1]*blocksize[i];
+    }
+    alltoall_handler_forward[0] =
+        MY_Alltoallv_init(temp_,
+                          blocksize,
+                          sdispls,
+                          MPI_DATA_PREC,
+                          temp1_,
+                          blocksize,
+                          rdispls,
+                          MPI_DATA_PREC,
+                          parallel.dim1_comm()[parallel.grid_rank()[0]],
+                          parallel.node_grid_size(1),
+                          parallel.dim0_comm()[parallel.grid_rank()[1]],
+                          parallel.node_grid_size(0),
+                          1000000);
+    min = parallel.min<int>(alltoall_handler_forward[0])
+    if(min == -1)
+    {
+      cout<<"cant define the forward alltoall 0, setting to normal alltoall"<<endl;
+      alltoall_handler_forward[0] = -1;
+    }
+    //MPI_Alltoall(temp_, (2*rSizeLocal_[2]*rSizeLocal_[2]*r2cSizeLocal_), MPI_DATA_PREC, temp1_, (2*rSizeLocal_[2]*rSizeLocal_[2]*r2cSizeLocal_), MPI_DATA_PREC, parallel.dim0_comm()[parallel.grid_rank()[1]]);
+
+    for(int i = 0;i<parallel.grid_size()[0];i++)
+    {
+      blocksize[i] = 2*rSizeLocal_[2]*rSizeLocal_[2]*r2cSizeLocal_;
+      sdispls[i] = i*blocksize[i];
+      rdispls[i] = parallel.grid_rank()[0]*blocksize[i];
+    }
+    alltoall_handler_forward[1] =
+        MY_Alltoallv_init(temp_,
+                          blocksize,
+                          sdispls,
+                          MPI_DATA_PREC,
+                          temp1_,
+                          blocksize,
+                          rdispls,
+                          MPI_DATA_PREC,
+                          parallel.dim0_comm()[parallel.grid_rank()[1]],
+                          parallel.node_grid_size(0),
+                          parallel.dim1_comm()[parallel.grid_rank()[0]],
+                          parallel.node_grid_size(1),
+                          1000000);
+    min = parallel.min<int>(alltoall_handler_forward[1]);
+    if(min == -1)
+    {
+      cout<<"cant define the forward alltoall 1, setting to normal alltoall"<<endl;
+      alltoall_handler_forward[1] = -1;
+    }
+    //MPI_Alltoall(temp1_, 2* rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_, MPI_DATA_PREC, temp_, 2* rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_, MPI_DATA_PREC, parallel.dim1_comm()[parallel.grid_rank()[0]]);
+
+    for(int i = 0;i<parallel.grid_size()[1];i++)
+    {
+      blocksize[i] = 2* rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_;
+      sdispls[i] = i*blocksize[i];
+      rdispls[i] = parallel.grid_rank()[1]*blocksize[i];
+    }
+    alltoall_handler_forward[2] =
+        MY_Alltoallv_init(temp1_,
+                          blocksize,
+                          sdispls,
+                          MPI_DATA_PREC,
+                          temp_,
+                          blocksize,
+                          rdispls,
+                          MPI_DATA_PREC,
+                          parallel.dim1_comm()[parallel.grid_rank()[0]],
+                          parallel.node_grid_size(1),
+                          parallel.dim0_comm()[parallel.grid_rank()[1]],
+                          parallel.node_grid_size(0),
+                          1000000);
+    min = parallel.min<int>(alltoall_handler_forward[2]);
+    if(min == -1)
+    {
+      cout<<"cant define the foward alltoall 2, setting to normal alltoall"<<endl;
+      alltoall_handler_forward[2] = -1;
+    }
+
+    //MPI_Alltoall(temp_,2* rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_, MPI_DATA_PREC, temp1_, 2* rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_, MPI_DATA_PREC, parallel.dim1_comm()[parallel.grid_rank()[0]]);
+
+    for(int i = 0;i<parallel.grid_size()[1];i++)
+    {
+      blocksize[i] = 2* rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_;
+      sdispls[i] = i*blocksize[i];
+      rdispls[i] = parallel.grid_rank()[1]*blocksize[i];
+    }
+    alltoall_handler_backward[0] =
+        MY_Alltoallv_init(temp_,
+                          blocksize,
+                          sdispls,
+                          MPI_DATA_PREC,
+                          temp1_,
+                          blocksize,
+                          rdispls,
+                          MPI_DATA_PREC,
+                          parallel.dim1_comm()[parallel.grid_rank()[0]],
+                          parallel.node_grid_size(1),
+                          parallel.dim0_comm()[parallel.grid_rank()[1]],
+                          parallel.node_grid_size(0),
+                          1000000);
+    min = parallel.min<int>(alltoall_handler_backward[0])
+    if(min == -1)
+    {
+      cout<<"cant define the backward alltoall 0, setting to normal alltoall"<<endl;
+      alltoall_handler_backward[0] = -1;
+    }
+    //MPI_Alltoall(temp_, (2*rSizeLocal_[2]*rSizeLocal_[2]*r2cSizeLocal_), MPI_DATA_PREC, temp1_, (2*rSizeLocal_[2]*rSizeLocal_[2]*r2cSizeLocal_), MPI_DATA_PREC, parallel.dim0_comm()[parallel.grid_rank()[1]]);
+
+    for(int i = 0;i<parallel.grid_size()[0];i++)
+    {
+      blocksize[i] = 2*rSizeLocal_[2]*rSizeLocal_[2]*r2cSizeLocal_;
+      sdispls[i] = i*blocksize[i];
+      rdispls[i] = parallel.grid_rank()[0]*blocksize[i];
+    }
+    alltoall_handler_backward[1] =
+        MY_Alltoallv_init(temp_,
+                          blocksize,
+                          sdispls,
+                          MPI_DATA_PREC,
+                          temp1_,
+                          blocksize,
+                          rdispls,
+                          MPI_DATA_PREC,
+                          parallel.dim0_comm()[parallel.grid_rank()[1]],
+                          parallel.node_grid_size(0),
+                          parallel.dim1_comm()[parallel.grid_rank()[0]],
+                          parallel.node_grid_size(1),
+                          1000000);
+    min = parallel.min<int>(alltoall_handler_backward[1]);
+    if(min == -1)
+    {
+      cout<<"cant define the backward alltoall 0, setting to normal alltoall"<<endl;
+      alltoall_handler_backward[1] = -1;
+    }
+    //MPI_Alltoall(temp1_, 2* rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_, MPI_DATA_PREC, temp_, 2* rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_, MPI_DATA_PREC, parallel.dim1_comm()[parallel.grid_rank()[0]]);
+
+    for(int i = 0;i<parallel.grid_size()[1];i++)
+    {
+      blocksize[i] = 2* rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_;
+      sdispls[i] = i*blocksize[i];
+      rdispls[i] = parallel.grid_rank()[1]*blocksize[i];
+    }
+    alltoall_handler_backward[2] =
+        MY_Alltoallv_init(temp1_,
+                          blocksize,
+                          sdispls,
+                          MPI_DATA_PREC,
+                          temp_,
+                          blocksize,
+                          rdispls,
+                          MPI_DATA_PREC,
+                          parallel.dim1_comm()[parallel.grid_rank()[0]],
+                          parallel.node_grid_size(1),
+                          parallel.dim0_comm()[parallel.grid_rank()[1]],
+                          parallel.node_grid_size(0),
+                          1000000);
+    min = parallel.min<int>(alltoall_handler_backward[2])
+    if(min == -1)
+    {
+      cout<<"cant define the backward alltoall 0, setting to normal alltoall"<<endl;
+      alltoall_handler_backward[2] = -1;
+    }
   }
 
   //create the fftw_plan
@@ -878,7 +1073,9 @@ void PlanFFT<compType>::execute(int fft_type)
         }
 #endif
 
-        MPI_Alltoall(temp_, 2* rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_, MPI_DATA_PREC, temp1_, 2* rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_, MPI_DATA_PREC, parallel.dim1_comm()[parallel.grid_rank()[0]]);
+        if(alltoall_handler_forward[0]==-1)MPI_Alltoall(temp_, 2* rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_, MPI_DATA_PREC, temp1_, 2* rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_, MPI_DATA_PREC, parallel.dim1_comm()[parallel.grid_rank()[0]]);
+        else MY_Alltoall(alltoall_handler_forward[0]);
+
         MPI_Gather(&temp_[(r2cSize_-1)*rSizeLocal_[1]*rSizeLocal_[2]][0], 2*rSizeLocal_[1]*rSizeLocal_[2], MPI_DATA_PREC, &temp1_[rSize_[0]/2*rSizeLocal_[1]*rSizeLocal_[2]][0] , 2*rSizeLocal_[1]*rSizeLocal_[2], MPI_DATA_PREC ,parallel.grid_size()[1]-1, parallel.dim1_comm()[parallel.grid_rank()[0]]);
         MPI_Barrier(parallel.dim1_comm()[parallel.grid_rank()[0]]);
 
@@ -896,7 +1093,8 @@ void PlanFFT<compType>::execute(int fft_type)
 #endif
 
         MPI_Barrier(parallel.lat_world_comm());
-        MPI_Alltoall(temp_, (2*rSizeLocal_[2]*rSizeLocal_[2]*r2cSizeLocal_), MPI_DATA_PREC, temp1_, (2*rSizeLocal_[2]*rSizeLocal_[2]*r2cSizeLocal_), MPI_DATA_PREC, parallel.dim0_comm()[parallel.grid_rank()[1]]);
+        if(alltoall_handler_forward[1]==-1)MPI_Alltoall(temp_, (2*rSizeLocal_[2]*rSizeLocal_[2]*r2cSizeLocal_), MPI_DATA_PREC, temp1_, (2*rSizeLocal_[2]*rSizeLocal_[2]*r2cSizeLocal_), MPI_DATA_PREC, parallel.dim0_comm()[parallel.grid_rank()[1]]);
+        else MY_Alltoall(alltoall_handler_forward[1]);
         MPI_Barrier(parallel.dim0_comm()[parallel.grid_rank()[1]]);
 
 
@@ -921,7 +1119,8 @@ void PlanFFT<compType>::execute(int fft_type)
 
 
 
-        MPI_Alltoall(temp1_, 2* rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_, MPI_DATA_PREC, temp_, 2* rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_, MPI_DATA_PREC, parallel.dim1_comm()[parallel.grid_rank()[0]]);
+        if(alltoall_handler_forward[2]==-1)MPI_Alltoall(temp1_, 2* rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_, MPI_DATA_PREC, temp_, 2* rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_, MPI_DATA_PREC, parallel.dim1_comm()[parallel.grid_rank()[0]]);
+        else MY_Alltoall(alltoall_handler_forward[2]);
         MPI_Scatter(&temp1_[r2cSizeLocal_as_*rSizeLocal_[2]*rSize_[0]][0], 2*rSizeLocal_[1]*rSizeLocal_[2], MPI_DATA_PREC, &temp_[(r2cSize_-1)*rSizeLocal_[1]*rSizeLocal_[2]][0] , 2*rSizeLocal_[1]*rSizeLocal_[2], MPI_DATA_PREC ,parallel.grid_size()[1]-1, parallel.dim1_comm()[parallel.grid_rank()[0]]);
         MPI_Barrier(parallel.dim1_comm()[parallel.grid_rank()[0]]);
 
@@ -956,7 +1155,8 @@ void PlanFFT<compType>::execute(int fft_type)
 
 
 
-        MPI_Alltoall(temp_,2* rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_, MPI_DATA_PREC, temp1_, 2* rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_, MPI_DATA_PREC, parallel.dim1_comm()[parallel.grid_rank()[0]]);
+        if(alltoall_handler_backward[0]==-1)MPI_Alltoall(temp_,2* rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_, MPI_DATA_PREC, temp1_, 2* rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_, MPI_DATA_PREC, parallel.dim1_comm()[parallel.grid_rank()[0]]);
+        else MY_Alltoall(alltoall_handler_backward[0]);
         MPI_Gather(&temp_[rSize_[0]/2*rSizeLocal_[1]*rSizeLocal_[2]][0], 2*rSizeLocal_[1]*rSizeLocal_[2], MPI_DATA_PREC, &temp1_[rSize_[0]/2*rSizeLocal_[1]*rSizeLocal_[2]][0] , 2*rSizeLocal_[1]*rSizeLocal_[2], MPI_DATA_PREC ,parallel.grid_size()[1]-1, parallel.dim1_comm()[parallel.grid_rank()[0]]);
         MPI_Barrier(parallel.dim1_comm()[parallel.grid_rank()[0]]);
 
@@ -981,7 +1181,8 @@ void PlanFFT<compType>::execute(int fft_type)
 #endif
 
 
-        MPI_Alltoall(temp_, (2*rSizeLocal_[2]*rSizeLocal_[2]*r2cSizeLocal_), MPI_DATA_PREC, temp1_, (2*rSizeLocal_[2]*rSizeLocal_[2]*r2cSizeLocal_), MPI_DATA_PREC, parallel.dim0_comm()[parallel.grid_rank()[1]]);
+        if(alltoall_handler_backward[1]==-1)MPI_Alltoall(temp_, (2*rSizeLocal_[2]*rSizeLocal_[2]*r2cSizeLocal_), MPI_DATA_PREC, temp1_, (2*rSizeLocal_[2]*rSizeLocal_[2]*r2cSizeLocal_), MPI_DATA_PREC, parallel.dim0_comm()[parallel.grid_rank()[1]]);
+        else MY_Alltoall(alltoall_handler_backward[1]);
         MPI_Barrier(parallel.dim0_comm()[parallel.grid_rank()[1]]);
 
 
@@ -1008,10 +1209,8 @@ void PlanFFT<compType>::execute(int fft_type)
 #endif
 
 
-
-
-
-        MPI_Alltoall(temp1_, 2* rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_, MPI_DATA_PREC, temp_, 2* rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_, MPI_DATA_PREC, parallel.dim1_comm()[parallel.grid_rank()[0]]);
+        if(alltoall_handler_backward[2]==-1)MPI_Alltoall(temp1_, 2* rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_, MPI_DATA_PREC, temp_, 2* rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_, MPI_DATA_PREC, parallel.dim1_comm()[parallel.grid_rank()[0]]);
+        else MY_Alltoall(alltoall_handler_backward[2]);
         MPI_Scatter(&temp1_[r2cSizeLocal_as_*rSizeLocal_[2]*rSize_[0]][0], 2*rSizeLocal_[1]*rSizeLocal_[2], MPI_DATA_PREC, &temp_[(r2cSize_-1)*rSizeLocal_[1]*rSizeLocal_[2]][0] , 2*rSizeLocal_[1]*rSizeLocal_[2], MPI_DATA_PREC ,parallel.grid_size()[1]-1, parallel.dim1_comm()[parallel.grid_rank()[0]]);
         MPI_Barrier(parallel.dim1_comm()[parallel.grid_rank()[0]]);
 
