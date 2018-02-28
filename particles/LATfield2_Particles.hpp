@@ -705,7 +705,7 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
         }
     }
 
-    part_simple partTest;
+    part partTest;
 
     for(x.first();x.test();x.next())
     {
