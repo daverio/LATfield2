@@ -1,7 +1,7 @@
 #ifndef LATFIELD2_PLANFFT_DECL_HPP
 #define LATFIELD2_PLANFFT_DECL_HPP
 
-#include "mpi_alltoallv_general.c"
+#include "mpi_alltoallv_general.h"
 
 
 
@@ -552,37 +552,50 @@ void PlanFFT<compType>::initialize(Field<float>*  rfield,Field<compType>*   kfie
 
   if(parallel.node_size() != -1)
   {
-    int min;
+    int minim;
     int blocksize[max(parallel.grid_size()[0],parallel.grid_size()[1])];
     int sdispls[max(parallel.grid_size()[0],parallel.grid_size()[1])];
     int rdispls[max(parallel.grid_size()[0],parallel.grid_size()[1])];
     //MPI_Alltoall(temp_, 2* rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_, MPI_DATA_PREC, temp1_, 2* rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_, MPI_DATA_PREC, parallel.dim1_comm()[parallel.grid_rank()[0]]);
-
     for(int i = 0;i<parallel.grid_size()[1];i++)
     {
       blocksize[i] = 2*rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_;
       sdispls[i] = i*blocksize[i];
-      rdispls[i] = parallel.grid_rank()[1]*blocksize[i];
+      rdispls[i] = i*blocksize[i];// parallel.grid_rank()[1]*blocksize[i];
     }
+    //int MY_Alltoallv_init(void *sendbuf,
+    //                      int *sendcounts,
+    //                      int *sdispls,
+    //                      MPI_Datatype sendtype,
+    //                      void *recvbuf,
+    //                      int *recvcounts,
+    //                      int *rdispls,
+    //                      MPI_Datatype recvtype,
+    //                      MPI_Comm comm,
+    //                      int my_cores_per_node_row,
+    //                      MPI_Comm comm2,
+    //                      int my_cores_per_node_column,
+    //                      int max_message_size_node);
     alltoall_handler_forward[0] =
         MY_Alltoallv_init(temp_,
                           blocksize,
-                          sdispls,
+                          NULL,
                           MPI_DATA_PREC,
                           temp1_,
-                          blocksize,
-                          rdispls,
+                          NULL,
+                          NULL,
                           MPI_DATA_PREC,
                           parallel.dim1_comm()[parallel.grid_rank()[0]],
                           parallel.node_grid_size(1),
                           parallel.dim0_comm()[parallel.grid_rank()[1]],
                           parallel.node_grid_size(0),
-                          1000000);
-    min = parallel.min<int>(alltoall_handler_forward[0])
-    if(min == -1)
+                          16000000);
+    parallel.min<int>(alltoall_handler_forward[0]);
+    if(alltoall_handler_forward[0] == -1)
     {
-      cout<<"cant define the forward alltoall 0, setting to normal alltoall"<<endl;
-      alltoall_handler_forward[0] = -1;
+      COUT<<"cant define the forward alltoall 0, setting to normal alltoall"<<endl;
+      for(int i = 0;i<parallel.grid_size()[1];i++) COUT<<"blocksize = " << blocksize[i] <<endl;
+      //alltoall_handler_forward[0] = -1;
     }
     //MPI_Alltoall(temp_, (2*rSizeLocal_[2]*rSizeLocal_[2]*r2cSizeLocal_), MPI_DATA_PREC, temp1_, (2*rSizeLocal_[2]*rSizeLocal_[2]*r2cSizeLocal_), MPI_DATA_PREC, parallel.dim0_comm()[parallel.grid_rank()[1]]);
 
@@ -605,12 +618,12 @@ void PlanFFT<compType>::initialize(Field<float>*  rfield,Field<compType>*   kfie
                           parallel.node_grid_size(0),
                           parallel.dim1_comm()[parallel.grid_rank()[0]],
                           parallel.node_grid_size(1),
-                          1000000);
-    min = parallel.min<int>(alltoall_handler_forward[1]);
-    if(min == -1)
+                          100000000);
+    parallel.min<int>(alltoall_handler_forward[1]);
+    if(alltoall_handler_forward[1] == -1)
     {
-      cout<<"cant define the forward alltoall 1, setting to normal alltoall"<<endl;
-      alltoall_handler_forward[1] = -1;
+      COUT<<"cant define the forward alltoall 1, setting to normal alltoall"<<endl;
+      //alltoall_handler_forward[1] = -1;
     }
     //MPI_Alltoall(temp1_, 2* rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_, MPI_DATA_PREC, temp_, 2* rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_, MPI_DATA_PREC, parallel.dim1_comm()[parallel.grid_rank()[0]]);
 
@@ -620,6 +633,7 @@ void PlanFFT<compType>::initialize(Field<float>*  rfield,Field<compType>*   kfie
       sdispls[i] = i*blocksize[i];
       rdispls[i] = parallel.grid_rank()[1]*blocksize[i];
     }
+
     alltoall_handler_forward[2] =
         MY_Alltoallv_init(temp1_,
                           blocksize,
@@ -633,12 +647,12 @@ void PlanFFT<compType>::initialize(Field<float>*  rfield,Field<compType>*   kfie
                           parallel.node_grid_size(1),
                           parallel.dim0_comm()[parallel.grid_rank()[1]],
                           parallel.node_grid_size(0),
-                          1000000);
-    min = parallel.min<int>(alltoall_handler_forward[2]);
-    if(min == -1)
+                          100000000);
+    parallel.min<int>(alltoall_handler_forward[2]);
+    if(alltoall_handler_forward[2] == -1)
     {
-      cout<<"cant define the foward alltoall 2, setting to normal alltoall"<<endl;
-      alltoall_handler_forward[2] = -1;
+      COUT<<"cant define the foward alltoall 2, setting to normal alltoall"<<endl;
+      //alltoall_handler_forward[2] = -1;
     }
 
     //MPI_Alltoall(temp_,2* rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_, MPI_DATA_PREC, temp1_, 2* rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_, MPI_DATA_PREC, parallel.dim1_comm()[parallel.grid_rank()[0]]);
@@ -662,12 +676,12 @@ void PlanFFT<compType>::initialize(Field<float>*  rfield,Field<compType>*   kfie
                           parallel.node_grid_size(1),
                           parallel.dim0_comm()[parallel.grid_rank()[1]],
                           parallel.node_grid_size(0),
-                          1000000);
-    min = parallel.min<int>(alltoall_handler_backward[0])
-    if(min == -1)
+                          100000000);
+    parallel.min<int>(alltoall_handler_backward[0]);
+    if(alltoall_handler_backward[0] == -1)
     {
-      cout<<"cant define the backward alltoall 0, setting to normal alltoall"<<endl;
-      alltoall_handler_backward[0] = -1;
+      COUT<<"cant define the backward alltoall 0, setting to normal alltoall"<<endl;
+      //alltoall_handler_backward[0] = -1;
     }
     //MPI_Alltoall(temp_, (2*rSizeLocal_[2]*rSizeLocal_[2]*r2cSizeLocal_), MPI_DATA_PREC, temp1_, (2*rSizeLocal_[2]*rSizeLocal_[2]*r2cSizeLocal_), MPI_DATA_PREC, parallel.dim0_comm()[parallel.grid_rank()[1]]);
 
@@ -690,12 +704,12 @@ void PlanFFT<compType>::initialize(Field<float>*  rfield,Field<compType>*   kfie
                           parallel.node_grid_size(0),
                           parallel.dim1_comm()[parallel.grid_rank()[0]],
                           parallel.node_grid_size(1),
-                          1000000);
-    min = parallel.min<int>(alltoall_handler_backward[1]);
-    if(min == -1)
+                          100000000);
+    parallel.min<int>(alltoall_handler_backward[1]);
+    if(alltoall_handler_backward[1] == -1)
     {
-      cout<<"cant define the backward alltoall 0, setting to normal alltoall"<<endl;
-      alltoall_handler_backward[1] = -1;
+      COUT<<"cant define the backward alltoall 1, setting to normal alltoall"<<endl;
+      //alltoall_handler_backward[1] = -1;
     }
     //MPI_Alltoall(temp1_, 2* rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_, MPI_DATA_PREC, temp_, 2* rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_, MPI_DATA_PREC, parallel.dim1_comm()[parallel.grid_rank()[0]]);
 
@@ -718,13 +732,17 @@ void PlanFFT<compType>::initialize(Field<float>*  rfield,Field<compType>*   kfie
                           parallel.node_grid_size(1),
                           parallel.dim0_comm()[parallel.grid_rank()[1]],
                           parallel.node_grid_size(0),
-                          1000000);
-    min = parallel.min<int>(alltoall_handler_backward[2])
-    if(min == -1)
+                          100000000);
+    parallel.min<int>(alltoall_handler_backward[2]);
+    if(alltoall_handler_backward[2] == -1)
     {
-      cout<<"cant define the backward alltoall 0, setting to normal alltoall"<<endl;
-      alltoall_handler_backward[2] = -1;
+      COUT<<"cant define the backward alltoall 2, setting to normal alltoall"<<endl;
+      //alltoall_handler_backward[2] = -1;
     }
+  }
+  else
+  {
+    COUT<<"using normal alltoall"<<endl;
   }
 
   //create the fftw_plan

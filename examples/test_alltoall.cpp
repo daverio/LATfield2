@@ -33,7 +33,7 @@ int main(int argc, char **argv)
                 break;
 		}
 	}
-  //parallel.setNodeGeometry(3,4);
+  parallel.setNodeGeometry(3,4);
 	parallel.initialize(n,m);
 
   Lattice lat;

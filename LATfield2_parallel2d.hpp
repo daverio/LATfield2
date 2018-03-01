@@ -248,6 +248,14 @@ void Parallel2d::initialize(int proc_size0, int proc_size1,int IO_total_size, in
 					cout<<endl;
 				}
 				*/
+				/*
+				//verification:
+				char procName[MPI_MAX_PROCESSOR_NAME];
+				int procName_size;
+				MPI_Get_processor_name(procName,&procName_size)
+				string str_procName;
+				*/
+
 				MPI_Group_range_incl(lat_world_group_,n_nodes[0],rangs0,&dim0_group_[icomm]);
 				MPI_Comm_create(lat_world_comm_, dim0_group_[icomm], &dim0_comm_[icomm]);
 			}

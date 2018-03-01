@@ -41,7 +41,7 @@ int setup_shared_memory(MPI_Comm comm, int my_cores_per_node_row, MPI_Comm comm2
         MPI_Barrier(my_comm_node);
         MPI_Comm_free(&my_comm_node);
     }
-    (*shmem)=(char*)shmat(*shmemid, NULL, 0);
+    (*shmem)=shmat(*shmemid, NULL, 0);
     if ((*shmem)==NULL) exit(2);
     if (!((my_mpi_rank_row%my_cores_per_node_row==0))&&(my_mpi_rank_column%my_cores_per_node_column==0)){
         (*shmemid)=-1;
@@ -63,7 +63,7 @@ void setup_rank_translation(MPI_Comm comm, int my_cores_per_node_row, MPI_Comm c
         MPI_Comm_rank(comm2, &my_mpi_rank_column);
         MPI_Comm_split(comm2, my_mpi_rank_column/my_cores_per_node_column, my_mpi_rank_column%my_cores_per_node_column, &my_comm_node);
         MPI_Comm_rank(MPI_COMM_WORLD, &grank);
-        lglobal_ranks=(int*)malloc(sizeof(int)*my_cores_per_node_column);
+        lglobal_ranks=malloc(sizeof(int)*my_cores_per_node_column);
         MPI_Gather(&grank, 1, MPI_INT, lglobal_ranks, 1, MPI_INT, 0, my_comm_node);
         MPI_Bcast(lglobal_ranks, my_cores_per_node_column, MPI_INT, 0, my_comm_node);
         MPI_Barrier(my_comm_node);
@@ -97,7 +97,7 @@ int MY_Alltoallv_init(void *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype
     if (handle>=MY_HANDLE_MAX){
         return(-1);
     }
-    comm_code[handle]=(void**)malloc(sizeof(void *)*1000000);
+    comm_code[handle]=malloc(sizeof(void *)*1000000);
     MPI_Comm_size(comm, &my_mpi_size_row);
     MPI_Comm_rank(comm, &my_mpi_rank_row);
     if (comm2!=MPI_COMM_NULL){
@@ -115,9 +115,9 @@ int MY_Alltoallv_init(void *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype
     my_mpi_rank_global=my_mpi_rank_row*my_cores_per_node_column+my_mpi_rank_column%my_cores_per_node_column;
     new_counts_displs=(sdispls==NULL);
     if (new_counts_displs){
-        sdispls=(int*)malloc(my_mpi_size_row*sizeof(int));
-        recvcounts=(int*)malloc(my_mpi_size_row*sizeof(int));
-        rdispls=(int*)malloc(my_mpi_size_row*sizeof(int));
+        sdispls=malloc(my_mpi_size_row*sizeof(int));
+        recvcounts=malloc(my_mpi_size_row*sizeof(int));
+        rdispls=malloc(my_mpi_size_row*sizeof(int));
         MPI_Alltoall(sendcounts, 1, MPI_INT, recvcounts, 1, MPI_INT, comm);
         sdispls[0]=0;
         rdispls[0]=0;
@@ -126,7 +126,7 @@ int MY_Alltoallv_init(void *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype
             rdispls[i+1]=rdispls[i]+recvcounts[i];
         }
     }
-    setup_shared_memory(comm, my_cores_per_node_row, comm2, my_cores_per_node_column, my_mpi_size_row*my_cores_per_node_row*my_cores_per_node_column*2*sizeof(int), &lshmemid, (volatile char**)&lshmem);
+    setup_shared_memory(comm, my_cores_per_node_row, comm2, my_cores_per_node_column, my_mpi_size_row*my_cores_per_node_row*my_cores_per_node_column*2*sizeof(int), &lshmemid, &lshmem);
     lshmem_sendcounts=lshmem;
     lshmem_recvcounts=lshmem+my_mpi_size_row*my_cores_per_node_row*my_cores_per_node_column;
     for (j=0; j<my_mpi_size_row/my_cores_per_node_row; j++){
@@ -161,7 +161,7 @@ int MY_Alltoallv_init(void *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype
             MPI_Barrier(comm);
         }
         if ((my_mpi_rank_row%my_cores_per_node_row==0)&&(my_mpi_rank_column%my_cores_per_node_column==0)){
-            memset((void *)shmem, 0, NUM_BARRIERS);
+            memset(shmem, 0, NUM_BARRIERS);
         }
         MPI_Barrier(comm);
         if (comm2!=MPI_COMM_NULL){
@@ -169,7 +169,7 @@ int MY_Alltoallv_init(void *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype
             MPI_Barrier(comm);
         }
     }
-    global_ranks=(int*)malloc(sizeof(int)*my_mpi_size_row*my_cores_per_node_column);
+    global_ranks=malloc(sizeof(int)*my_mpi_size_row*my_cores_per_node_column);
     setup_rank_translation(comm, my_cores_per_node_row, comm2, my_cores_per_node_column, global_ranks);
     my_shared_sendbuf=shmem+NUM_BARRIERS;
     my_shared_recvbuf=shmem+NUM_BARRIERS+my_size_shared_sendbuf;
@@ -330,7 +330,7 @@ int MY_Alltoallv_init(void *sendbuf, int *sendcounts, int *sdispls, MPI_Datatype
         free(recvcounts);
         free(sdispls);
     }
-    shmdt((const void*)lshmem);
+    shmdt(lshmem);
     if (lshmemid!=-1){
         shmctl(lshmemid, IPC_RMID, NULL);
     }
@@ -347,7 +347,7 @@ int MY_Alltoall_done(int handle){
             return(0);
         }
     }
-    shmdt((const void*)shmem);
+    shmdt(shmem);
     if (shmemid!=-1){
         shmctl(shmemid, IPC_RMID, NULL);
     }
@@ -370,37 +370,37 @@ int MY_Alltoall(int handle){
     MPI_Request my_request[MY_REQUEST_MAX];
     void **lcomm_code = comm_code[handle];
     int num_cores;
-    num_cores=*((int*)(lcomm_code));
+    num_cores=(int)(*(lcomm_code));
     while (*lcomm_code!=NULL){
         lcomm_code++;
         int num_comm=0;
         while (*lcomm_code!=NULL){
-            MPI_Irecv(*lcomm_code, *((int*)(lcomm_code+2)), MPI_CHAR, *((int*)(lcomm_code+1)), 0, MPI_COMM_WORLD, my_request+num_comm);
+            MPI_Irecv(*lcomm_code, (int)(*(lcomm_code+2)), MPI_CHAR, (int)(*(lcomm_code+1)), 0, MPI_COMM_WORLD, my_request+num_comm);
             lcomm_code+=3;
             num_comm++;
         }
         lcomm_code++;
         while (*lcomm_code!=NULL){
-            memcpy(*lcomm_code, *(lcomm_code+1), *((int*)(lcomm_code+2)));
+            memcpy(*lcomm_code, *(lcomm_code+1), (int)(*(lcomm_code+2)));
             lcomm_code+=3;
         }
         lcomm_code++;
         node_barrier(num_cores);
         while (*lcomm_code!=NULL){
-            MPI_Isend(*lcomm_code, *((int*)(lcomm_code+2)), MPI_CHAR, *((int*)(lcomm_code+1)), 0, MPI_COMM_WORLD, my_request+num_comm);
+            MPI_Isend(*lcomm_code, (int)(*(lcomm_code+2)), MPI_CHAR, (int)(*(lcomm_code+1)), 0, MPI_COMM_WORLD, my_request+num_comm);
             lcomm_code+=3;
             num_comm++;
         }
         lcomm_code++;
         while (*lcomm_code!=NULL){
-            memcpy(*lcomm_code, *(lcomm_code+1), *((int*)(lcomm_code+2)));
+            memcpy(*lcomm_code, *(lcomm_code+1), (int)(*(lcomm_code+2)));
             lcomm_code+=3;
         }
         lcomm_code++;
         MPI_Waitall(num_comm, my_request, my_status);
         node_barrier(num_cores);
         while (*lcomm_code!=NULL){
-            memcpy(*lcomm_code, *(lcomm_code+1), *((int*)(lcomm_code+2)));
+            memcpy(*lcomm_code, *(lcomm_code+1), (int)(*(lcomm_code+2)));
             lcomm_code+=3;
         }
         lcomm_code++;
