@@ -285,6 +285,8 @@ public:
      */
     size_t mass_offset(){return mass_offset_;};
 
+    long numParts(){return numParticles_};
+
 protected:
 
   part_info part_global_info_;
