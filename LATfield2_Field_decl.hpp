@@ -1549,26 +1549,26 @@ void Field<FieldType>::load(const string filename,
 template <class FieldType>
 void  Field<FieldType>::saveHDF5(string filename, string dataset_name)
 {
-#ifdef HDF5
+	#ifdef HDF5
 
-	save_hdf5(data_,type_id,array_size,lattice_->coordSkip(),lattice_->size(),lattice_->sizeLocal(),lattice_->halo(),lattice_->dim(),components_,filename,dataset_name,parallel.lat_world_comm());
-#else
-    COUT<<"LATfield2d must be compiled with HDF5 (flag HDF5 turn on!)"<<endl;
-    COUT<<"to be able to use hdf5 data format!!!)"<<endl;
-    COUT<<"saving file in binary: "<<filename<<"BIN"<<endl;
-    this->write(filename+"BIN");
-#endif
+		save_hdf5(data_,type_id_,array_size_,lattice_->coordSkip(),lattice_->size(),lattice_->sizeLocal(),lattice_->halo(),lattice_->dim(),components_,filename,dataset_name);
+	#else
+	    COUT<<"LATfield2d must be compiled with HDF5 (flag HDF5 turn on!)"<<endl;
+	    COUT<<"to be able to use hdf5 data format!!!)"<<endl;
+	    COUT<<"saving file in binary: "<<filename<<"BIN"<<endl;
+	    this->write(filename+"BIN");
+	#endif
 }
 template <class FieldType>
 void  Field<FieldType>::loadHDF5(string filename, string dataset_name)
 {
-#ifdef HDF5
-	load_hdf5(data_,lattice_->coordSkip(),lattice_->size(),lattice_->sizeLocal(),lattice_->halo(),lattice_->dim(),components_,filename,dataset_name,parallel.lat_world_comm());
-#else
-    COUT<<"LATfield2d must be compiled with HDF5 (flag HDF5 turn on!)"<<endl;
-    COUT<<"to be able to use hdf5 data format!!!)"<<endl;
-    COUT<<"aborting...."<<endl;
-#endif
+	#ifdef HDF5
+		load_hdf5(data_,lattice_->coordSkip(),lattice_->size(),lattice_->sizeLocal(),lattice_->halo(),lattice_->dim(),components_,filename,dataset_name);
+	#else
+	    COUT<<"LATfield2d must be compiled with HDF5 (flag HDF5 turn on!)"<<endl;
+	    COUT<<"to be able to use hdf5 data format!!!)"<<endl;
+	    COUT<<"aborting...."<<endl;
+	#endif
 }
 
 template <class FieldType>

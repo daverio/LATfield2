@@ -20,50 +20,36 @@ extern "C"{
 #include "int2string.hpp"
 
 
-int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,int halo, int lat_dim,int comp,hid_t array_type,int array_size,string  filename_str, MPI_Comm & comm)
+int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,int halo, int lat_dim,int comp,hid_t array_type,int array_size,string  filename_str)
 {
 
 
 
-
-		 int mpi_size,mpi_rank,p;
-		 mpi_rank = -1;
-		 MPI_Comm_size(comm, &mpi_size);
-		 MPI_Comm_rank(comm, &mpi_rank);
-
-
-		 cout<< "rank: "<<mpi_rank<<endl;
-
-
-		 //MPI_Barrier(comm);
-
-
-		 char * filename;
-           filename = (char*)malloc((filename_str.size()+1)*sizeof(char));
-           for(int i = 0;i<filename_str.size();i++)filename[i]=filename_str[i];
-           filename[filename_str.size()] = '\0';
 
 
 	   hid_t file_id, plist_id,filespace,memspace,dset_id,dtype_id,dtbase_id;
 	   hsize_t  components;
 
 
+	   char * filename;
+           filename = (char*)malloc((filename_str.size()+1)*sizeof(char));
+           for(int i = 0;i<filename_str.size();i++)filename[i]=filename_str[i];
+           filename[filename_str.size()] = '\0';
 
-		 //cout<< lat_dim << endl;
 	   herr_t status;
 
 	   hsize_t * sizeGlobal;
-		 sizeGlobal = (hsize_t *)malloc((lat_dim+1)*sizeof(hsize_t));
- 	 hsize_t * localSize;
-	   localSize = (hsize_t *)malloc((lat_dim+1)*sizeof(hsize_t));
+	   sizeGlobal = new hsize_t[lat_dim+1];
+	   hsize_t * localSize;
+	   localSize = new hsize_t[lat_dim+1];
 
 
-     hsize_t * offset;
-     offset = (hsize_t *)malloc((lat_dim+1)*sizeof(hsize_t));
+       hsize_t * offset;
+       offset = new hsize_t[lat_dim+1];
 	   hsize_t * offsetf;
-	   offsetf = (hsize_t *)malloc((lat_dim+1)*sizeof(hsize_t));
+	   offsetf = new hsize_t[lat_dim+1];
 	   hsize_t * count;
-	   count = (hsize_t *)malloc((lat_dim+1)*sizeof(hsize_t));
+	   count = new hsize_t[lat_dim+1];
 
 
 	   hsize_t haloSize = 2*halo;
@@ -91,24 +77,22 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
        if(array_size ==1)
        {
            dtype_id = H5Tcopy(array_type);
-		   		 //status = H5Tset_order(dtype_id, DATA_ORDER);
+		   status = H5Tset_order(dtype_id, DATA_ORDER);
        }
        else if(array_size > 1)
        {
-		   //components = array_size;
-		   //dtbase_id = H5Tcopy(array_type);
-		   //status = H5Tset_order(dtbase_id, DATA_ORDER);
-		   //dtype_id = H5Tarray_create(dtbase_id,1,&components);
+		   components = array_size;
+		   dtbase_id = H5Tcopy(array_type);
+		   status = H5Tset_order(dtbase_id, DATA_ORDER);
+		   dtype_id = H5Tarray_create(dtbase_id,1,&components);
        }
-
        ///////////////////////////////
 	   ///////////////////////////////
 
+
 #ifdef H5_HAVE_PARALLEL //Parallel version, H5_HAVE_PARALLEL definition is needed by hdf5 to run in parallel too !
-
-				/*
-
-				MPI_Info info  = MPI_INFO_NULL;
+        MPI_Comm comm  = parallel.lat_world_comm();
+        MPI_Info info  = MPI_INFO_NULL;
 
         plist_id = H5Pcreate(H5P_FILE_ACCESS);
         H5Pset_fapl_mpio(plist_id, comm, info);
@@ -198,15 +182,13 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
 
         free(filename);
 
-				*/
-
 	   return 1;
 
 #else // serial version, without H5_HAVE_PARALLEL definition hdf5 will run in serial !
 
     int mpi_size,mpi_rank,p;
-    MPI_Comm_size(comm, &mpi_size);
-    MPI_Comm_rank(comm, &mpi_rank);
+    MPI_Comm_size(parallel.lat_world_comm(), &mpi_size);
+    MPI_Comm_rank(parallel.lat_world_comm(), &mpi_rank);
 
     //create the file
 
@@ -240,10 +222,10 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
         H5Sclose(filespace);
         H5Fclose(file_id);
     }
-    MPI_Barrier(comm);
+    MPI_Barrier(parallel.lat_world_comm());
     for(p=0;p < mpi_size;p++)
     {
-        MPI_Barrier(comm);
+        MPI_Barrier(parallel.lat_world_comm());
         if(mpi_rank==p)
         {
             plist_id = H5Pcreate(H5P_FILE_ACCESS);
@@ -301,7 +283,7 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
             H5Fclose(file_id);
 
         }
-        MPI_Barrier(comm);
+        MPI_Barrier(parallel.lat_world_comm());
 
 
 
@@ -325,7 +307,7 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
 
 
 
-	int load_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,int comp,int halo, int lat_dim,string  filename_str, MPI_Comm & comm)
+	int load_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,int comp,int halo, int lat_dim,string  filename_str)
 	{
 
         hid_t file_id, plist_id,filespace,memspace,dset_id,dtype_id,dtbase_id;
@@ -373,6 +355,8 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
 
 #ifdef H5_HAVE_PARALLEL	//Parallel version, H5_HAVE_PARALLEL definition is needed by hdf5 to run in parallel too
 
+
+        MPI_Comm comm  = parallel.lat_world_comm();
 		MPI_Info info  = MPI_INFO_NULL;
 
 
@@ -459,8 +443,8 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
 
 
         int mpi_size,mpi_rank,p;
-		MPI_Comm_size(comm, &mpi_size);
-		MPI_Comm_rank(comm, &mpi_rank);
+		MPI_Comm_size(parallel.lat_world_comm(), &mpi_size);
+		MPI_Comm_rank(parallel.lat_world_comm(), &mpi_rank);
 
 
 		for(p=0;p < mpi_size;p++)
@@ -535,7 +519,7 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
                     H5Fclose(file_id);
 
                 }
-                MPI_Barrier(comm);
+                MPI_Barrier(parallel.lat_world_comm());
 
             }
 
@@ -559,12 +543,12 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
 
 
 template<class fieldType>
-int save_hdf5(fieldType *data,hid_t type_id,int array_size,long file_offset[2],int *size,int * sizeLocal,int halo, int lat_dim,int comp,string  filename_str, string dataset_name_str, MPI_Comm comm)
+int save_hdf5(fieldType *data,hid_t type_id,int array_size,long file_offset[2],int *size,int * sizeLocal,int halo, int lat_dim,int comp,string  filename_str, string dataset_name_str)
 {
-	return save_hdf5_externC((char*)data, file_offset, size, sizeLocal, halo, lat_dim, comp, type_id, array_size, filename_str, comm);
+	return save_hdf5_externC((char*)data, file_offset, size, sizeLocal, halo, lat_dim, comp, type_id, array_size, filename_str);
 }
 template<class fieldType>
-int load_hdf5(fieldType *data,long file_offset[2],int *size,int * sizeLocal,int halo, int lat_dim,int comp,string  filename_str, string dataset_name_str, MPI_Comm comm)
+int load_hdf5(fieldType *data,long file_offset[2],int *size,int * sizeLocal,int halo, int lat_dim,int comp,string  filename_str, string dataset_name_str)
 {
-    return load_hdf5_externC( (char*) data, file_offset, size, sizeLocal, comp, halo, lat_dim,  filename_str, comm);
+    return load_hdf5_externC( (char*) data, file_offset, size, sizeLocal, comp, halo, lat_dim,  filename_str);
 }
