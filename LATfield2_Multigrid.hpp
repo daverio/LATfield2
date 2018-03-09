@@ -140,7 +140,7 @@ void MultiGrid::initialize_Field(Field<FieldType> * fieldBase, MultiField<FieldT
 																																			fieldBase->cols(),
 																																			fieldBase->symmetry());
 
-			COUT << "Lattice size: layer["<< i <<"] ("<< lattice_[i].size(0)<<","<< lattice_[i].size(1)<<","<< lattice_[i].size(2)<<");"<<endl;
+			//COUT << "Lattice size: layer["<< i <<"] ("<< lattice_[i].size(0)<<","<< lattice_[i].size(1)<<","<< lattice_[i].size(2)<<");"<<endl;
 
 
 
