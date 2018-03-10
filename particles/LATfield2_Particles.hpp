@@ -1544,6 +1544,7 @@ void Particles<part,part_info,part_dataType>::saveHDF5(string filename_base, int
     int numProcPerFile = parallel.size()/fileNumber;
     int numProcPerFileDim1 = parallel.grid_size()[1]/fileNumber;
     int whichFile  = parallel.grid_rank()[1] * fileNumber / parallel.grid_size()[1];
+    //cout<< "whichFile: "<<whichFile<<endl;
     //int rankInFile;
     long numParts[numProcPerFile];
     int ranksList[numProcPerFile];
