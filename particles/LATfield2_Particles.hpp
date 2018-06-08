@@ -816,6 +816,7 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                         cout<< "particle : "<<(*itTemp).ID<<" have move to far away (more than 1 proc)."<<endl;
                         cout<< "particle position: "<< (*itTemp) <<endl;
                         cout<< thisRanks[0]<<" , "<< thisRanks[1]<<" , "<< partRanks[0]<<" , "<< partRanks[1]<<endl;
+                        parallel.abortForce();
                     }
                 }
                 else if(partRanks[1]==thisRanks[1]+1)
@@ -840,6 +841,7 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                         cout<< "particle : "<<(*itTemp).ID<<" have move to far away (more than 1 proc)."<<endl;
                         cout<< "particle position: "<< (*itTemp) <<endl;
                         cout<< thisRanks[0]<<" , "<< thisRanks[1]<<" , "<< partRanks[0]<<" , "<< partRanks[1]<<endl;
+                        parallel.abortForce();
                     }
                 }
                 else if(partRanks[1]==thisRanks[1])
@@ -859,6 +861,7 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                         cout<< "particle : "<<(*itTemp).ID<<" have move to far away (more than 1 proc)."<<endl;
                         cout<< "particle position: "<< (*itTemp) <<endl;
                         cout<< thisRanks[0]<<" , "<< thisRanks[1]<<" , "<< partRanks[0]<<" , "<< partRanks[1]<<endl;
+                        parallel.abortForce();
                     }
                 }
                 else
@@ -866,6 +869,7 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                     cout<< "particle : "<<(*itTemp).ID<<" have move to far away (more than 1 proc)."<<endl;
                     cout<< "particle position: "<< (*itTemp) <<endl;
                     cout<< thisRanks[0]<<" , "<< thisRanks[1]<<" , "<< partRanks[0]<<" , "<< partRanks[1]<<endl;
+                    parallel.abortForce();
                 }
 
             }
