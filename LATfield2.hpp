@@ -22,7 +22,7 @@
 
 
 #ifdef HDF5
-#include "hdf5.h"
+#include <hdf5.h>
 
 
 
@@ -81,7 +81,7 @@ Parallel2d parallel;
 
 
 #ifdef HDF5
-#include "hdf5.h"
+#include <hdf5.h>
 #ifdef H5_HAVE_PIXIE
 #include "LATfield2_save_hdf5_pixie.h"
 #else
