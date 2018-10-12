@@ -461,7 +461,7 @@ void Particles<part,part_info,part_dataType>::coutPart(long ID)
         {
             for(it=(field_part_)(x).parts.begin(); it != (field_part_)(x).parts.end();++it)
             {
-                if((*it).ID==ID)cout<< "Parallel ranks: ("<<parallel.grid_rank()[1]<<","<<parallel.grid_rank()[0]<<") ; "<< part_global_info_.type_name<<": "<<*it<<endl;
+                if((*it).ID==ID)cout<< "Parallel ranks: ("<<parallel.grid_rank()[1]<<","<<parallel.grid_rank()[0]<<") ; "<< part_global_info_.type_name<<": "<<*it<< " , lattice position:"<<x <<endl;
             }
         }
 

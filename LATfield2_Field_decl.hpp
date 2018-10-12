@@ -380,6 +380,10 @@ class Field
          Returns the number of columns of the component matrix at each sites.
          */
 		int   cols();
+    /*!
+     Returns the number of component matrix at each sites.
+     */
+    int   nMatrix();
         /*!
          returns the symmetry of the component matrix at each sites.
          */
@@ -412,8 +416,8 @@ class Field
 		int        components_;
 		int        rows_;
 		int        cols_;
-        int        nMatrix_;
-        int        matrixSize_;
+    int        nMatrix_;
+    int        matrixSize_;
 		int        symmetry_;
 		unsigned int sizeof_fieldType_;
 
@@ -1920,6 +1924,9 @@ int Field<FieldType>::rows() { return rows_; }
 
 template <class FieldType>
 int Field<FieldType>::cols() { return cols_; }
+
+template <class FieldType>
+int Field<FieldType>::nMatrix() { return nMatrix_; }
 
 template <class FieldType>
 int Field<FieldType>::symmetry() { return symmetry_; }
