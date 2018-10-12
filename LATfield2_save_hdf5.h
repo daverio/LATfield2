@@ -225,7 +225,7 @@ extern "C"{
 
 
 
-	    hid_t file_id, plist_id,filespace,memspace,dset_id,dtype_id,dtbase_id,group_id,root_id;
+	    hid_t file_id, plist_id, plistxfer_id,filespace,memspace,dset_id,dtype_id,dtbase_id,group_id,root_id;
 
 
 		char * filename;
@@ -274,14 +274,14 @@ extern "C"{
 		plist_id = H5Pcreate(H5P_FILE_ACCESS);
 		H5Pset_fapl_mpio(plist_id, comm, info);
 
-		file_id = H5Fopen(filename,H5F_ACC_RDWR,plist_id);
-		H5Pclose(plist_id);
+		file_id = H5Fopen(filename,H5F_ACC_RDONLY,plist_id);
+		//H5Pclose(plist_id);
 
 		root_id = H5Gopen(file_id,"/",H5P_DEFAULT);
 		dset_id = H5Dopen(root_id, dataset_name, H5P_DEFAULT);
 		filespace = H5Dget_space(dset_id);
 		dtype_id = H5Dget_type(dset_id);
-		plist_id = H5Pcreate(H5P_DATASET_XFER);
+		//plist_id = H5Pcreate(H5P_DATASET_XFER);
 
 		memspace = H5Screate_simple(lat_dim,localSize,NULL);
 
@@ -291,15 +291,17 @@ extern "C"{
 		status = H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offsetf, NULL, count, NULL);
 		status = H5Sselect_hyperslab(memspace, H5S_SELECT_SET, offset, NULL, count, NULL);
 
-		plist_id = H5Pcreate(H5P_DATASET_XFER);
-		H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
-		status = H5Dread(dset_id, dtype_id, memspace, filespace, plist_id, data);
+		plistxfer_id = H5Pcreate(H5P_DATASET_XFER);
+		H5Pset_dxpl_mpio(plistxfer_id, H5FD_MPIO_COLLECTIVE);
+		status = H5Dread(dset_id, dtype_id, memspace, filespace, plistxfer_id, data);
 
 		H5Dclose(dset_id);
+		H5Gclose(root_id);
 		H5Sclose(filespace);
 		H5Sclose(memspace);
-		H5Pclose(plist_id);
+		H5Pclose(plistxfer_id);
 		H5Fclose(file_id);
+		H5Pclose(plist_id);
 
 
 		return 1;
