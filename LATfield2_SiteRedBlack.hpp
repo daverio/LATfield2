@@ -10,7 +10,11 @@ public:
   SiteRedBlack3d(Lattice& lattice);
   SiteRedBlack3d(Lattice& lattice, long index);
   void first();
+  void firstRed();
+  void firstBlack();
   bool test();
+  bool testRed();
+  bool testBlack();
   void next();
   void nextRed();
   void nextBlack();
@@ -30,6 +34,18 @@ void SiteRedBlack3d::first()
   color_ = 0;
 }
 
+void SiteRedBlack3d::firstRed()
+{
+  index_=lattice_->siteFirst();
+  color_ = 0;
+}
+
+void SiteRedBlack3d::firstBlack()
+{
+  index_=lattice_->siteFirst()+1;
+  color_ = 1;
+}
+
 bool SiteRedBlack3d::test()
 {
   if(color_ == 1)
@@ -44,6 +60,32 @@ bool SiteRedBlack3d::test()
       color_ = 1;
     }
     return 1;
+  }
+}
+
+bool SiteRedBlack3d::testBlack()
+{
+  if(color_ == 1)
+  {
+    return index_ <= lattice_->siteLast();
+  }
+  else
+  {
+    cout << " WTF Black" << endl;
+    return 0;
+  }
+}
+
+bool SiteRedBlack3d::testRed()
+{
+  if(!color_)
+  {
+    return index_ <= lattice_->siteLast();
+  }
+  else
+  {
+    cout << " WTF Red" << endl;
+    return 0;
   }
 }
 
