@@ -20,7 +20,7 @@ extern "C"{
 #include "int2string.hpp"
 
 
-int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,int halo, int lat_dim,int comp,hid_t array_type,int array_size,string  filename_str)
+int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,int halo, int lat_dim,int comp,hid_t array_type,int array_size,string  filename_str, string arg_dataset_name_str)
 {
 
 
@@ -29,6 +29,9 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
 
 	   hid_t file_id, plist_id,filespace,memspace,dset_id,dtype_id,dtbase_id;
 	   hsize_t  components;
+		 string compName;
+
+		 string dataset_name_str;
 
 
 	   char * filename;
@@ -97,7 +100,10 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
         plist_id = H5Pcreate(H5P_FILE_ACCESS);
         H5Pset_fapl_mpio(plist_id, comm, info);
 
-        file_id = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+				file_id = H5Fcreate(filename, H5F_ACC_EXCL, H5P_DEFAULT, plist_id);
+				if(file_id<0) file_id = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+
+
         H5Pclose(plist_id);
 
 
@@ -111,7 +117,9 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
             plist_id = H5Pcreate(H5P_DATASET_CREATE);
             //H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
 
-            dset_id = H5Dcreate1(file_id, "/comp_000", dtype_id, filespace,plist_id);
+
+						compName = "/"+arg_dataset_name_str;
+            dset_id = H5Dcreate1(file_id, compName.c_str(), dtype_id, filespace,plist_id);
 
             H5Pclose(plist_id);
             H5Sclose(filespace);
@@ -146,8 +154,7 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
                 plist_id = H5Pcreate(H5P_DATASET_CREATE);
                 //H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
 
-                string compName;
-                compName = "/comp_"+int2string(c,999);
+                compName = "/"+arg_dataset_name_str+"_"+int2string(c,999);
                 dset_id = H5Dcreate1(file_id, compName.c_str(), dtype_id, filespace,plist_id);
 
                 H5Pclose(plist_id);
@@ -195,7 +202,13 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
     if(mpi_rank==0)
     {
         plist_id = H5Pcreate(H5P_FILE_ACCESS);
-        file_id = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+        file_id = H5Fcreate(filename, H5F_ACC_EXCL, H5P_DEFAULT, plist_id);
+				if(file_id<0)
+				{
+					file_id = H5Fopen(filename,H5F_ACC_RDWR,plist_id);
+				}
+
+
         H5Pclose(plist_id);
 
         filespace = H5Screate_simple(lat_dim,sizeGlobal,NULL);
@@ -205,17 +218,25 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
 
         if(comp==1)
         {
-            dset_id = H5Dcreate1(file_id, "/comp_000", dtype_id, filespace,plist_id);
-            H5Dclose(dset_id);
+						compName = "/"+arg_dataset_name_str;
+						if(H5Lexists(file_id, compName.c_str(),H5P_DEFAULT)<=0)
+						{
+							cout<<"creating dataset"<<endl;
+							dset_id = H5Dcreate1(file_id, compName.c_str(), dtype_id, filespace,plist_id);
+							H5Dclose(dset_id);
+						}
         }
         else if(comp > 1)
         {
             for(int c = 0;c<comp;c++)
             {
-                string compName;
-                compName = "/comp_"+int2string(c,999);
-                dset_id = H5Dcreate1(file_id, compName.c_str(), dtype_id, filespace,plist_id);
-                H5Dclose(dset_id);
+                compName = "/"+arg_dataset_name_str+"_"+int2string(c,999);
+								if(H5Lexists(file_id, compName.c_str(),H5P_DEFAULT)<=0)
+								{
+									cout<<"creating dataset"<<endl;
+									dset_id = H5Dcreate1(file_id, compName.c_str(), dtype_id, filespace,plist_id);
+                	H5Dclose(dset_id);
+								}
             }
         }
         H5Pclose(plist_id);
@@ -235,7 +256,8 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
 
             if(comp==1)
             {
-                dset_id = H5Dopen(file_id, "/comp_000", H5P_DEFAULT);
+								compName = "/"+arg_dataset_name_str;
+                dset_id = H5Dopen(file_id, compName.c_str(), H5P_DEFAULT);
                 filespace = H5Dget_space(dset_id);
                 dtype_id = H5Dget_type(dset_id);
                 plist_id = H5Pcreate(H5P_DATASET_XFER);
@@ -257,9 +279,7 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
             {
                 for(int c=0;c<comp;c++)
                 {
-                    string compName;
-                    compName = "/comp_"+int2string(c,999);
-
+										compName = "/"+arg_dataset_name_str+"_"+int2string(c,999);
                     dset_id = H5Dopen(file_id, compName.c_str(), H5P_DEFAULT);
                     filespace = H5Dget_space(dset_id);
                     dtype_id = H5Dget_type(dset_id);
@@ -288,7 +308,7 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
 
 
     }
-
+		MPI_Barrier(parallel.lat_world_comm());
 
            delete[] filename;
 
@@ -307,7 +327,7 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
 
 
 
-	int load_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,int comp,int halo, int lat_dim,string  filename_str)
+	int load_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,int comp,int halo, int lat_dim,string  filename_str, string arg_dataset_name_str)
 	{
 
         hid_t file_id, plist_id,filespace,memspace,dset_id,dtype_id,dtbase_id;
@@ -317,6 +337,8 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
 	filename = (char*)malloc((filename_str.size()+1)*sizeof(char));
 	for(int i = 0;i<filename_str.size();i++)filename[i]=filename_str[i];
 	filename[filename_str.size()] = '\0';
+
+	string compName;
 
 
         hsize_t * sizeGlobal;
@@ -368,7 +390,8 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
 
         if(comp==1)
         {
-            dset_id = H5Dopen(file_id, "/comp_000", H5P_DEFAULT);
+						compName = "/"+arg_dataset_name_str;
+            dset_id = H5Dopen(file_id, compName.c_str(), H5P_DEFAULT);
             filespace = H5Dget_space(dset_id);
             dtype_id = H5Dget_type(dset_id);
             plist_id = H5Pcreate(H5P_DATASET_XFER);
@@ -395,9 +418,7 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
             //plist_id = H5Pcreate(H5P_DATASET_CREATE);
             for(int c = 0;c<comp;c++)
             {
-                string compName;
-                compName = "/comp_"+int2string(c,999);
-
+								compName = "/"+arg_dataset_name_str+"_"+int2string(c,999);
                 dset_id = H5Dopen(file_id, compName.c_str(), H5P_DEFAULT);
                 filespace = H5Dget_space(dset_id);
                 dtype_id = H5Dget_type(dset_id);
@@ -458,7 +479,8 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
 
                 if(comp==1)
                 {
-                    dset_id = H5Dopen(file_id, "/comp_000", H5P_DEFAULT);
+										compName = "/"+arg_dataset_name_str;
+                    dset_id = H5Dopen(file_id, compName.c_str(), H5P_DEFAULT);
                     filespace = H5Dget_space(dset_id);
                     dtype_id = H5Dget_type(dset_id);
                     plist_id = H5Pcreate(H5P_DATASET_XFER);
@@ -484,11 +506,7 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
                     //plist_id = H5Pcreate(H5P_DATASET_CREATE);
                     for(int c = 0;c<comp;c++)
                     {
-
-                        string compName;
-                        compName = "/comp_"+int2string(c,999);
-
-
+												compName = "/"+arg_dataset_name_str+"_"+int2string(c,999);
                         dset_id = H5Dopen(file_id, compName.c_str(), H5P_DEFAULT);
                         filespace = H5Dget_space(dset_id);
 
@@ -545,10 +563,10 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
 template<class fieldType>
 int save_hdf5(fieldType *data,hid_t type_id,int array_size,long file_offset[2],int *size,int * sizeLocal,int halo, int lat_dim,int comp,string  filename_str, string dataset_name_str)
 {
-	return save_hdf5_externC((char*)data, file_offset, size, sizeLocal, halo, lat_dim, comp, type_id, array_size, filename_str);
+	return save_hdf5_externC((char*)data, file_offset, size, sizeLocal, halo, lat_dim, comp, type_id, array_size, filename_str, dataset_name_str);
 }
 template<class fieldType>
 int load_hdf5(fieldType *data,long file_offset[2],int *size,int * sizeLocal,int halo, int lat_dim,int comp,string  filename_str, string dataset_name_str)
 {
-    return load_hdf5_externC( (char*) data, file_offset, size, sizeLocal, comp, halo, lat_dim,  filename_str);
+    return load_hdf5_externC( (char*) data, file_offset, size, sizeLocal, comp, halo, lat_dim,  filename_str, dataset_name_str);
 }
