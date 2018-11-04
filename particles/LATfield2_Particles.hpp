@@ -65,7 +65,6 @@
 #include "LATfield2_particlesIO.h"
 #endif
 
-
 CREATE_MEMBER_DETECTOR(mass)
 CREATE_MEMBER_DETECTOR(ID)
 CREATE_MEMBER_DETECTOR(vel)
@@ -291,6 +290,8 @@ public:
       return temp;
     };
 
+    void cout_particle_velocity_stats(const string name);
+
 protected:
 
   part_info part_global_info_;
@@ -489,6 +490,50 @@ bool Particles<part,part_info,part_dataType>::addParticle_global(part newPart)
     {
       return false;
     }
+}
+
+template <typename part, typename part_info, typename part_dataType>
+void Particles<part,part_info,part_dataType>::cout_particle_velocity_stats(const string text)
+{
+  Site  xPart(lat_part_);
+  typename std::list<part>::iterator it;
+
+  double min[3] = {1000000000,1000000000,1000000000};
+  double max[3] = {-1000000000,-1000000000,-1000000000};
+  long count = 0;
+  double mean[3] = {0.0,0.0,0.0};
+
+  for(xPart.first() ; xPart.test(); xPart.next())
+  {
+    if(field_part_(xPart).size!=0)
+    {
+      for (it=(field_part_)(xPart).parts.begin(); it != (field_part_)(xPart).parts.end(); ++it)
+      {
+        for(int i=0;i<3;i++)
+        {
+          mean[i] += (*it).vel[i];
+          if((*it).vel[i]<min[i])min[i] = (*it).vel[i];
+          if((*it).vel[i]>max[i])max[i] = (*it).vel[i];
+        }
+        count++;
+      }
+    }
+  }
+
+  parallel.min(min,3);
+  parallel.max(max,3);
+  parallel.sum(count);
+  parallel.sum(mean,3);
+  for(int i=0;i<3;i++)mean[i] /= count;
+
+  COUT<<"--- "<<text<<" velocity stats ---"<<setprecision(10)<<endl;
+  for(int i=0;i<3;i++)
+  {
+    COUT<<"comp "<<i<< " : min "<<min[i]<< " ; max "<<max[i]<< " ; mean "<<mean[i]<<endl;
+  }
+  COUT<<"----------------------"<<setprecision(6)<<endl;
+
+
 }
 
 template <typename part, typename part_info, typename part_dataType>
