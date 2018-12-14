@@ -94,7 +94,7 @@ class Imag
   friend Imag expi(Real x) { return Imag( std::cos(x), std::sin(x) ); }
 
   //I/O STREAM OPERATORS
-  friend std::ostream& operator<<(ostream& os, Imag z) { os<<z.data[0]<<" "<<z.data[1]; return os; }
+  friend std::ostream& operator<<(ostream& os, Imag z) { os<<z.data[0]<<" + i"<<z.data[1]; return os; }
   friend std::istream& operator>>(istream& is, Imag& z) { is>>z.data[0]>>z.data[1]; return is; }
 
   /* WV added conversion operators to oldschool double[2] */
