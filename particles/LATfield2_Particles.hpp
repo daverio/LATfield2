@@ -307,10 +307,7 @@ protected:
   Real  lat_resolution_;
   Real boxSize_[3];
 
-
-
-  Field<partList<part> > field_part_;
-
+  Field<partList<part>> field_part_;
 
   int mass_type_;
   size_t mass_offset_;
@@ -546,7 +543,7 @@ void Particles<part,part_info,part_dataType>::prepare_RK()
 {
   Site  xPart(lat_part_);
   typename std::list<part>::iterator it;
-  
+
   for(xPart.first() ; xPart.test(); xPart.next())
   {
     if(field_part_(xPart).size!=0)
