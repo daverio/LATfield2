@@ -18,16 +18,22 @@ extern "C"{
 #include <stdlib.h>
 #include <string.h>
 #include "int2string.hpp"
+#include <sys/stat.h>
+
+inline bool file_exists(const std::string& name) {
+  struct stat buffer;
+  return (stat (name.c_str(), &buffer) == 0);
+}
 
 
 int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,int halo, int lat_dim,int comp,hid_t array_type,int array_size,string  filename_str, string arg_dataset_name_str)
 {
 
 
+		bool fexist;
 
 
-
-	   hid_t file_id, plist_id,filespace,memspace,dset_id,dtype_id,dtbase_id;
+	   hid_t file_id, plist_id,filespace,memspace,dset_id,dtype_id,dtbase_id,plist_id_dataset,plist_id_write;
 	   hsize_t  components;
 		 string compName;
 
@@ -79,7 +85,7 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
 
        if(array_size ==1)
        {
-           dtype_id = H5Tcopy(array_type);
+       dtype_id = H5Tcopy(array_type);
 		   status = H5Tset_order(dtype_id, DATA_ORDER);
        }
        else if(array_size > 1)
@@ -94,102 +100,93 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
 
 
 #ifdef H5_HAVE_PARALLEL //Parallel version, H5_HAVE_PARALLEL definition is needed by hdf5 to run in parallel too !
-        MPI_Comm comm  = parallel.lat_world_comm();
-        MPI_Info info  = MPI_INFO_NULL;
-
-        plist_id = H5Pcreate(H5P_FILE_ACCESS);
-        H5Pset_fapl_mpio(plist_id, comm, info);
-
-				file_id = H5Fcreate(filename, H5F_ACC_EXCL, H5P_DEFAULT, plist_id);
-				if(file_id<0) file_id = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
 
 
-        H5Pclose(plist_id);
+		MPI_Comm comm  = parallel.lat_world_comm();
+		MPI_Info info  = MPI_INFO_NULL;
 
+		//verify if the file exists:
+		if(parallel.rank()==0)fexist = file_exists(filename_str);
+		parallel.broadcast(fexist,0);
 
+		plist_id = H5Pcreate(H5P_FILE_ACCESS);
+		H5Pset_fapl_mpio(plist_id, comm, info);
 
+		if(fexist) file_id = H5Fopen(filename_str.c_str(),H5F_ACC_RDWR,plist_id);
+		else file_id = H5Fcreate(filename_str.c_str(), H5F_ACC_EXCL, H5P_DEFAULT, plist_id);
+		H5Pclose(plist_id);
 
-        if(comp==1)
-        {
+		if(comp==1)
+		{
+			compName = "/"+arg_dataset_name_str;
 
-            filespace = H5Screate_simple(lat_dim,sizeGlobal,NULL);
+			if(H5Lexists(file_id, compName.c_str(),H5P_DEFAULT)<=0)
+			{
+				filespace = H5Screate_simple(lat_dim,sizeGlobal,NULL);
+				dset_id = H5Dcreate(file_id, compName.c_str(), dtype_id, filespace,
+													  H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+				H5Sclose(filespace);
+			}
+			else
+			{
+				dset_id = H5Dopen(file_id, compName.c_str(), H5P_DEFAULT);
+			}
 
-            plist_id = H5Pcreate(H5P_DATASET_CREATE);
-            //H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
+			filespace = H5Dget_space(dset_id);
+			memspace = H5Screate_simple(lat_dim,localSize,NULL);
 
+			status = H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offsetf, NULL, count, NULL);
+			status = H5Sselect_hyperslab(memspace, H5S_SELECT_SET, offset, NULL, count, NULL);
 
-						compName = "/"+arg_dataset_name_str;
-            dset_id = H5Dcreate1(file_id, compName.c_str(), dtype_id, filespace,plist_id);
+			plist_id = H5Pcreate(H5P_DATASET_XFER);
+			H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
+			status = H5Dwrite(dset_id, dtype_id, memspace, filespace, plist_id, data);
 
-            H5Pclose(plist_id);
-            H5Sclose(filespace);
+			H5Dclose(dset_id);
+	    H5Sclose(filespace);
+	    H5Sclose(memspace);
+	    H5Pclose(plist_id);
 
-            filespace = H5Dget_space(dset_id);
-            memspace = H5Screate_simple(lat_dim,localSize,NULL);
+		}
+		else if(comp > 1)
+		{
+			for(int c = 0;c<comp;c++)
+			{
+				compName = "/"+arg_dataset_name_str+"_"+int2string(c,999);
+				offset[lat_dim]=c;
 
-            status = H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offsetf, NULL, count, NULL);
-            status = H5Sselect_hyperslab(memspace, H5S_SELECT_SET, offset, NULL, count, NULL);
+				if(H5Lexists(file_id, compName.c_str(),H5P_DEFAULT)<=0)
+				{
+					filespace = H5Screate_simple(lat_dim,sizeGlobal,NULL);
+					dset_id = H5Dcreate(file_id, compName.c_str(), dtype_id, filespace,
+														  H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+					H5Sclose(filespace);
+				}
+				else
+				{
+					dset_id = H5Dopen(file_id, compName.c_str(), H5P_DEFAULT);
+				}
 
-            plist_id = H5Pcreate(H5P_DATASET_XFER);
-            H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
-            status = H5Dwrite(dset_id, dtype_id, memspace, filespace, plist_id, data);
+				filespace = H5Dget_space(dset_id);
+				memspace = H5Screate_simple(lat_dim+1,localSize,NULL);
 
+				status = H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offsetf, NULL, count, NULL);
+				status = H5Sselect_hyperslab(memspace, H5S_SELECT_SET, offset, NULL, count, NULL);
 
-            H5Dclose(dset_id);
-            H5Sclose(filespace);
-            H5Sclose(memspace);
-            H5Pclose(plist_id);
+				plist_id = H5Pcreate(H5P_DATASET_XFER);
+				H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
+				status = H5Dwrite(dset_id, dtype_id, memspace, filespace, plist_id, data);
 
+				H5Dclose(dset_id);
+		    H5Sclose(filespace);
+		    H5Sclose(memspace);
+		    H5Pclose(plist_id);
+			}
+		}
 
-        }
-        else if(comp > 1)
-        {
-            //plist_id = H5Pcreate(H5P_DATASET_CREATE);
+    H5Fclose(file_id);
 
-
-            for(int c = 0;c<comp;c++)
-            {
-                filespace = H5Screate_simple(lat_dim,sizeGlobal,NULL);
-
-                plist_id = H5Pcreate(H5P_DATASET_CREATE);
-                //H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
-
-                compName = "/"+arg_dataset_name_str+"_"+int2string(c,999);
-                dset_id = H5Dcreate1(file_id, compName.c_str(), dtype_id, filespace,plist_id);
-
-                H5Pclose(plist_id);
-                H5Sclose(filespace);
-
-		offset[lat_dim]=c;
-
-                filespace = H5Dget_space(dset_id);
-                memspace = H5Screate_simple(lat_dim+1,localSize,NULL);
-                status = H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offsetf, NULL, count, NULL);
-                status = H5Sselect_hyperslab(memspace, H5S_SELECT_SET, offset, NULL, count, NULL);
-
-                plist_id = H5Pcreate(H5P_DATASET_XFER);
-                H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
-                status = H5Dwrite(dset_id, dtype_id, memspace, filespace, plist_id, data);
-
-
-
-                H5Dclose(dset_id);
-                H5Sclose(filespace);
-                H5Sclose(memspace);
-                H5Pclose(plist_id);
-            }
-
-        }
-
-
-
-
-        H5Fclose(file_id);
-
-
-        free(filename);
-
-	   return 1;
+	  return 1;
 
 #else // serial version, without H5_HAVE_PARALLEL definition hdf5 will run in serial !
 
@@ -201,15 +198,12 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
 
     if(mpi_rank==0)
     {
-        plist_id = H5Pcreate(H5P_FILE_ACCESS);
-        file_id = H5Fcreate(filename, H5F_ACC_EXCL, H5P_DEFAULT, plist_id);
-				if(file_id<0)
-				{
-					file_id = H5Fopen(filename,H5F_ACC_RDWR,plist_id);
-				}
+				fexist = file_exists(filename_str);
 
-
-        H5Pclose(plist_id);
+				plist_id = H5Pcreate(H5P_FILE_ACCESS);
+				if(fexist) file_id = H5Fopen(filename,H5F_ACC_RDWR,plist_id);
+				else file_id = H5Fcreate(filename, H5F_ACC_EXCL, H5P_DEFAULT, plist_id);
+				H5Pclose(plist_id);
 
         filespace = H5Screate_simple(lat_dim,sizeGlobal,NULL);
 
