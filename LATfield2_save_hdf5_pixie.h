@@ -215,7 +215,6 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
 						compName = "/"+arg_dataset_name_str;
 						if(H5Lexists(file_id, compName.c_str(),H5P_DEFAULT)<=0)
 						{
-							cout<<"creating dataset"<<endl;
 							dset_id = H5Dcreate1(file_id, compName.c_str(), dtype_id, filespace,plist_id);
 							H5Dclose(dset_id);
 						}
@@ -227,7 +226,6 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
                 compName = "/"+arg_dataset_name_str+"_"+int2string(c,999);
 								if(H5Lexists(file_id, compName.c_str(),H5P_DEFAULT)<=0)
 								{
-									cout<<"creating dataset"<<endl;
 									dset_id = H5Dcreate1(file_id, compName.c_str(), dtype_id, filespace,plist_id);
                 	H5Dclose(dset_id);
 								}
