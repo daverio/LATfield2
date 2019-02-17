@@ -144,7 +144,7 @@ class Field
         /*!
          to be implemented, return vector
          */
-		LFvector<FieldType> operator()(long index);
+		LFvector<FieldType>& operator()(long index);
 
 		/*!
 		 Returns the value of the field stored in data_[index]. User should used operator()(const Site& site) to refer and access to the value of the field.
@@ -156,7 +156,7 @@ class Field
         /*!
           to be implemented, return vector
          */
-		LFvector<FieldType> operator()(long index, int component);
+		LFvector<FieldType>& operator()(long index, int component);
 		/*!
 		 Returns the value of the field stored in data_[component + index*components_]. User should used operator()(const Site& site, int component) to refer and access to the value of the field.
 
@@ -168,7 +168,7 @@ class Field
         /*!
          to be implemented, return vector
          */
-		LFvector<FieldType> operator()(long index, int i, int j);
+		LFvector<FieldType>& operator()(long index, int i, int j);
 		/*!
 		 Returns the value of the field stored in data_[j*rows_ + i + index*components_]. In the symmetric case, it returns data_[abs(i-j) + min(i,j)*(rows_+0.5-0.5*min(i,j)) + index*components_]. User should used operator()(const Site& site, int i, int j) to refer and access to the value of the field.
 
@@ -181,13 +181,13 @@ class Field
 
 
 
-        LFvector<FieldType> operator()(long index, int k, int i, int j);
+        LFvector<FieldType>& operator()(long index, int k, int i, int j);
 				FieldType& value(long index, int k, int i, int j);
 
 				/*!
          to be implemented, return vector
          */
-				LFvector<FieldType> operator()(const Site& site);
+				LFvector<FieldType>& operator()(const Site& site);
 		/*!
 		 Returns the value of the field at the position pointed by the Site object (data_[site.index()]). Can be used only for field with one component!
 
@@ -200,7 +200,7 @@ class Field
 				/*!
          to be implemented, return vector
          */
-		LFvector<FieldType> operator()(const Site& site, int component);
+		LFvector<FieldType>& operator()(const Site& site, int component);
         /*!
          Returns the value of a (vector) field's component at the position pointed by the Site object (data_[component + site.index()*components_]).
 
@@ -215,7 +215,7 @@ class Field
 		/*!
 		 to be implemented, return vector
 		 */
-LFvector<FieldType> operator()(const Site& site, int i, int j);
+LFvector<FieldType>& operator()(const Site& site, int i, int j);
         /*!
          Returns the value of the (i,j) matrix component of the field at the position pointed by the Site object (data_[j*rows_ + i + site.index*components_]). In the symmetric case, it returns data_[abs(i-j) + min(i,j)*(rows_+0.5-0.5*min(i,j)) + site.index()*components_].
 
@@ -227,7 +227,7 @@ LFvector<FieldType> operator()(const Site& site, int i, int j);
          */
 		FieldType& value(const Site& site, int i, int j);
 
-        LFvector<FieldType> operator()(const Site& site, int k, int i, int j);
+        LFvector<FieldType>& operator()(const Site& site, int k, int i, int j);
 				FieldType& value(const Site& site, int k, int i, int j);
 
 #ifdef FFT3D
@@ -235,7 +235,7 @@ LFvector<FieldType> operator()(const Site& site, int i, int j);
         /*!
          Equivalent to FieldType& operator()(const Site& site) for cKsite
          */
-		LFvector<FieldType> operator()(const cKSite& site);
+		LFvector<FieldType>& operator()(const cKSite& site);
 		/*!
 		 Equivalent to FieldType& value(const Site& site) for cKsite
 		 */
@@ -244,7 +244,7 @@ FieldType& value(const cKSite& site);
         /*!
          Equivalent to FieldType& operator()(const Site& site, int component) for cKsite
          */
-		LFvector<FieldType> operator()(const cKSite& site, int component);
+		LFvector<FieldType>& operator()(const cKSite& site, int component);
 		/*!
 		 Equivalent to FieldType& value(const Site& site, int component) for cKsite
 		 */
@@ -253,19 +253,19 @@ FieldType& value(const cKSite& site, int component);
         /*!
          Equivalent to FieldType& operator()(const Site& site, int i, int j) for cKsite
          */
-		LFvector<FieldType> operator()(const cKSite& site, int i, int j);
+		LFvector<FieldType>& operator()(const cKSite& site, int i, int j);
 		/*!
 		 Equivalent to FieldType& value(const Site& site, int i, int j) for cKsite
 		 */
 FieldType& value(const cKSite& site, int i, int j);
 
-        LFvector<FieldType> operator()(const cKSite& site,int k, int i, int j);
+        LFvector<FieldType>& operator()(const cKSite& site,int k, int i, int j);
 				FieldType& value(const cKSite& site,int k, int i, int j);
 
         /*!
          Equivalent to FieldType& operator()(const Site& site) for rKsite
          */
-		LFvector<FieldType> operator()(const rKSite& site);
+		LFvector<FieldType>& operator()(const rKSite& site);
 		/*!
 		 Equivalent to FieldType& value(const Site& site) for rKsite
 		 */
@@ -274,7 +274,7 @@ FieldType& value(const rKSite& site);
         /*!
          Equivalent to FieldType& operator()(const Site& site, int component) for rKsite
          */
-		LFvector<FieldType> operator()(const rKSite& site, int component);
+		LFvector<FieldType>& operator()(const rKSite& site, int component);
 		/*!
 		 Equivalent to FieldType& value(const Site& site, int component) for rKsite
 		 */
@@ -282,13 +282,13 @@ FieldType& value(const rKSite& site, int component);
         /*!
          Equivalent to FieldType& operator()(const Site& site, int i, int j) for rKsite
          */
-		LFvector<FieldType> operator()(const rKSite& site, int i, int j);
+		LFvector<FieldType>& operator()(const rKSite& site, int i, int j);
 		/*!
 		 Equivalent to FieldType& value(const Site& site, int i, int j) for rKsite
 		 */
 FieldType& value(const rKSite& site, int i, int j);
 
-        LFvector<FieldType> operator()(const rKSite& site,int k, int i, int j);
+        LFvector<FieldType>& operator()(const rKSite& site,int k, int i, int j);
 				FieldType& value(const rKSite& site,int k, int i, int j);
 #endif
 
@@ -448,6 +448,7 @@ FieldType& value(const rKSite& site, int i, int j);
 #endif
     public:
         FieldType* data_;
+        LFvector<FieldType> outVect_;
 	protected:
 		//MEMBER DATA
 		Lattice*   lattice_;
@@ -464,18 +465,17 @@ FieldType& value(const rKSite& site, int i, int j);
 		static int initialized;
 		static int allocated;
 
-		int vectorSize_;
 		long sitesLocalGross_;
 
     unsigned long long data_memSize_;
 #ifdef HDF5
-        hid_t type_id_;
-        int array_size_;
+    hid_t type_id_;
+    int array_size_;
 #endif
 #ifdef EXTERNAL_IO
-        ioserver_file io_file_;
-        int iof_offset_;
-        int iof_thickness_;
+    ioserver_file io_file_;
+    int iof_offset_;
+    int iof_thickness_;
 #endif
 
 	};
@@ -681,7 +681,7 @@ void Field<FieldType>::initialize(Lattice& lattice, int components)
 	sizeof_fieldType_ = sizeof(FieldType);
 	status_= initialized;
 	lattice_=&lattice;
-	vectorSize_ = lattice_->vectorSize();
+	outVect_.initialize(lattice_->vectorSize());
 	sitesLocalGross_ = lattice_->sitesLocalGross();
 	components_=components;
 	rows_=components_;
@@ -703,7 +703,7 @@ void Field<FieldType>::initialize(Lattice& lattice, int rows, int cols, int symm
 	sizeof_fieldType_ = sizeof(FieldType);
 	status_= initialized;
 	lattice_=&lattice;
-	vectorSize_ = lattice_->vectorSize();
+  outVect_.initialize(lattice_->vectorSize());
 	sitesLocalGross_ = lattice_->sitesLocalGross();
 	rows_=rows;
 	cols_=cols;
@@ -712,9 +712,7 @@ void Field<FieldType>::initialize(Lattice& lattice, int rows, int cols, int symm
 	if(symmetry_==symmetric) { components = ( rows_ * (rows_+1) ) / 2; }
 	else { components = rows*cols; }
 	components_=components;
-    matrixSize_ = components;
-
-
+  matrixSize_ = components;
 }
 template <class FieldType>
 void Field<FieldType>::initialize(Lattice& lattice,int nMatrix, int rows, int cols, int symmetry)
@@ -726,7 +724,7 @@ void Field<FieldType>::initialize(Lattice& lattice,int nMatrix, int rows, int co
     sizeof_fieldType_ = sizeof(FieldType);
     status_= initialized;
     lattice_=&lattice;
-		vectorSize_ = lattice_->vectorSize();
+		outVect_.initialize(lattice_->vectorSize());
 		sitesLocalGross_ = lattice_->sitesLocalGross();
     rows_=rows;
     cols_=cols;
@@ -736,8 +734,6 @@ void Field<FieldType>::initialize(Lattice& lattice,int nMatrix, int rows, int co
     else { components = rows*cols; }
     matrixSize_ = components;
     components_=components * nMatrix;
-
-
 }
 
 template <class FieldType>
@@ -810,11 +806,10 @@ void Field<FieldType>::dealloc()
 //FIELD INDEXING===============
 
 template <class FieldType>
-inline LFvector<FieldType> Field<FieldType>::operator()(long index)
+inline LFvector<FieldType>& Field<FieldType>::operator()(long index)
 {
-	//TODO
-	LFvector<FieldType> vec(vectorSize_,&data_[index]);
-	return vec;
+	outVect_.setData(&data_[index]);
+  return outVect_;
 }
 template <class FieldType>
 inline FieldType& Field<FieldType>::value(long index)
@@ -823,11 +818,10 @@ inline FieldType& Field<FieldType>::value(long index)
 }
 
 template <class FieldType>
-inline LFvector<FieldType> Field<FieldType>::operator()(long index, int component)
+inline LFvector<FieldType>& Field<FieldType>::operator()(long index, int component)
 {
-	//TODO
-	LFvector<FieldType> vec(vectorSize_,&data_[index + component * sitesLocalGross_]);
-	return vec;
+  outVect_.setData(&data_[index + component * sitesLocalGross_]);
+	return outVect_;
 }
 template <class FieldType>
 inline FieldType& Field<FieldType>::value(long index, int component)
@@ -837,7 +831,7 @@ inline FieldType& Field<FieldType>::value(long index, int component)
 
 
 template <class FieldType>
-inline LFvector<FieldType> Field<FieldType>::operator()(long index, int i, int j)
+inline LFvector<FieldType>& Field<FieldType>::operator()(long index, int i, int j)
 {
 	//TODO
 	int component;
@@ -847,8 +841,8 @@ inline LFvector<FieldType> Field<FieldType>::operator()(long index, int i, int j
 		else component = j + i * rows_ - (i * (1 + i)) / 2;
     }
 	else { component = j*rows_ + i; }
-	LFvector<FieldType> vec(vectorSize_,&data_[index + component * sitesLocalGross_]);
-	return vec;
+  outVect_.setData(&data_[index + component * sitesLocalGross_]);
+	return outVect_;
 }
 template <class FieldType>
 inline FieldType& Field<FieldType>::value(long index, int i, int j)
@@ -865,7 +859,7 @@ inline FieldType& Field<FieldType>::value(long index, int i, int j)
 
 
 template <class FieldType>
-inline LFvector<FieldType> Field<FieldType>::operator()(long index, int k, int i, int j)
+inline LFvector<FieldType>& Field<FieldType>::operator()(long index, int k, int i, int j)
 {
 		//TODO
     int component;
@@ -876,8 +870,8 @@ inline LFvector<FieldType> Field<FieldType>::operator()(long index, int k, int i
     }
     else { component = j*rows_ + i; }
     component += matrixSize_ * k;
-		LFvector<FieldType> vec(vectorSize_,&data_[index + component * sitesLocalGross_]);
-		return vec;
+    outVect_.setData(&data_[index + component * sitesLocalGross_]);
+		return outVect_;
 }
 template <class FieldType>
 inline FieldType& Field<FieldType>::value(long index, int k, int i, int j)
@@ -894,22 +888,22 @@ inline FieldType& Field<FieldType>::value(long index, int k, int i, int j)
 }
 
 template <class FieldType>
-inline LFvector<FieldType> Field<FieldType>::operator()(const Site& site)
+inline LFvector<FieldType>& Field<FieldType>::operator()(const Site& site)
 {
 	return this->operator()(site.index());
 }
 template <class FieldType>
-inline LFvector<FieldType> Field<FieldType>::operator()(const Site& site, int component)
+inline LFvector<FieldType>& Field<FieldType>::operator()(const Site& site, int component)
 {
 	return this->operator()(site.index(),component);
 }
 template <class FieldType>
-inline LFvector<FieldType> Field<FieldType>::operator()(const Site& site, int i, int j)
+inline LFvector<FieldType>& Field<FieldType>::operator()(const Site& site, int i, int j)
 {
 	return this->operator()(site.index(),i,j);
 }
 template <class FieldType>
-inline LFvector<FieldType> Field<FieldType>::operator()(const Site& site,int k, int i, int j)
+inline LFvector<FieldType>& Field<FieldType>::operator()(const Site& site,int k, int i, int j)
 {
     return this->operator()(site.index(),k,i,j);
 }
@@ -938,49 +932,49 @@ inline FieldType& Field<FieldType>::value(const Site& site,int k, int i, int j)
 #ifdef FFT3D
 
 template <class FieldType>
-inline LFvector<FieldType> Field<FieldType>::operator()(const cKSite& site)
+inline LFvector<FieldType>& Field<FieldType>::operator()(const cKSite& site)
 {
 	return this->operator()(site.index());
 }
 
 template <class FieldType>
-inline LFvector<FieldType> Field<FieldType>::operator()(const cKSite& site, int component)
+inline LFvector<FieldType>& Field<FieldType>::operator()(const cKSite& site, int component)
 {
 	return this->operator()(site.index(),component);
 }
 
 template <class FieldType>
-inline LFvector<FieldType> Field<FieldType>::operator()(const cKSite& site, int i, int j)
+inline LFvector<FieldType>& Field<FieldType>::operator()(const cKSite& site, int i, int j)
 {
 	return this->operator()(site.index(),i,j);
 }
 
 template <class FieldType>
-inline LFvector<FieldType> Field<FieldType>::operator()(const cKSite& site, int k, int i, int j)
+inline LFvector<FieldType>& Field<FieldType>::operator()(const cKSite& site, int k, int i, int j)
 {
     return this->operator()(site.index(),k,i,j);
 }
 
 template <class FieldType>
-inline LFvector<FieldType> Field<FieldType>::operator()(const rKSite& site)
+inline LFvector<FieldType>& Field<FieldType>::operator()(const rKSite& site)
 {
 	return this->operator()(site.index());
 }
 
 template <class FieldType>
-inline LFvector<FieldType> Field<FieldType>::operator()(const rKSite& site, int component)
+inline LFvector<FieldType>& Field<FieldType>::operator()(const rKSite& site, int component)
 {
 	return this->operator()(site.index(),component);
 }
 
 template <class FieldType>
-inline LFvector<FieldType> Field<FieldType>::operator()(const rKSite& site, int i, int j)
+inline LFvector<FieldType>& Field<FieldType>::operator()(const rKSite& site, int i, int j)
 {
 	return this->operator()(site.index(),i,j);
 }
 
 template <class FieldType>
-inline LFvector<FieldType> Field<FieldType>::operator()(const rKSite& site, int k, int i, int j)
+inline LFvector<FieldType>& Field<FieldType>::operator()(const rKSite& site, int k, int i, int j)
 {
     return this->operator()(site.index(),k,i,j);
 }
@@ -1200,266 +1194,6 @@ void Field<FieldType>::updateHaloComms()
 
 	}
 
-	/*
-
-	int buffer_size0, buffer_size1,temp;
-	int i,j;
-
-	//Size of buffer : max size between 2 scatered dimension;
-	buffer_size0 = lattice_->halo() * components_*lattice_->jump(lattice_->dim()-1);
-	buffer_size1 = lattice_->halo() * components_*lattice_->jump(lattice_->dim()-2) *lattice_->sizeLocal(lattice_->dim()-1);
-
-	if(buffer_size0>buffer_size1)temp=buffer_size0;
-	else temp=buffer_size1;
-
-	FieldType* buffer_send = new FieldType[ temp ];
-	FieldType* buffer_rec = new FieldType[ temp ];
-
-	FieldType* pointer_send_up;
-	FieldType* pointer_send_down;
-	FieldType* pointer_rec_up;
-	FieldType* pointer_rec_down;
-
-
-	pointer_send_up = data_ + ((lattice_->halo()+1)*lattice_->jump(lattice_->dim()-1) - 2*lattice_->halo()*lattice_->jump(lattice_->dim()-2))*components_;
-	pointer_rec_up = data_ + ((lattice_->halo()+1)*lattice_->jump(lattice_->dim()-1) - lattice_->halo()*lattice_->jump(lattice_->dim()-2))*components_;
-
-	pointer_send_down = data_ + buffer_size0 + lattice_->jump(lattice_->dim()-2)*lattice_->halo()*components_   ;
-	pointer_rec_down = data_ + buffer_size0;
-
-	if(parallel.grid_rank()[1]%2==0)
-	{
-
-
-		for(j=0;j<lattice_->sizeLocal(lattice_->dim()-1);j++)
-		{
-			for(i=0;i<buffer_size1/lattice_->sizeLocal(lattice_->dim()-1);i++)
-			{
-				buffer_send[i+j*buffer_size1/lattice_->sizeLocal(lattice_->dim()-1)]= pointer_send_up[i+j*lattice_->jump(lattice_->dim()-1)*components_];
-
-			}
-		}
-
-		if(parallel.grid_rank()[1]!=parallel.grid_size()[1]-1)
-		{
-			parallel.send_dim1( buffer_send, buffer_size1, parallel.grid_rank()[1]+1);
-			parallel.receive_dim1( buffer_rec, buffer_size1, parallel.grid_rank()[1]+1);
-		}
-
-		for(j=0;j<lattice_->sizeLocal(lattice_->dim()-1);j++)
-		{
-			for(i=0;i<buffer_size1/lattice_->sizeLocal(lattice_->dim()-1);i++)
-			{
-				pointer_rec_up[i+j*lattice_->jump(lattice_->dim()-1)*components_] = buffer_rec[i+j*buffer_size1/lattice_->sizeLocal(lattice_->dim()-1)];
-			}
-		}
-
-
-		for(j=0;j<lattice_->sizeLocal(lattice_->dim()-1);j++)
-		{
-			for(i=0;i<buffer_size1/lattice_->sizeLocal(lattice_->dim()-1);i++)
-			{
-				buffer_send[i+j*buffer_size1/lattice_->sizeLocal(lattice_->dim()-1)]= pointer_send_down[i+j*lattice_->jump(lattice_->dim()-1)*components_];
-			}
-		}
-
-
-		if(parallel.grid_rank()[1] != 0)
-		{
-			parallel.send_dim1( buffer_send, buffer_size1, parallel.grid_rank()[1]-1);
-			parallel.receive_dim1( buffer_rec, buffer_size1,  parallel.grid_rank()[1]-1);
-		}
-		else if(parallel.grid_size()[1]%2==0)
-		{
-			parallel.send_dim1( buffer_send, buffer_size1, parallel.grid_size()[1]-1);
-			parallel.receive_dim1( buffer_rec, buffer_size1,  parallel.grid_size()[1]-1);
-		}
-
-		for(j=0;j<lattice_->sizeLocal(lattice_->dim()-1);j++)
-		{
-			for(i=0;i<buffer_size1/lattice_->sizeLocal(lattice_->dim()-1);i++)
-			{
-				pointer_rec_down[i+j*lattice_->jump(lattice_->dim()-1)*components_] = buffer_rec[i+j*buffer_size1/lattice_->sizeLocal(lattice_->dim()-1)];
-			}
-		}
-
-
-	}
-	else
-	{
-        for(j=0;j<lattice_->sizeLocal(lattice_->dim()-1);j++)
-		{
-			for(i=0;i<buffer_size1/lattice_->sizeLocal(lattice_->dim()-1);i++)
-			{
-				buffer_send[i+j*buffer_size1/lattice_->sizeLocal(lattice_->dim()-1)]= pointer_send_down[i+j*lattice_->jump(lattice_->dim()-1)*components_];
-			}
-		}
-
-		parallel.receive_dim1( buffer_rec, buffer_size1, parallel.grid_rank()[1]-1);
-		parallel.send_dim1( buffer_send, buffer_size1, parallel.grid_rank()[1]-1);
-
-
-		for(j=0;j<lattice_->sizeLocal(lattice_->dim()-1);j++)
-		{
-			for(i=0;i<buffer_size1/lattice_->sizeLocal(lattice_->dim()-1);i++)
-			{
-				pointer_rec_down[i+j*lattice_->jump(lattice_->dim()-1)*components_] = buffer_rec[i+j*buffer_size1/lattice_->sizeLocal(lattice_->dim()-1)];
-			}
-		}
-
-
-		for(j=0;j<lattice_->sizeLocal(lattice_->dim()-1);j++)
-		{
-			for(i=0;i<buffer_size1/lattice_->sizeLocal(lattice_->dim()-1);i++)
-			{
-				buffer_send[i+j*buffer_size1/lattice_->sizeLocal(lattice_->dim()-1)]= pointer_send_up[i+j*lattice_->jump(lattice_->dim()-1)*components_];
-			}
-		}
-
-		if(parallel.grid_rank()[1]!=parallel.grid_size()[1]-1)
-		{
-			parallel.receive_dim1( buffer_rec, buffer_size1, parallel.grid_rank()[1]+1);
-			parallel.send_dim1( buffer_send, buffer_size1, parallel.grid_rank()[1]+1);
-		}
-		else
-		{
-			parallel.receive_dim1( buffer_rec, buffer_size1,0);
-			parallel.send_dim1( buffer_send, buffer_size1, 0);
-		}
-
-		for(j=0;j<lattice_->sizeLocal(lattice_->dim()-1);j++)
-		{
-			for(i=0;i<buffer_size1/lattice_->sizeLocal(lattice_->dim()-1);i++)
-			{
-				pointer_rec_up[i+j*lattice_->jump(lattice_->dim()-1)*components_] = buffer_rec[i+j*buffer_size1/lattice_->sizeLocal(lattice_->dim()-1)];
-			}
-		}
-
-
-	}
-
-
-	if(parallel.grid_size()[1]%2!=0)
-	{
-		if(parallel.grid_rank()[1]==0)
-		{
-			for(j=0;j<lattice_->sizeLocal(lattice_->dim()-1);j++)
-			{
-				for(i=0;i<buffer_size1/lattice_->sizeLocal(lattice_->dim()-1);i++)
-				{
-					buffer_send[i+j*buffer_size1/lattice_->sizeLocal(lattice_->dim()-1)]= pointer_send_down[i+j*lattice_->jump(lattice_->dim()-1)*components_];
-
-				}
-			}
-
-			parallel.send_dim1( buffer_send, buffer_size1, parallel.grid_size()[1]-1);
-			parallel.receive_dim1( buffer_rec, buffer_size1,  parallel.grid_size()[1]-1);
-
-			for(j=0;j<lattice_->sizeLocal(lattice_->dim()-1);j++)
-			{
-				for(i=0;i<buffer_size1/lattice_->sizeLocal(lattice_->dim()-1);i++)
-				{
-					pointer_rec_down[i+j*lattice_->jump(lattice_->dim()-1)*components_] = buffer_rec[i+j*buffer_size1/lattice_->sizeLocal(lattice_->dim()-1)];
-				}
-			}
-
-		}
-		if(parallel.grid_rank()[1]==parallel.grid_size()[1]-1)
-		{
-			for(j=0;j<lattice_->sizeLocal(lattice_->dim()-1);j++)
-			{
-				for(i=0;i<buffer_size1/lattice_->sizeLocal(lattice_->dim()-1);i++)
-				{
-					buffer_send[i+j*buffer_size1/lattice_->sizeLocal(lattice_->dim()-1)]= pointer_send_up[i+j*lattice_->jump(lattice_->dim()-1)*components_];
-				}
-			}
-			parallel.receive_dim1( buffer_rec, buffer_size1,0);
-			parallel.send_dim1( buffer_send, buffer_size1, 0);
-
-			for(j=0;j<lattice_->sizeLocal(lattice_->dim()-1);j++)
-			{
-				for(i=0;i<buffer_size1/lattice_->sizeLocal(lattice_->dim()-1);i++)
-				{
-					pointer_rec_up[i+j*lattice_->jump(lattice_->dim()-1)*components_] = buffer_rec[i+j*buffer_size1/lattice_->sizeLocal(lattice_->dim()-1)];
-
-				}
-			}
-		}
-	}
-
-
-
-	pointer_send_up = data_ + lattice_->sitesLocalGross() * components_ - 2*buffer_size0;
-	pointer_rec_up = data_ + lattice_->sitesLocalGross() * components_ - buffer_size0;
-
-	pointer_send_down = data_ + buffer_size0;
-	pointer_rec_down = data_;
-
-
-	if(parallel.grid_rank()[0]%2==0)
-	{
-
-		if(parallel.grid_rank()[0]!=parallel.grid_size()[0]-1)
-		{
-			parallel.send_dim0( pointer_send_up, buffer_size0, parallel.grid_rank()[0]+1);
-			parallel.receive_dim0( pointer_rec_up, buffer_size0, parallel.grid_rank()[0]+1);
-		}
-
-
-
-
-		if(parallel.grid_rank()[0] != 0)
-		{
-			parallel.send_dim0( pointer_send_down, buffer_size0, parallel.grid_rank()[0]-1);
-			parallel.receive_dim0( pointer_rec_down, buffer_size0,  parallel.grid_rank()[0]-1);
-		}
-		else if(parallel.grid_size()[0]%2==0)
-		{
-			parallel.send_dim0( pointer_send_down, buffer_size0, parallel.grid_size()[0]-1);
-			parallel.receive_dim0( pointer_rec_down, buffer_size0,  parallel.grid_size()[0]-1);
-		}
-
-
-	}
-	else
-	{
-
-		parallel.receive_dim0( pointer_rec_down, buffer_size0, parallel.grid_rank()[0]-1);
-		parallel.send_dim0( pointer_send_down, buffer_size0, parallel.grid_rank()[0]-1);
-
-
-		if(parallel.grid_rank()[0]!=parallel.grid_size()[0]-1)
-		{
-			parallel.receive_dim0( pointer_rec_up, buffer_size0, parallel.grid_rank()[0]+1);
-			parallel.send_dim0( pointer_send_up, buffer_size0, parallel.grid_rank()[0]+1);
-		}
-		else
-		{
-			parallel.receive_dim0( pointer_rec_up, buffer_size0,0);
-			parallel.send_dim0( pointer_send_up, buffer_size0, 0);
-		}
-
-
-
-	}
-
-	if(parallel.grid_size()[0]%2!=0)
-	{
-		if(parallel.grid_rank()[0]==0)
-		{
-			parallel.send_dim0( pointer_send_down, buffer_size0, parallel.grid_size()[0]-1);
-			parallel.receive_dim0( pointer_rec_down, buffer_size0,  parallel.grid_size()[0]-1);
-		}
-		if(parallel.grid_rank()[0]==parallel.grid_size()[0]-1)
-		{
-			parallel.receive_dim0( pointer_rec_up, buffer_size0,0);
-			parallel.send_dim0( pointer_send_up, buffer_size0, 0);
-		}
-	}
-
-
-
-	*/
 	delete[] buffer_send;
 	delete[] buffer_rec;
 

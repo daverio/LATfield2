@@ -52,8 +52,8 @@ int main(int argc, char **argv)
     int vectorSize = latSize / 2;
     Lattice lat(dim,latSize,halo,vectorSize);
     Lattice lat_part(dim,latSize,0,vectorSize);
-    double boxSize[3] = {latSize,latSize,latSize};
 
+    Site x(lat);
     long npts3d = latSize*latSize*latSize;
 
     Field<Real> rho(lat,3);
@@ -62,7 +62,9 @@ int main(int argc, char **argv)
 
     MPI_timer timer(NTIMER);
 
+    /*
 
+    double boxSize[3] = {latSize,latSize,latSize};
     part_simple_info particles_global_info;
     part_simple_dataType particles_dataType;
 
@@ -74,8 +76,7 @@ int main(int argc, char **argv)
     parts.initialize(particles_global_info,particles_dataType,&lat_part,boxSize);
 
     Site xp(lat_part);
-    Site x(lat);
-    Site y(lat);
+
 
 
     part_simple part;
@@ -112,28 +113,28 @@ int main(int argc, char **argv)
     //--------------   Operations on Fields   ----------------
 
 
-
+    */
 
     for(x.first();x.test();x.nextValue())
     {
       for(int i=0;i<3;i++)rho.value(x,i) = x.coord(i);
     }
 
-    for(x.first();x.test();x.next())
-    {
-      phi(x) = 1;
-    }
+    //for(x.first();x.test();x.next())
+    //{
+    //  phi(x) = 1;
+    //}
 
-    Real sum = 0;
+    //Real sum = 0;
 
-    for(x.first();x.test();x.next())
-    {
-      sum += phi(x);
-    }
+    //for(x.first();x.test();x.next())
+    //{
+    //  sum += phi(x);
+    //}
 
-    parallel.sum(sum);
+    //parallel.sum(sum);
 
-    COUT<<"npts3d: "<<npts3d<< " ; sum: "<<sum<<endl;
+    //COUT<<"npts3d: "<<npts3d<< " ; sum: "<<sum<<endl;
 
 
 

@@ -119,8 +119,7 @@ timer_udHalo_10comp = 0.0;
 
       //1 comp
       timer_ref =MPI_Wtime();
-      SCOREP_USER_REGION_BEGIN( impl_1comp, "impl_1comp",
-      SCOREP_USER_REGION_TYPE_COMMON )
+      SCOREP_USER_REGION_BEGIN( impl_1comp, "impl_1comp", SCOREP_USER_REGION_TYPE_COMMON )
       for(x.first();x.test();x.nextValue())
       {
         phi.value(x) = cos( 2.0 * M_PI * (double)x.coord(0) * dx );
@@ -130,8 +129,7 @@ timer_udHalo_10comp = 0.0;
       timer_impl_1comp += timer;
       // 10 comp
       timer_ref =MPI_Wtime();
-      SCOREP_USER_REGION_BEGIN( impl_10comp, "impl_10comp",
-      SCOREP_USER_REGION_TYPE_COMMON )
+      SCOREP_USER_REGION_BEGIN( impl_10comp, "impl_10comp", SCOREP_USER_REGION_TYPE_COMMON )
       for(x.first();x.test();x.nextValue())
       {
         for(int i=0;i<10;i++)mcomp.value(x,i) = (double)i*cos(2.0 * M_PI * (double)x.coord(0)*dx);

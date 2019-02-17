@@ -210,6 +210,9 @@ public:
 protected:
 		Lattice* lattice_;
 		long index_;
+		//
+		//lattice info: does it speeds things ?
+		
 };
 
 

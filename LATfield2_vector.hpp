@@ -11,12 +11,17 @@ class LFvector
 public:
   LFvector();
   LFvector(const LFvector& other);
-  LFvector(Lattice & lat, T * source=NULL);
-  LFvector(int size, T * source=NULL);
+  LFvector(Lattice & lat, T * source);
+  LFvector(int size, T * source);
+  LFvector(Lattice & lat);
+  LFvector(int size);
 
-  void initialize(Lattice & lat, T * source=NULL);
-  void initialize(int size, T * source=NULL);
+  void initialize(Lattice & lat);
+  void initialize(Lattice & lat, T * source);
+  void initialize(int size);
+  void initialize(int size, T * source);
   void nocopy(const LFvector& other);
+  void setData(T * source);
 
 
   ~LFvector();
@@ -61,7 +66,6 @@ LFvector<T>::~LFvector()
 {
   if(allocated_)
   {
-    //cout<<"vector dealocated"<<endl;
     free(data_);
     allocated_=false;
   }
@@ -87,8 +91,32 @@ LFvector<T>::LFvector(const LFvector& other)
 template<class T>
 LFvector<T>::LFvector(Lattice & lat, T * source)
 {
-  this->initialize(lat, source);
+  size_=lat.vectorSize();
+  if(source!=NULL)
+  {
+    data_=source;
+    allocated_=false;
+  }
+  else
+  {
+    data_= (T*)malloc(size_*sizeof(T));
+    allocated_=true;
+  }
 }
+
+template<class T>
+LFvector<T>::LFvector(Lattice & lat)
+{
+  this->size_ = lat.vectorSize();
+}
+
+template<class T>
+void LFvector<T>::initialize(Lattice & lat)
+{
+  size_=lat.vectorSize();
+  allocated_=false;
+}
+
 template<class T>
 void LFvector<T>::initialize(Lattice & lat, T * source)
 {
@@ -105,11 +133,34 @@ void LFvector<T>::initialize(Lattice & lat, T * source)
   }
 }
 
+template<class T>
+LFvector<T>::LFvector(int size)
+{
+  this->size_ = size;
+}
+
+template<class T>
+void LFvector<T>::initialize(int size)
+{
+  size_=size;
+  allocated_=false;
+}
 
 template<class T>
 LFvector<T>::LFvector(int size, T * source)
 {
-  this->initialize(size, source);
+  size_=size;
+  if(source!=NULL)
+  {
+    data_=source;
+    allocated_=false;
+  }
+  else
+  {
+    //cout<<" vector allocation "<<endl;
+    data_= (T*)malloc(size_*sizeof(T));
+    allocated_=true;
+  }
 }
 template<class T>
 void LFvector<T>::initialize(int size, T * source)
@@ -128,11 +179,20 @@ void LFvector<T>::initialize(int size, T * source)
   }
 }
 
+
+
+
 template<class T>
 void LFvector<T>::nocopy(const LFvector& other)
 {
   this->size_ = other->size_;
   this->data_ = other->data_;
+}
+
+template<class T>
+void LFvector<T>::setData(T * source)
+{
+  this->data_ = source;
 }
 
 template<class T>
@@ -415,7 +475,7 @@ T vmin(const LFvector<T>& v1)
 
 LFvector<double> vpow(const LFvector<double> v, double n)
 {
-  LFvector<double> result(v.size_);
+  LFvector<double> result(v.size_,NULL);
   for(int i = 0;i<v.size_;i++)
   {
     result.data_[i] = pow(v.data_[i],n);
@@ -425,7 +485,7 @@ LFvector<double> vpow(const LFvector<double> v, double n)
 
 LFvector<double> vsqrt(const LFvector<double> v)
 {
-  LFvector<double> result(v.size_);
+  LFvector<double> result(v.size_,NULL);
   for(int i = 0;i<v.size_;i++)
   {
     result.data_[i] = sqrt(v.data_[i]);
@@ -436,7 +496,7 @@ LFvector<double> vsqrt(const LFvector<double> v)
 
 LFvector<double> vexp(const LFvector<double> v)
 {
-  LFvector<double> result(v.size_);
+  LFvector<double> result(v.size_,NULL);
   for(int i = 0;i<v.size_;i++)
   {
     result.data_[i] = exp(v.data_[i]);
@@ -446,7 +506,7 @@ LFvector<double> vexp(const LFvector<double> v)
 
 LFvector<double> vabs(const LFvector<double> v)
 {
-  LFvector<double> result(v.size_);
+  LFvector<double> result(v.size_,NULL);
   for(int i = 0;i<v.size_;i++)
   {
     result.data_[i] = fabs(v.data_[i]);
