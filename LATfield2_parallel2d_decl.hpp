@@ -362,9 +362,7 @@ class Parallel2d{
 
   //MISCELLANEOUS===================
 
-  #ifdef OPENMP
-  int numThreads(){return numThreads_;}
-  #endif
+
   /*!
    \return lat_world_size_  the number of MPI process (compute processes)
    */
@@ -460,9 +458,7 @@ private:
   int world_rank_;
   int world_size_;
 
-  #ifdef OPENMP
-  int numThreads_;
-  #endif
+
 
   MPI_Comm world_comm_,lat_world_comm_, *dim0_comm_, *dim1_comm_;
   MPI_Group world_group_,lat_world_group_, *dim0_group_,*dim1_group_ ;

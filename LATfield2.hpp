@@ -15,11 +15,6 @@
 #include <typeinfo>
 #include <list>
 
-#ifdef OPENMP
-#include <omp.h>
-#endif
-
-
 #ifdef FFT3D
 #include "fftw3.h"
 #endif

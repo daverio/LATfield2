@@ -26,13 +26,9 @@ Parallel2d::Parallel2d() : neverFinalizeMPI(false)
     world_comm_ = MPI_COMM_WORLD;
 
 
-#ifdef OPENMP
-	int provided;
-	MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED,&provided);
-	cout<<MPI_THREAD_FUNNELED<< " "<<provided<<endl;
-#else
+
 	MPI_Init( &argc, &argv );
-#endif
+
 
 
 	MPI_Comm_rank( lat_world_comm_, &lat_world_rank_ );
@@ -41,13 +37,9 @@ Parallel2d::Parallel2d() : neverFinalizeMPI(false)
 	MPI_Comm_size( world_comm_, &world_size_ );
 #else
     world_comm_ = MPI_COMM_WORLD;
-#ifdef OPENMP
-	int provided;
-	MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED,&provided);
-	cout<<MPI_THREAD_FUNNELED<< " "<<provided<<endl;
-#else
+
 	MPI_Init( &argc, &argv );
-#endif
+
     MPI_Comm_rank( world_comm_, &world_rank_ );
 	MPI_Comm_size( world_comm_, &world_size_ );
 
@@ -64,9 +56,7 @@ void Parallel2d::initialize(int proc_size0, int proc_size1)
 void Parallel2d::initialize(int proc_size0, int proc_size1,int IO_total_size, int IO_node_size)
 {
 
-	#ifdef OPENMP
-  numThreads_ = omp_get_max_threads();
-  #endif
+
 
     grid_size_[0]=proc_size0;
 	grid_size_[1]=proc_size1;

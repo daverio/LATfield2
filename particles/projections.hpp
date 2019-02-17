@@ -30,7 +30,6 @@ inline long setIndex(long * size, long i, long j,long k)
  */
 void projection_init(Field<Real> * f)
 {
-    #pragma omp parallel for
     for(long i=0;i< f->lattice().sitesLocalGross()  * (long)(f->components())  ;i++)(*f).value(i)=0.0;
 }
 
@@ -73,149 +72,7 @@ int CIC_mapv2[2][2][2][2] =   { { {{24,28},{25,29}},{{26,30},{27,31}} } , { {{28
  \sa scalarProjectionCIC_comm(Field<Real> * rho)
  \sa projection_init(Field<Real> * f)
  */
-#ifdef OPENMP
-template<typename part, typename part_info, typename part_dataType>
-void scalarProjectionCIC_project(Particles<part,part_info,part_dataType> * parts,Field<Real> * rho, size_t * oset = NULL,int flag_where = FROM_INFO)
-{
 
-  if(rho->lattice().halo() == 0)
-  {
-    cout<< "LATfield2::scalarProjectionCIC_proj: the field has to have at least a halo of 1" <<endl;
-    cout<< "LATfield2::scalarProjectionCIC_proj: aborting" <<endl;
-    exit(-1);
-  }
-
-  Site xPart(parts->lattice());
-  Site xField(rho->lattice());
-
-
-
-
-  double latresolution = parts->res();
-
-  double mass;
-  double cicVol;
-  cicVol= latresolution*latresolution*latresolution;
-  cicVol *= cicVol;
-
-
-  //long index;
-  //long index01,index10,index11;
-  //Real localCube[8]; // XYZ = 000 | 001 | 010 | 011 | 100 | 101 | 110 | 111
-
-  Real threadRect[parallel.numThreads()][ rho->lattice().maxThreadSize() + 1][4]; //000 | 001 | 010 | 011
-
-  int sfrom;
-  size_t offset;
-
-  if(oset == NULL)
-  {
-    sfrom = parts->mass_type();
-    offset = parts->mass_offset();
-  }
-  else
-  {
-    sfrom =  flag_where;
-    offset = *oset;
-  }
-
-  int tid;
-
-  if(sfrom == FROM_INFO)
-  {
-    mass = *(double*)((char*)parts->parts_info() + offset);
-    mass /= cicVol;
-    //cout << mass<<endl;
-  }
-
-  for(xPart.first(),xField.first();xPart.test();xPart.next(),xField.next())
-  {
-    #pragma omp parallel
-    {
-      int tid = omp_get_thread_num();
-      double referPos[3];
-      double rescalPos[3];
-      double rescalPosDown[3];
-
-      referPos[1]=xPart.coord(1)*latresolution;
-      referPos[2]=xPart.coord(2)*latresolution;
-
-
-      for(int i = 0; i < parts->lattice().threadSize(tid) + 1; i++)
-      {
-        for(int j=0;j<4;j++)threadRect[tid][i][j] = 0.0;
-      }
-
-      long index   = xPart.index()        + parts->lattice().threadOffset(tid);
-      long index00 = xField.index()       + rho->lattice().threadOffset(tid);
-      long index01 = xField.move3d(0,0,1) + rho->lattice().threadOffset(tid);
-      long index10 = xField.move3d(0,1,0) + rho->lattice().threadOffset(tid);
-      long index11 = xField.move3d(0,1,1) + rho->lattice().threadOffset(tid);
-
-
-      for(int x_i=0;x_i<parts->lattice().threadSize(tid);x_i++)
-      {
-        if(parts->field().value(index+x_i).size!=0)
-        {
-          referPos[0]=(xPart.coord(0)+parts->lattice().threadOffset(tid)+x_i)*latresolution;
-
-          for (typename std::list<part>::iterator it=parts->field().value(index+x_i).parts.begin(); it != parts->field().value(index+x_i).parts.end(); ++it)
-          {
-
-            for(int i =0;i<3;i++)
-            {
-              rescalPos[i]=it->pos[i]-referPos[i];
-              rescalPosDown[i]=latresolution -rescalPos[i];
-            }
-            //cout<< xPart << *it
-            //     << rescalPos[0]<< " , "<< rescalPos[1]<< " , "<< rescalPos[2]<< " , "<<latresolution<<endl;
-            if(sfrom==FROM_PART)
-            {
-              mass = *(double*)((char*)&(*it)+offset);
-              mass /=cicVol;
-            }
-
-            //000
-            threadRect[tid][x_i  ][0] += rescalPosDown[0]*rescalPosDown[1]*rescalPosDown[2] * mass;
-            //001
-            threadRect[tid][x_i  ][1] += rescalPosDown[0]*rescalPosDown[1]*rescalPos[2] * mass;
-            //010
-            threadRect[tid][x_i  ][2] += rescalPosDown[0]*rescalPos[1]*rescalPosDown[2] * mass;
-            //011
-            threadRect[tid][x_i  ][3] += rescalPosDown[0]*rescalPos[1]*rescalPos[2] * mass;
-            //100
-            threadRect[tid][x_i+1][0] += rescalPos[0]*rescalPosDown[1]*rescalPosDown[2] * mass;
-            //101
-            threadRect[tid][x_i+1][1] += rescalPos[0]*rescalPosDown[1]*rescalPos[2] * mass;
-            //110
-            threadRect[tid][x_i+1][2] += rescalPos[0]*rescalPos[1]*rescalPosDown[2] * mass;
-            //111
-            threadRect[tid][x_i+1][3] += rescalPos[0]*rescalPos[1]*rescalPos[2] * mass;
-          }
-        }
-      }
-
-      for(int x_i=0;x_i<parts->lattice().threadSize(tid);x_i++)
-      {
-        rho->value( index00 + x_i ) += threadRect[tid][x_i][0];
-        rho->value( index01 + x_i )   += threadRect[tid][x_i][1];
-        rho->value( index10 + x_i )   += threadRect[tid][x_i][2];
-        rho->value( index11 + x_i )   += threadRect[tid][x_i][3];
-      }
-
-      #pragma omp barrier
-
-      rho->value( index00 + parts->lattice().threadSize(tid) ) += threadRect[tid][parts->lattice().threadSize(tid)][0];
-      rho->value( index01 + parts->lattice().threadSize(tid) ) += threadRect[tid][parts->lattice().threadSize(tid)][1];
-      rho->value( index10 + parts->lattice().threadSize(tid) ) += threadRect[tid][parts->lattice().threadSize(tid)][2];
-      rho->value( index11 + parts->lattice().threadSize(tid) ) += threadRect[tid][parts->lattice().threadSize(tid)][3];
-
-
-
-    }
-  }
-}
-#else
 template<typename part, typename part_info, typename part_dataType>
 void scalarProjectionCIC_project(Particles<part,part_info,part_dataType> * parts,Field<Real> * rho, size_t * oset = NULL,int flag_where = FROM_INFO)
 {
@@ -320,7 +177,7 @@ void scalarProjectionCIC_project(Particles<part,part_info,part_dataType> * parts
     }
   }
 }
-#endif
+
 
 
  /*! \fn scalarProjectionCIC_comm(Field<Real> * rho)
@@ -366,7 +223,7 @@ void scalarProjectionCIC_project(Particles<part,part_info,part_dataType> * parts
 
 
      iref = sizeLocalGross[0] - halo;
-     #pragma omp parallel for collapse(2)
+
      for(int k=distHaloOne;k<sizeLocalOne[2]+distHaloOne;k++)
      {
          for(int j=distHaloOne;j<sizeLocalOne[1]+distHaloOne;j++)
@@ -393,7 +250,7 @@ void scalarProjectionCIC_project(Particles<part,part_info,part_dataType> * parts
      //pack data
      imax = sizeLocal[0];
      iref = sizeLocalGross[1]- halo;
-     #pragma omp parallel for collapse(2)
+
      for(int k=0;k<(sizeLocalOne[2]-1);k++)
      {
          for(int i=0;i<imax;i++)
@@ -403,7 +260,7 @@ void scalarProjectionCIC_project(Particles<part,part_info,part_dataType> * parts
      }
      parallel.sendUp_dim1(bufferSend,bufferRec,bufferSizeY);
      //unpack data
-     #pragma omp parallel for collapse(2)
+
      for(int k=0;k<(sizeLocalOne[2]-1);k++)
      {
          for(int i=0;i<imax;i++)
@@ -418,7 +275,7 @@ void scalarProjectionCIC_project(Particles<part,part_info,part_dataType> * parts
 
      //pack data
      iref=sizeLocalGross[2]-halo;
-     #pragma omp parallel for collapse(2)
+
      for(int j=0;j<(sizeLocalOne[1]-2);j++)
      {
          for(int i=0;i<imax;i++)
@@ -431,7 +288,7 @@ void scalarProjectionCIC_project(Particles<part,part_info,part_dataType> * parts
 
 
      //unpack data
-     #pragma omp parallel for collapse(2)
+
      for(int j=0;j<(sizeLocalOne[1]-2);j++)
      {
          for(int i=0;i<imax;i++)
@@ -647,7 +504,7 @@ void vectorProjectionCICNGP_comm(Field<Real> * vel)
 
     for(int c=0;c<comp;c++)
     {
-      #pragma omp parallel for collapse(2)
+
       for(int k=distHaloOne;k<sizeLocalOne[2]+distHaloOne;k++)
       {
           for(int j=distHaloOne;j<sizeLocalOne[1]+distHaloOne;j++)
@@ -679,7 +536,7 @@ void vectorProjectionCICNGP_comm(Field<Real> * vel)
 
     for(int c=0;c<comp;c++)
     {
-      #pragma omp parallel for collapse(2)
+
       for(int k=0;k<(sizeLocalOne[2]-1);k++)
       {
           for(int i=0;i<imax;i++)
@@ -698,7 +555,7 @@ void vectorProjectionCICNGP_comm(Field<Real> * vel)
 
     for(int c=0;c<comp;c++)
     {
-      #pragma omp parallel for collapse(2)
+
       for(int k=0;k<(sizeLocalOne[2]-1);k++)
       {
           for(int i=0;i<imax;i++)
@@ -719,7 +576,7 @@ void vectorProjectionCICNGP_comm(Field<Real> * vel)
     iref=sizeLocalGross[2]-halo;
     for(int c=0;c<comp;c++)
     {
-      #pragma omp parallel for collapse(2)
+
       for(int j=0;j<(sizeLocalOne[1]-2);j++)
       {
           for(int i=0;i<imax;i++)
@@ -736,7 +593,7 @@ void vectorProjectionCICNGP_comm(Field<Real> * vel)
     //unpack data
     for(int c=0;c<comp;c++)
     {
-      #pragma omp parallel for collapse(2)
+
       for(int j=0;j<(sizeLocalOne[1]-2);j++)
       {
           for(int i=0;i<imax;i++)
@@ -970,7 +827,7 @@ void symtensorProjectionCICNGP_comm(Field<Real> * Tij)
 
     for(int c=0;c<comp;c++)
     {
-      #pragma omp parallel for collapse(2)
+
       for(int k=distHaloOne;k<sizeLocalOne[2]+distHaloOne;k++)
       {
           for(int j=distHaloOne;j<sizeLocalOne[1]+distHaloOne;j++)
@@ -1003,7 +860,7 @@ void symtensorProjectionCICNGP_comm(Field<Real> * Tij)
 
     for(int c=0;c<comp;c++)
     {
-      #pragma omp parallel for collapse(2)
+
       for(int k=0;k<(sizeLocalOne[2]-1);k++)
       {
           for(int i=0;i<imax;i++)
@@ -1021,7 +878,7 @@ void symtensorProjectionCICNGP_comm(Field<Real> * Tij)
     //unpack data
     for(int c=0;c<comp;c++)
     {
-      #pragma omp parallel for collapse(2)
+
       for(int k=0;k<(sizeLocalOne[2]-1);k++)
       {
           for(int i=0;i<imax;i++)
@@ -1039,7 +896,7 @@ void symtensorProjectionCICNGP_comm(Field<Real> * Tij)
     iref=sizeLocalGross[2]-halo;
     for(int c=0;c<comp;c++)
     {
-      #pragma omp parallel for collapse(2)
+
       for(int j=0;j<(sizeLocalOne[1]-2);j++)
       {
           for(int i=0;i<imax;i++)
@@ -1056,7 +913,7 @@ void symtensorProjectionCICNGP_comm(Field<Real> * Tij)
     //unpack data
     for(int c=0;c<comp;c++)
     {
-      #pragma omp parallel for collapse(2)
+
       for(int j=0;j<(sizeLocalOne[1]-2);j++)
       {
           for(int i=0;i<imax;i++)
@@ -1332,7 +1189,7 @@ void vectorProjectionCIC_comm(Field<Real> * vel)
 
     for(int comp=0;comp<3;comp++)
     {
-      #pragma omp parallel for collapse(2)
+
       for(int k=distHaloOne;k<sizeLocalOne[2]+distHaloOne;k++)
       {
           for(int j=distHaloOne;j<sizeLocalOne[1]+distHaloOne;j++)
@@ -1377,7 +1234,7 @@ void vectorProjectionCIC_comm(Field<Real> * vel)
 
     for(int comp =0;comp<3;comp++)
     {
-      #pragma omp parallel for collapse(2)
+
       for(int k=0;k<sizeLocalOne[2];k++)
       {
           for(int i=0;i<imax;i++)
@@ -1389,7 +1246,7 @@ void vectorProjectionCIC_comm(Field<Real> * vel)
 
     for(int comp =0;comp<3;comp++)
     {
-      #pragma omp parallel for collapse(2)
+
       for(int k=0;k<sizeLocalOne[2];k++)
       {
           for(int i=0;i<imax;i++)
@@ -1407,7 +1264,7 @@ void vectorProjectionCIC_comm(Field<Real> * vel)
 
     for(int comp =0;comp<3;comp++)
     {
-      #pragma omp parallel for collapse(2)
+
       for(int k=0;k<sizeLocalOne[2];k++)
       {
           for(int i=0;i<imax;i++)
@@ -1419,7 +1276,7 @@ void vectorProjectionCIC_comm(Field<Real> * vel)
 
     for(int comp =0;comp<3;comp++)
     {
-      #pragma omp parallel for collapse(2)
+
       for(int k=0;k<sizeLocalOne[2];k++)
       {
           for(int i=0;i<imax;i++)
@@ -1437,7 +1294,7 @@ void vectorProjectionCIC_comm(Field<Real> * vel)
 
     for(int comp =0;comp<3;comp++)
     {
-      #pragma omp parallel for collapse(2)
+
       for(int j=0;j<(sizeLocalOne[1]-2);j++)
       {
           for(int i=0;i<imax;i++)
@@ -1449,7 +1306,7 @@ void vectorProjectionCIC_comm(Field<Real> * vel)
 
     for(int comp =0;comp<3;comp++)
     {
-      #pragma omp parallel for collapse(2)
+
       for(int j=0;j<(sizeLocalOne[1]-2);j++)
       {
           for(int i=0;i<imax;i++)
@@ -1468,7 +1325,7 @@ void vectorProjectionCIC_comm(Field<Real> * vel)
 
     for(int comp =0;comp<3;comp++)
     {
-      #pragma omp parallel for collapse(2)
+
       for(int j=0;j<(sizeLocalOne[1]-2);j++)
       {
           for(int i=0;i<imax;i++)
@@ -1480,7 +1337,7 @@ void vectorProjectionCIC_comm(Field<Real> * vel)
 
     for(int comp =0;comp<3;comp++)
     {
-      #pragma omp parallel for collapse(2)
+
       for(int j=0;j<(sizeLocalOne[1]-2);j++)
       {
           for(int i=0;i<imax;i++)
@@ -1821,7 +1678,7 @@ void VecVecProjectionCIC_comm(Field<Real> * Tij)
 
     for(int comp=0;comp<6;comp++)
     {
-      #pragma omp parallel for collapse(2)
+
       for(int k=distHaloOne;k<sizeLocalOne[2]+distHaloOne;k++)
       {
           for(int j=distHaloOne;j<sizeLocalOne[1]+distHaloOne;j++)
@@ -1830,7 +1687,7 @@ void VecVecProjectionCIC_comm(Field<Real> * Tij)
           }
       }
     }
-    #pragma omp parallel for collapse(2)
+
     for(int k=distHaloOne;k<sizeLocalOne[2]+distHaloOne;k++)
     {
         for(int j=distHaloOne;j<sizeLocalOne[1]+distHaloOne;j++)
@@ -1838,7 +1695,7 @@ void VecVecProjectionCIC_comm(Field<Real> * Tij)
             (*Tij).value(setIndex(sizeLocalGross,iref2,j,k),0,1) += (*Tij).value(setIndex(sizeLocalGross,distHaloOne,j,k),0,1);
         }
     }
-    #pragma omp parallel for collapse(2)
+
     for(int k=distHaloOne;k<sizeLocalOne[2]+distHaloOne;k++)
     {
         for(int j=distHaloOne;j<sizeLocalOne[1]+distHaloOne;j++)
@@ -1846,7 +1703,7 @@ void VecVecProjectionCIC_comm(Field<Real> * Tij)
             (*Tij).value(setIndex(sizeLocalGross,iref2,j,k),0,2) += (*Tij).value(setIndex(sizeLocalGross,distHaloOne,j,k),0,2);
         }
     }
-    #pragma omp parallel for collapse(2)
+
     for(int k=distHaloOne;k<sizeLocalOne[2]+distHaloOne;k++)
     {
         for(int j=distHaloOne;j<sizeLocalOne[1]+distHaloOne;j++)
@@ -1901,7 +1758,7 @@ void VecVecProjectionCIC_comm(Field<Real> * Tij)
           }
       }
     }
-    #pragma omp parallel for collapse(2)
+
     for(int k=0;k<sizeLocalOne[2];k++)
     {
       for(int i=0;i<imax;i++)
@@ -1909,7 +1766,7 @@ void VecVecProjectionCIC_comm(Field<Real> * Tij)
         bufferSendDown[    3l * (i+k*imax)]=(*Tij).value(setIndex(sizeLocalGross,i+halo,distHaloOne,k+distHaloOne),0,1);
       }
     }
-    #pragma omp parallel for collapse(2)
+
     for(int k=0;k<sizeLocalOne[2];k++)
     {
       for(int i=0;i<imax;i++)
@@ -1917,7 +1774,7 @@ void VecVecProjectionCIC_comm(Field<Real> * Tij)
         bufferSendDown[1l + 3l * (i+k*imax)]=(*Tij).value(setIndex(sizeLocalGross,i+halo,distHaloOne,k+distHaloOne),0,2);
       }
     }
-    #pragma omp parallel for collapse(2)
+
     for(int k=0;k<sizeLocalOne[2];k++)
     {
       for(int i=0;i<imax;i++)
@@ -1945,7 +1802,7 @@ void VecVecProjectionCIC_comm(Field<Real> * Tij)
           }
       }
     }
-    #pragma omp parallel for collapse(2)
+
     for(int k=0;k<sizeLocalOne[2];k++)
     {
         for(int i=0;i<imax;i++)
@@ -1953,7 +1810,7 @@ void VecVecProjectionCIC_comm(Field<Real> * Tij)
             (*Tij).value(setIndex(sizeLocalGross,i+halo,iref1,k+distHaloOne),0,1) += bufferRecDown[     3l * (i+k*imax)];
         }
     }
-    #pragma omp parallel for collapse(2)
+
     for(int k=0;k<sizeLocalOne[2];k++)
     {
         for(int i=0;i<imax;i++)
@@ -1961,7 +1818,7 @@ void VecVecProjectionCIC_comm(Field<Real> * Tij)
             (*Tij).value(setIndex(sizeLocalGross,i+halo,iref1,k+distHaloOne),0,2) += bufferRecDown[1l + 3l * (i+k*imax)];
         }
     }
-    #pragma omp parallel for collapse(2)
+
     for(int k=0;k<sizeLocalOne[2];k++)
     {
         for(int i=0;i<imax;i++)
@@ -1980,7 +1837,7 @@ void VecVecProjectionCIC_comm(Field<Real> * Tij)
 
     for(int comp =0;comp<6;comp++)
     {
-      #pragma omp parallel for collapse(2)
+
       for(int j=0;j<(sizeLocalOne[1]-2);j++)
       {
           for(int i=0;i<imax;i++)
@@ -1989,7 +1846,7 @@ void VecVecProjectionCIC_comm(Field<Real> * Tij)
           }
       }
     }
-    #pragma omp parallel for collapse(2)
+
     for(int j=0;j<(sizeLocalOne[1]-2);j++)
     {
         for(int i=0;i<imax;i++)
@@ -1997,7 +1854,7 @@ void VecVecProjectionCIC_comm(Field<Real> * Tij)
             bufferSendDown[     3l * (i+j*imax)]=(*Tij).value(setIndex(sizeLocalGross,i+halo,j+halo,distHaloOne),0,1);
         }
     }
-    #pragma omp parallel for collapse(2)
+
     for(int j=0;j<(sizeLocalOne[1]-2);j++)
     {
         for(int i=0;i<imax;i++)
@@ -2005,7 +1862,7 @@ void VecVecProjectionCIC_comm(Field<Real> * Tij)
             bufferSendDown[1l + 3l * (i+j*imax)]=(*Tij).value(setIndex(sizeLocalGross,i+halo,j+halo,distHaloOne),0,2);
         }
     }
-    #pragma omp parallel for collapse(2)
+
     for(int j=0;j<(sizeLocalOne[1]-2);j++)
     {
         for(int i=0;i<imax;i++)
@@ -2022,7 +1879,7 @@ void VecVecProjectionCIC_comm(Field<Real> * Tij)
 
     for(int comp =0;comp<6;comp++)
     {
-      #pragma omp parallel for collapse(2)
+
       for(int j=0;j<(sizeLocalOne[1]-2);j++)
       {
           for(int i=0;i<imax;i++)
@@ -2031,7 +1888,7 @@ void VecVecProjectionCIC_comm(Field<Real> * Tij)
           }
       }
     }
-    #pragma omp parallel for collapse(2)
+
     for(int j=0;j<(sizeLocalOne[1]-2);j++)
     {
         for(int i=0;i<imax;i++)
@@ -2039,7 +1896,7 @@ void VecVecProjectionCIC_comm(Field<Real> * Tij)
             (*Tij).value(setIndex(sizeLocalGross,i+halo,j+halo,iref1),0,1) += bufferRecDown[     3l * (i+j*imax)];
         }
     }
-    #pragma omp parallel for collapse(2)
+
     for(int j=0;j<(sizeLocalOne[1]-2);j++)
     {
         for(int i=0;i<imax;i++)
@@ -2047,7 +1904,7 @@ void VecVecProjectionCIC_comm(Field<Real> * Tij)
             (*Tij).value(setIndex(sizeLocalGross,i+halo,j+halo,iref1),0,2) += bufferRecDown[1l + 3l * (i+j*imax)];
         }
     }
-    #pragma omp parallel for collapse(2)
+
     for(int j=0;j<(sizeLocalOne[1]-2);j++)
     {
         for(int i=0;i<imax;i++)

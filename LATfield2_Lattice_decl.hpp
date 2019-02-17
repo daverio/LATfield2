@@ -192,11 +192,7 @@ public:
     int * sizeLocalAllProcDim1();
 
 
-#ifdef OPENMP
-    int threadSize(int tid);
-    int threadOffset(int tid);
-    int maxThreadSize();
-#endif
+
 
 
 private:
@@ -231,11 +227,7 @@ private:
     //save variable for fast save
     int arch_saved_;
 
-    #ifdef OPENMP
-    int * threadSizes_;
-    int * threadOffsets_;
-    int maxThreadSize_;
-    #endif
+
 
 };
 
