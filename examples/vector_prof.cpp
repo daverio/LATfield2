@@ -56,8 +56,8 @@ int main(int argc, char **argv)
     //int latSize = 256;
     int halo = 2;
     int vectorSize = 64;//latSize / 2;
-    Lattice lat(dim,latSize,halo,vectorSize);
-    Lattice lat_part(dim,latSize,0,vectorSize);
+    Lattice lat(dim,latSize,halo,);
+    Lattice lat_part(dim,latSize,0);
 
     Site x(lat);
     long npts3d = latSize*latSize*latSize;
@@ -69,9 +69,9 @@ int main(int argc, char **argv)
     MPI_timer timer(NTIMER);
 
 
-    for(x.first();x.test();x.nextValue())
+    for(x.first();x.test();x.next())
     {
-      for(int i=0;i<3;i++)rho.value(x,i) = x.coord(i);
+      for(int i=0;i<3;i++)rho(x,i) = x.coord(i);
     }
 
     rho.updateHalo();
@@ -101,14 +101,14 @@ int main(int argc, char **argv)
     for(int i = 0;i<iteration;i++)
       {
         timer.start(T_FADD_COMP_OLD);
-        for(x.first();x.test();x.nextValue())
+        for(x.first();x.test();x.next())
         {
           phi(x)=rho(x,0)+rho(x,1)+rho(x,2);
         }
         timer.stop(T_FADD_COMP_OLD);
 
         timer.start(T_FDER3_OLD);
-        for(x.first();x.test();x.nextValue())
+        for(x.first();x.test();x.next())
         {
           for(int i = 0;i<3;i++)beta.value(x,i)=phi.value(x+i)-phi.value(x-i);
         }
