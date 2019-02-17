@@ -19,6 +19,12 @@ Site::Site(Lattice& lattice, long index) { initialize(lattice, index); }
 void Site::initialize(Lattice& lattice) { lattice_=&lattice; index_=0l;}
 void Site::initialize(Lattice& lattice, long index) { lattice_ = &lattice; index_ = index; }
 
+
+void Site::operator=(const long index)
+{
+	this->index_ = index;
+}
+
 //NEIGHBOURING SITE OPERATORS==
 
 long Site::operator+(int direction)
@@ -43,7 +49,7 @@ long Site::move(int * steps)
 }
 long Site::move3d(int sx, int sy, int sz)
 {
-	return index_ + (sx*lattice_->jump(0)) + (sy*lattice_->jump(2)) + (sz*lattice_->jump(2));
+	return index_ + (sx*lattice_->jump(0)) + (sy*lattice_->jump(1)) + (sz*lattice_->jump(2));
 }
 
 //LOOPING OPERATIONS====================

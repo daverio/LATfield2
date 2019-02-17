@@ -285,6 +285,8 @@ public:
      */
     size_t mass_offset(){return mass_offset_;};
 
+    long num_particles(){return numParticles_;};
+
 protected:
 
   part_info part_global_info_;
@@ -334,7 +336,7 @@ void Particles<part,part_info,part_dataType>::initialize(part_info part_global_i
   part_datatype_=part_datatype;
   numParticles_ = 0;
 
-  lat_part_.initialize(lat_part->dim(),lat_part->size(),0);
+  lat_part_.initialize(lat_part->dim(),lat_part->size(),0,lat_part->vectorSize());
 
   field_part_.initialize(lat_part_);
   field_part_.alloc();
@@ -451,9 +453,9 @@ void Particles<part,part_info,part_dataType>::coutPart(long ID)
 
     for(x.first();x.test();x.nextValue())
     {
-        if((field_part_)(x).size!=0)
+        if(field_part_.value(x).size!=0)
         {
-            for(it=(field_part_)(x).parts.begin(); it != (field_part_)(x).parts.end();++it)
+            for(it=field_part_.value(x).parts.begin(); it != field_part_.value(x).parts.end();++it)
             {
                 if((*it).ID==ID)cout<< "Parallel ranks: ("<<parallel.grid_rank()[1]<<","<<parallel.grid_rank()[0]<<") ; "<< part_global_info_.type_name<<": "<<*it<<endl;
             }
@@ -544,7 +546,7 @@ Real Particles<part,part_info,part_dataType>::updateVel(Real (*updateVel_funct)(
     {
         if(field_part_.value(xPart).size!=0)
         {
-            for (it=(field_part_).value(xPart).parts.begin(); it != (field_part_).value(xPart).parts.end(); ++it)
+            for (it=field_part_.value(xPart).parts.begin(); it != field_part_.value(xPart).parts.end(); ++it)
             {
                 for (int l=0; l<3; l++)
                     frac[l] = modf( (*it).pos[l] / lat_resolution_, &x0);
@@ -828,8 +830,8 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                     }
                     else if(partRanks[0]==thisRanks[0]+1)
                     {
-                        part_moveProc[4].splice(part_moveProc[4].end(),field_part.value(x).parts,itTemp);
-                        field_part.value(x).size -= 1;
+                        part_moveProc[4].splice(part_moveProc[4].end(),field_part_.value(x).parts,itTemp);
+                        field_part_.value(x).size -= 1;
                     }
                     else
                     {
@@ -842,13 +844,13 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                 {
                     if(partRanks[0]==thisRanks[0]-1)
                     {
-                        part_moveProc[6].splice(part_moveProc[6].end(),field_part.value(x).parts,itTemp);
-                        field_part.value(x).size -= 1;
+                        part_moveProc[6].splice(part_moveProc[6].end(),field_part_.value(x).parts,itTemp);
+                        field_part_.value(x).size -= 1;
                     }
                     else if(partRanks[0]==thisRanks[0]+1)
                     {
-                        part_moveProc[7].splice(part_moveProc[7].end(),field_part.value(x).parts,itTemp);
-                        field_part.value(x).size -= 1;
+                        part_moveProc[7].splice(part_moveProc[7].end(),field_part_.value(x).parts,itTemp);
+                        field_part_.value(x).size -= 1;
                     }
                     else
                     {
@@ -874,7 +876,9 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
 
 
 
-    for(x.first();x.test();x.nextValue())if((field_part_)(x).size!=0)(field_part_)(x).parts.splice((field_part_)(x).parts.end(), (field_part_)(x).partsTemp );
+    for(x.first();x.test();x.nextValue())
+      if(field_part_.value(x).size!=0)
+        field_part_.value(x).parts.splice(field_part_.value(x).parts.end(), field_part_.value(x).partsTemp );
 
 
      //cout<<"starting first dim"<<endl;
@@ -1168,8 +1172,8 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
         this->getPartCoordLocal(recBuffer[2][i],newLocalCoord);
         x.setCoordLocal(newLocalCoord);
 
-        field_part.value(x).size += 1;
-        field_part.value(x).parts.push_back(recBuffer[2][i]);
+        field_part_.value(x).size += 1;
+        field_part_.value(x).parts.push_back(recBuffer[2][i]);
 #ifdef DEBUG_MOVE
         int verif;
         verif=addParticle_global(recBuffer[2][i]);
@@ -1191,8 +1195,8 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
 
         x.setCoordLocal(newLocalCoord);
 
-        field_part.value(x).size += 1;
-        field_part.value(x).parts.push_back(recBuffer[5][i]);
+        field_part_.value(x).size += 1;
+        field_part_.value(x).parts.push_back(recBuffer[5][i]);
 #ifdef DEBUG_MOVE
         int verif;
         verif=addParticle_global(recBuffer[5][i]);
@@ -1504,8 +1508,8 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
 
             x.setCoordLocal(newLocalCoord);
 
-            field_part.value(x).size += 1;
-            field_part.value(x).parts.push_back(recBuffer[p][i]);
+            field_part_.value(x).size += 1;
+            field_part_.value(x).parts.push_back(recBuffer[p][i]);
         }
     }
 
@@ -1563,9 +1567,9 @@ void Particles<part,part_info,part_dataType>::saveHDF5(string filename_base, int
   index=0;
   for(x.first();x.test();x.nextValue())
     {
-      if(field_part.value(x).size!=0)
+      if(field_part_.value(x).size!=0)
         {
-	         for(it=field_part.value(x).parts.begin(); it != field_part.value(x).parts.end();++it)
+	         for(it=field_part_.value(x).parts.begin(); it != field_part_.value(x).parts.end();++it)
            {
 	             partlist[index]=(*it);
                index++;
@@ -1782,9 +1786,9 @@ void Particles<part,part_info,part_dataType>::saveHDF5_server_write(string filen
     long index=0;
     for(x.first();x.test();x.nextValue())
     {
-        if(field_part.value(x).size!=0)
+        if(field_part_.value(x).size!=0)
         {
-            for(it=field_part.value(x).parts.begin(); it != field_part.value(x).parts.end();++it)
+            for(it=field_part_.value(x).parts.begin(); it != field_part_.value(x).parts.end();++it)
             {
 
                 for(int i=0;i<3;i++)

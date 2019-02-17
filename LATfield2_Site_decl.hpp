@@ -129,6 +129,11 @@ public:
    */
 		void haloNext();
 
+		//assignments:
+
+		void operator=(const long index);
+
+
 		//NEIGHBOURING SITE OPERATORS==
 
   /*!

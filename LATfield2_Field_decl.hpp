@@ -1047,16 +1047,22 @@ void Field<FieldType>::updateHalo()
 	int copyfrom;
 
 	int  dim=lattice_->dim();
+  int  halo=lattice_->halo();
 	int* jump=new int[dim];
 	int* size=new int[dim];
+  long *sizeGross = new long[dim];
+  long index;
 
 	for(int i=0; i<dim; i++)
 	{
 		jump[i]=lattice_->jump(i);
 		size[i]=lattice_->sizeLocal(i);
+    sizeGross[i]=lattice_->sizeLocalGross(i);
 	}
-	for(int i=0; i<components_; i++)
+  /*
+	for(int c=0; c<components_; c++)
 	{
+
 		for(site.haloFirst(); site.haloTest(); site.haloNext())
 		{
 			//Work out where to copy from
@@ -1073,12 +1079,42 @@ void Field<FieldType>::updateHalo()
 				}
 			}
 			//Copy data
-
-			data_[site.index() + i*sitesLocalGross_] = data_[copyfrom + i*sitesLocalGross_];
-			//memcpy(data_[site.index()*components_+i],data_[copyfrom*components_+i],sizeof_fieldType_);
-
+			data_[site.index() + c*sitesLocalGross_] = data_[copyfrom + c*sitesLocalGross_];
 		}
 	}
+  */
+  if(dim == 3)
+  {
+    for(int c=0; c<components_; c++)
+  	{
+      #pragma omp parallel for collapse(2) private(index,copyfrom)
+      for(long j = halo; j < size[1]+halo;j++)
+      {
+        for(long k = halo; k < size[2]+halo;k++)
+        {
+          for(long i = 0;i < halo;i++)
+          {
+            index = i+sizeGross[0]*(j+sizeGross[1]*k);
+            copyfrom = index + size[0];
+            data_[index + c*sitesLocalGross_] = data_[copyfrom + c*sitesLocalGross_];
+          }
+          for(long i = halo + size[0]; i<sizeGross[0] ; i++)
+          {
+            index = i+sizeGross[0]*(j+sizeGross[1]*k);
+            copyfrom = index - size[0];
+            data_[index + c*sitesLocalGross_] = data_[copyfrom + c*sitesLocalGross_];
+          }
+        }
+      }
+    }
+  }
+  else
+  {
+    COUT<<"updateHalo currently implementd only for 3d lattices... aborting!"<<endl;
+    parallel.abortForce();
+  }
+
+
 
 	delete[] jump;
 	delete[] size;
@@ -1120,6 +1156,7 @@ void Field<FieldType>::updateHaloComms()
 	sj=lattice_->sizeLocal(lattice_->dim()-1);
 	for(comp = 0; comp<components_;comp++)
 	{
+    #pragma omp parallel for collapse(2)
 		for(j=0;j<sj;j++)
 		{
 			for(i=0;i<si ;i++)
@@ -1136,6 +1173,7 @@ void Field<FieldType>::updateHaloComms()
 
 	for(comp = 0; comp<components_;comp++)
 	{
+    #pragma omp parallel for collapse(2)
 		for(j=0;j<sj;j++)
 		{
 			for(i=0;i<si ;i++)
@@ -1150,6 +1188,7 @@ void Field<FieldType>::updateHaloComms()
 	//send down dim1_comm
 	for(comp = 0; comp<components_;comp++)
 	{
+    #pragma omp parallel for collapse(2)
 		for(j=0;j<sj;j++)
 		{
 			for(i=0;i<si ;i++)
@@ -1166,6 +1205,7 @@ void Field<FieldType>::updateHaloComms()
 
 	for(comp = 0; comp<components_;comp++)
 	{
+    #pragma omp parallel for collapse(2)
 		for(j=0;j<sj;j++)
 		{
 			for(i=0;i<si ;i++)

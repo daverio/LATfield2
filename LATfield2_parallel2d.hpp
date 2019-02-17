@@ -48,6 +48,10 @@ void Parallel2d::initialize(int proc_size0, int proc_size1)
 void Parallel2d::initialize(int proc_size0, int proc_size1,int IO_total_size, int IO_node_size)
 {
 
+	#ifdef OPENMP
+  numThreads_ = omp_get_max_threads();
+  #endif
+
     grid_size_[0]=proc_size0;
 	grid_size_[1]=proc_size1;
 

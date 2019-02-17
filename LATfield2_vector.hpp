@@ -81,6 +81,7 @@ LFvector<T>::LFvector(const LFvector& other)
   size_ = other.size_;
   data_= (T*)malloc(size_*sizeof(T));
   allocated_=true;
+  #pragma omp parallel for
   for(int i = 0;i<size_;i++) *(data_+i) = other.data_[i];
 }
 
@@ -388,13 +389,21 @@ LFvector<T> operator/( const T& a, const LFvector<T>& v1 ) {
 }
 
 
-
-
+template<class T>
+T& operator+=(T& res, const LFvector<T>& v1){
+      #pragma omp parallel for reduction(+:res)
+      for(int i = 0;i<v1.size_;i++)
+      {
+        res += v1.data_[i];
+      }
+      return res;
+}
 
 template<class T>
 T vsum(const LFvector<T>& v1)
 {
   T result = 0.0;
+  #pragma omp parallel for reduction(+:result)
   for(int i = 0;i<v1.size_;i++)
   {
     result += v1.data_[i];
@@ -406,6 +415,7 @@ template<class T>
 T vmax(const LFvector<T>& v1)
 {
   T result = 0.0;
+  #pragma omp parallel for reduction(max:result)
   for(int i = 0;i<v1.size_;i++)
   {
     if(result<v1.data_[i])result = v1.data_[i];
@@ -419,6 +429,7 @@ template<class T>
 T vmin(const LFvector<T>& v1)
 {
   T result = 1000000000000000.0;
+  #pragma omp parallel for reduction(min:result)
   for(int i = 0;i<v1.size_;i++)
   {
     if(result>v1.data_[i])result = v1.data_[i];
@@ -431,6 +442,7 @@ T vmin(const LFvector<T>& v1)
 LFvector<double> vpow(const LFvector<double> v, double n)
 {
   LFvector<double> result(v.size_);
+  #pragma omp parallel for
   for(int i = 0;i<v.size_;i++)
   {
     result.data_[i] = pow(v.data_[i],n);
@@ -441,6 +453,7 @@ LFvector<double> vpow(const LFvector<double> v, double n)
 LFvector<double> vsqrt(const LFvector<double> v)
 {
   LFvector<double> result(v.size_);
+  #pragma omp parallel for
   for(int i = 0;i<v.size_;i++)
   {
     result.data_[i] = sqrt(v.data_[i]);
@@ -452,6 +465,7 @@ LFvector<double> vsqrt(const LFvector<double> v)
 LFvector<double> vexp(const LFvector<double> v)
 {
   LFvector<double> result(v.size_);
+  #pragma omp parallel for
   for(int i = 0;i<v.size_;i++)
   {
     result.data_[i] = exp(v.data_[i]);
@@ -462,6 +476,7 @@ LFvector<double> vexp(const LFvector<double> v)
 LFvector<double> vabs(const LFvector<double> v)
 {
   LFvector<double> result(v.size_);
+  #pragma omp parallel for
   for(int i = 0;i<v.size_;i++)
   {
     result.data_[i] = fabs(v.data_[i]);

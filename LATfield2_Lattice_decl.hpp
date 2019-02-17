@@ -109,6 +109,7 @@ public:
      */
     int  sizeLocal(int direction);  //Local version
 
+    int  sizeLocalGross(int direction);
 
     /*!
      \return long. Number of sites on the lattice (excluding halo sites).
@@ -191,6 +192,13 @@ public:
     int * sizeLocalAllProcDim1();
 
 
+#ifdef OPENMP
+    int threadSize(int tid);
+    int threadOffset(int tid);
+    int maxThreadSize();
+#endif
+
+
 private:
     int        status_;
     static int initialized;
@@ -222,6 +230,12 @@ private:
 
     //save variable for fast save
     int arch_saved_;
+
+    #ifdef OPENMP
+    int * threadSizes_;
+    int * threadOffsets_;
+    int maxThreadSize_;
+    #endif
 
 };
 

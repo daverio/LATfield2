@@ -50,11 +50,16 @@ Lattice::~Lattice()
 {
 	if((status_ & initialized) > 0)
     {
-		delete[] size_;
-		delete[] sizeLocal_;
-		delete[] jump_;
+				delete[] size_;
+				delete[] sizeLocal_;
+				delete[] jump_;
         delete[] sizeLocalAllProcDim0_;
         delete[] sizeLocalAllProcDim1_;
+
+				#ifdef OPENMP
+					delete[] threadSizes_;
+					delete[] threadOffsets_;
+				#endif
     }
 }
 //INITIALIZE=========================
@@ -94,15 +99,50 @@ void Lattice::initialize(int dim, const int* size, int halo, int vectorSize)
 	}
 	else
 	{
-		vectorSize_ = vectorSize;
-		if(size[0] % vectorSize_ != 0)
+		if(size[0] % vectorSize != 0)
 		{
 			COUT<<"initialization of the lattice with wrong vector size, size[0] % vectorSize_ != 0"<<endl;
 			COUT<<"reseting vectorSize_ to size[0]"<<endl;
 			COUT<<"might increase memory consumption for large lattice, fix it if memory bounded!"<<endl;
 			vectorSize_ = size[0];
 		}
+		else
+		{
+			vectorSize_ = vectorSize;
+		}
 	}
+
+	//setting thread localSize and offset
+	#ifdef OPENMP
+	threadSizes_ = new int[parallel.numThreads()];
+	threadOffsets_ = new int[parallel.numThreads()];
+
+	if(vectorSize_ % parallel.numThreads()!=0)
+	{
+		COUT<<"Lattice::initialize: vector size set to: "<< vectorSize_<<endl;
+		COUT<<"Lattice::initialize: numthreads set to: "<< parallel.numThreads()<<endl;
+		COUT<<"Lattice::initialize: not ideal load balancing!"<<endl;
+		COUT<<"Lattice::initialize: for ideal load balance (is possible) use vectorSize % numThread = 0"<<endl;
+	}
+
+	#pragma omp parallel
+	{
+		int tid = omp_get_thread_num();
+		threadSizes_[tid] = int(ceil((parallel.numThreads() - tid)*vectorSize_/float(parallel.numThreads())))
+												-  int(ceil((parallel.numThreads()-tid-1)*vectorSize_/float(parallel.numThreads()) ));
+
+	}
+
+	threadOffsets_[0]=0;
+	maxThreadSize_ = threadSizes_[0];
+	for(int i = 1;i<parallel.numThreads();i++)
+	{
+		threadOffsets_[i] = threadOffsets_[i-1] + threadSizes_[i-1];
+		maxThreadSize_ = max(maxThreadSize_,threadSizes_[i]);
+	}
+
+	#endif
+
 
 
 	//Calculate local size
@@ -438,6 +478,7 @@ int  Lattice::halo() { return halo_; }
 
 int* Lattice::sizeLocal() { return sizeLocal_; };
 int  Lattice::sizeLocal(int i) { return sizeLocal_[i]; }
+int  Lattice::sizeLocalGross(int i) { return sizeLocal_[i]+2*halo_; }
 long  Lattice::sitesLocal() { return sitesLocal_; }
 long  Lattice::sitesLocalGross() { return sitesLocalGross_; }
 
@@ -451,5 +492,11 @@ long Lattice::siteLast() { return siteLast_; }
 
 int * Lattice::sizeLocalAllProcDim0(){ return sizeLocalAllProcDim0_; }
 int * Lattice::sizeLocalAllProcDim1(){ return sizeLocalAllProcDim1_; }
+
+#ifdef OPENMP
+int  Lattice::threadSize(int tid){return threadSizes_[tid];}
+int  Lattice::threadOffset(int tid){return threadOffsets_[tid];}
+int  Lattice::maxThreadSize(){return maxThreadSize_;}
+#endif
 
 #endif

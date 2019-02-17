@@ -30,7 +30,8 @@ inline long setIndex(long * size, long i, long j,long k)
  */
 void projection_init(Field<Real> * f)
 {
-    for(long i=0;i< f->lattice().sitesLocalGross()  * (long)(f->components())  ;i++)(*f)(i)=0.0;
+    #pragma omp parallel for
+    for(long i=0;i< f->lattice().sitesLocalGross()  * (long)(f->components())  ;i++)(*f).value(i)=0.0;
 }
 
 
@@ -72,232 +73,377 @@ int CIC_mapv2[2][2][2][2] =   { { {{24,28},{25,29}},{{26,30},{27,31}} } , { {{28
  \sa scalarProjectionCIC_comm(Field<Real> * rho)
  \sa projection_init(Field<Real> * f)
  */
+#ifdef OPENMP
 template<typename part, typename part_info, typename part_dataType>
 void scalarProjectionCIC_project(Particles<part,part_info,part_dataType> * parts,Field<Real> * rho, size_t * oset = NULL,int flag_where = FROM_INFO)
 {
 
-    if(rho->lattice().halo() == 0)
+  if(rho->lattice().halo() == 0)
+  {
+    cout<< "LATfield2::scalarProjectionCIC_proj: the field has to have at least a halo of 1" <<endl;
+    cout<< "LATfield2::scalarProjectionCIC_proj: aborting" <<endl;
+    exit(-1);
+  }
+
+  Site xPart(parts->lattice());
+  Site xField(rho->lattice());
+
+
+
+
+  double latresolution = parts->res();
+
+  double mass;
+  double cicVol;
+  cicVol= latresolution*latresolution*latresolution;
+  cicVol *= cicVol;
+
+
+  //long index;
+  //long index01,index10,index11;
+  //Real localCube[8]; // XYZ = 000 | 001 | 010 | 011 | 100 | 101 | 110 | 111
+
+  Real threadRect[parallel.numThreads()][ rho->lattice().maxThreadSize() + 1][4]; //000 | 001 | 010 | 011
+
+  int sfrom;
+  size_t offset;
+
+  if(oset == NULL)
+  {
+    sfrom = parts->mass_type();
+    offset = parts->mass_offset();
+  }
+  else
+  {
+    sfrom =  flag_where;
+    offset = *oset;
+  }
+
+  int tid;
+
+  if(sfrom == FROM_INFO)
+  {
+    mass = *(double*)((char*)parts->parts_info() + offset);
+    mass /= cicVol;
+    //cout << mass<<endl;
+  }
+
+  for(xPart.first(),xField.first();xPart.test();xPart.next(),xField.next())
+  {
+    #pragma omp parallel
     {
-        cout<< "LATfield2::scalarProjectionCIC_proj: the field has to have at least a halo of 1" <<endl;
-        cout<< "LATfield2::scalarProjectionCIC_proj: aborting" <<endl;
-        exit(-1);
-    }
+      int tid = omp_get_thread_num();
+      double referPos[3];
+      double rescalPos[3];
+      double rescalPosDown[3];
 
-    Site xPart(parts->lattice());
-    Site xField(rho->lattice());
-
-    typename std::list<part>::iterator it;
-
-    //size_t offset;
-    //*offset = oset;
-
-    double referPos[3];
-    double rescalPos[3];
-    double rescalPosDown[3];
-    double latresolution = parts->res();
-
-    double mass;
-    double cicVol;
-    cicVol= latresolution*latresolution*latresolution;
-    cicVol *= cicVol;
-
-    Real localCube[8]; // XYZ = 000 | 001 | 010 | 011 | 100 | 101 | 110 | 111
-
-    int sfrom;
-
-    size_t offset;
-
-    if(oset == NULL)
-    {
-        sfrom = parts->mass_type();
-        offset = parts->mass_offset();
-    }
-    else
-    {
-        sfrom =  flag_where;
-        offset = *oset;
-    }
-
-    if(sfrom == FROM_INFO)
-    {
-        mass = *(double*)((char*)parts->parts_info() + offset);
-        mass /= cicVol;
-        //cout << mass<<endl;
-    }
+      referPos[1]=xPart.coord(1)*latresolution;
+      referPos[2]=xPart.coord(2)*latresolution;
 
 
+      for(int i = 0; i < parts->lattice().threadSize(tid) + 1; i++)
+      {
+        for(int j=0;j<4;j++)threadRect[tid][i][j] = 0.0;
+      }
+
+      long index   = xPart.index()        + parts->lattice().threadOffset(tid);
+      long index00 = xField.index()       + rho->lattice().threadOffset(tid);
+      long index01 = xField.move3d(0,0,1) + rho->lattice().threadOffset(tid);
+      long index10 = xField.move3d(0,1,0) + rho->lattice().threadOffset(tid);
+      long index11 = xField.move3d(0,1,1) + rho->lattice().threadOffset(tid);
 
 
-    for(xPart.first(),xField.first();xPart.test();xPart.nextValue(),xField.nextValue())
-    {
-
-
-        if(parts->field().value(xPart).size!=0)
+      for(int x_i=0;x_i<parts->lattice().threadSize(tid);x_i++)
+      {
+        if(parts->field().value(index+x_i).size!=0)
         {
-            for(int i=0;i<3;i++)referPos[i]=xPart.coord(i)*latresolution;
-            for(int i=0;i<8;i++)localCube[i]=0;
+          referPos[0]=(xPart.coord(0)+parts->lattice().threadOffset(tid)+x_i)*latresolution;
 
-            for (it=(parts->field()).value(xPart).parts.begin(); it != (parts->field()).value(xPart).parts.end(); ++it)
+          for (typename std::list<part>::iterator it=parts->field().value(index+x_i).parts.begin(); it != parts->field().value(index+x_i).parts.end(); ++it)
+          {
+
+            for(int i =0;i<3;i++)
             {
-                for(int i =0;i<3;i++)
-                {
-                    rescalPos[i]=(*it).pos[i]-referPos[i];
-                    rescalPosDown[i]=latresolution -rescalPos[i];
-                }
-
-                if(sfrom==FROM_PART)
-                {
-                    mass = *(double*)((char*)&(*it)+offset);
-                    mass /=cicVol;
-                }
-
-                //000
-                localCube[0] += rescalPosDown[0]*rescalPosDown[1]*rescalPosDown[2] * mass;
-                //001
-                localCube[1] += rescalPosDown[0]*rescalPosDown[1]*rescalPos[2] * mass;
-                //010
-                localCube[2] += rescalPosDown[0]*rescalPos[1]*rescalPosDown[2] * mass;
-                //011
-                localCube[3] += rescalPosDown[0]*rescalPos[1]*rescalPos[2] * mass;
-                //100
-                localCube[4] += rescalPos[0]*rescalPosDown[1]*rescalPosDown[2] * mass;
-                //101
-                localCube[5] += rescalPos[0]*rescalPosDown[1]*rescalPos[2] * mass;
-                //110
-                localCube[6] += rescalPos[0]*rescalPos[1]*rescalPosDown[2] * mass;
-                //111
-                localCube[7] += rescalPos[0]*rescalPos[1]*rescalPos[2] * mass;
+              rescalPos[i]=it->pos[i]-referPos[i];
+              rescalPosDown[i]=latresolution -rescalPos[i];
+            }
+            //cout<< xPart << *it
+            //     << rescalPos[0]<< " , "<< rescalPos[1]<< " , "<< rescalPos[2]<< " , "<<latresolution<<endl;
+            if(sfrom==FROM_PART)
+            {
+              mass = *(double*)((char*)&(*it)+offset);
+              mass /=cicVol;
             }
 
-            (*rho).value(xField)+=localCube[0];
-            (*rho).value(xField+2)+=localCube[1];
-            (*rho).value(xField+1)+=localCube[2];
-            (*rho).value(xField+1+2)+=localCube[3];
-            (*rho).value(xField+0)+=localCube[4];
-            (*rho).value(xField+0+2)+=localCube[5];
-            (*rho).value(xField+0+1)+=localCube[6];
-            (*rho).value(xField+0+1+2)+=localCube[7];
+            //000
+            threadRect[tid][x_i  ][0] += rescalPosDown[0]*rescalPosDown[1]*rescalPosDown[2] * mass;
+            //001
+            threadRect[tid][x_i  ][1] += rescalPosDown[0]*rescalPosDown[1]*rescalPos[2] * mass;
+            //010
+            threadRect[tid][x_i  ][2] += rescalPosDown[0]*rescalPos[1]*rescalPosDown[2] * mass;
+            //011
+            threadRect[tid][x_i  ][3] += rescalPosDown[0]*rescalPos[1]*rescalPos[2] * mass;
+            //100
+            threadRect[tid][x_i+1][0] += rescalPos[0]*rescalPosDown[1]*rescalPosDown[2] * mass;
+            //101
+            threadRect[tid][x_i+1][1] += rescalPos[0]*rescalPosDown[1]*rescalPos[2] * mass;
+            //110
+            threadRect[tid][x_i+1][2] += rescalPos[0]*rescalPos[1]*rescalPosDown[2] * mass;
+            //111
+            threadRect[tid][x_i+1][3] += rescalPos[0]*rescalPos[1]*rescalPos[2] * mass;
+          }
         }
+      }
+
+      for(int x_i=0;x_i<parts->lattice().threadSize(tid);x_i++)
+      {
+        rho->value( index00 + x_i ) += threadRect[tid][x_i][0];
+        rho->value( index01 + x_i )   += threadRect[tid][x_i][1];
+        rho->value( index10 + x_i )   += threadRect[tid][x_i][2];
+        rho->value( index11 + x_i )   += threadRect[tid][x_i][3];
+      }
+
+      #pragma omp barrier
+
+      rho->value( index00 + parts->lattice().threadSize(tid) ) += threadRect[tid][parts->lattice().threadSize(tid)][0];
+      rho->value( index01 + parts->lattice().threadSize(tid) ) += threadRect[tid][parts->lattice().threadSize(tid)][1];
+      rho->value( index10 + parts->lattice().threadSize(tid) ) += threadRect[tid][parts->lattice().threadSize(tid)][2];
+      rho->value( index11 + parts->lattice().threadSize(tid) ) += threadRect[tid][parts->lattice().threadSize(tid)][3];
+
+
+
     }
-
-
+  }
 }
-
-
-
-/*! \fn scalarProjectionCIC_comm(Field<Real> * rho)
- \brief communication method associated to the cloud-in-cell projection of scalars .
-
-
- \sa scalarProjectionCIC_project(...)
-*/
-void scalarProjectionCIC_comm(Field<Real> * rho)
+#else
+template<typename part, typename part_info, typename part_dataType>
+void scalarProjectionCIC_project(Particles<part,part_info,part_dataType> * parts,Field<Real> * rho, size_t * oset = NULL,int flag_where = FROM_INFO)
 {
 
-    if(rho->lattice().halo() == 0)
+  if(rho->lattice().halo() == 0)
+  {
+    cout<< "LATfield2::scalarProjectionCIC_proj: the field has to have at least a halo of 1" <<endl;
+    cout<< "LATfield2::scalarProjectionCIC_proj: aborting" <<endl;
+    exit(-1);
+  }
+
+  Site xPart(parts->lattice());
+  Site xField(rho->lattice());
+
+  typename std::list<part>::iterator it;
+
+  double referPos[3];
+  double rescalPos[3];
+  double rescalPosDown[3];
+  double latresolution = parts->res();
+
+  double mass;
+  double cicVol;
+  cicVol= latresolution*latresolution*latresolution;
+  cicVol *= cicVol;
+
+  Real localCube[8]; // XYZ = 000 | 001 | 010 | 011 | 100 | 101 | 110 | 111
+  int sfrom;
+  size_t offset;
+
+  if(oset == NULL)
+  {
+    sfrom = parts->mass_type();
+    offset = parts->mass_offset();
+  }
+  else
+  {
+    sfrom =  flag_where;
+    offset = *oset;
+  }
+
+  if(sfrom == FROM_INFO)
+  {
+    mass = *(double*)((char*)parts->parts_info() + offset);
+    mass /= cicVol;
+    //cout << mass<<endl;
+  }
+
+  for(xPart.first(),xField.first();xPart.test();xPart.next(),xField.next())
+  {
+    referPos[1]=xPart.coord(1)*latresolution;
+    referPos[2]=xPart.coord(2)*latresolution;
+    for(int x_i=0;x_i<parts->lattice().vectorSize();x_i++)
     {
-        cout<< "LATfield2::scalarProjectionCIC_proj: the field has to have at least a halo of 1" <<endl;
-        cout<< "LATfield2::scalarProjectionCIC_proj: aborting" <<endl;
-        exit(-1);
-    }
+      if(parts->field().value(xPart.index()+x_i).size!=0)
+      {
+        referPos[0]=(xPart.coord(0)+x_i)*latresolution;
+        for(int i=0;i<8;i++)localCube[i]=0;
 
-    Real *bufferSend;
-    Real *bufferRec;
-
-
-    long bufferSizeY;
-    long bufferSizeZ;
-
-
-    int sizeLocal[3];
-    long sizeLocalGross[3];
-    int sizeLocalOne[3];
-    int halo = rho->lattice().halo();
-
-    for(int i=0;i<3;i++)
-    {
-        sizeLocal[i]=rho->lattice().sizeLocal(i);
-        sizeLocalGross[i] = sizeLocal[i] + 2 * halo;
-        sizeLocalOne[i]=sizeLocal[i]+2;
-    }
-
-    int distHaloOne = halo - 1;
-
-    int iref;
-    int imax;
-
-
-    iref = sizeLocalGross[0] - halo;
-
-    for(int k=distHaloOne;k<sizeLocalOne[2]+distHaloOne;k++)
-    {
-        for(int j=distHaloOne;j<sizeLocalOne[1]+distHaloOne;j++)
+        for (it=parts->field().value(xPart.index()+x_i).parts.begin(); it != parts->field().value(xPart.index()+x_i).parts.end(); ++it)
         {
-            (*rho).value(setIndex(sizeLocalGross,halo,j,k)) += (*rho).value(setIndex(sizeLocalGross,iref,j,k));
+
+          for(int i =0;i<3;i++)
+          {
+            rescalPos[i]=(*it).pos[i]-referPos[i];
+            rescalPosDown[i]=latresolution -rescalPos[i];
+          }
+          //cout<< xPart << *it
+          //     << rescalPos[0]<< " , "<< rescalPos[1]<< " , "<< rescalPos[2]<< " , "<<latresolution<<endl;
+          if(sfrom==FROM_PART)
+          {
+            mass = *(double*)((char*)&(*it)+offset);
+            mass /=cicVol;
+          }
+
+          //000
+          localCube[0] += rescalPosDown[0]*rescalPosDown[1]*rescalPosDown[2] * mass;
+          //001
+          localCube[1] += rescalPosDown[0]*rescalPosDown[1]*rescalPos[2] * mass;
+          //010
+          localCube[2] += rescalPosDown[0]*rescalPos[1]*rescalPosDown[2] * mass;
+          //011
+          localCube[3] += rescalPosDown[0]*rescalPos[1]*rescalPos[2] * mass;
+          //100
+          localCube[4] += rescalPos[0]*rescalPosDown[1]*rescalPosDown[2] * mass;
+          //101
+          localCube[5] += rescalPos[0]*rescalPosDown[1]*rescalPos[2] * mass;
+          //110
+          localCube[6] += rescalPos[0]*rescalPos[1]*rescalPosDown[2] * mass;
+          //111
+          localCube[7] += rescalPos[0]*rescalPos[1]*rescalPos[2] * mass;
         }
+        rho->value( xField.index()       + x_i ) += localCube[0];
+        rho->value( xField.move3d(0,0,1) + x_i ) += localCube[1];
+        rho->value( xField.move3d(0,1,0) + x_i ) += localCube[2];
+        rho->value( xField.move3d(0,1,1) + x_i ) += localCube[3];
+        rho->value( xField.move3d(1,0,0) + x_i ) += localCube[4];
+        rho->value( xField.move3d(1,0,1) + x_i ) += localCube[5];
+        rho->value( xField.move3d(1,1,0) + x_i ) += localCube[6];
+        rho->value( xField.move3d(1,1,1) + x_i ) += localCube[7];
+      }
     }
-
-
-    //send halo in direction Y
-    bufferSizeY =  (long)(sizeLocalOne[2]-1) * (long)sizeLocal[0];
-    bufferSizeZ = (long)sizeLocal[0] * (long)sizeLocal[1] ;
-    if(bufferSizeY>bufferSizeZ)
-    {
-        bufferSend = (Real*)malloc(sizeof(Real)*bufferSizeY);
-        bufferRec = (Real*)malloc(sizeof(Real)*bufferSizeY);
-    }
-    else
-    {
-        bufferSend = (Real*)malloc(sizeof(Real)*bufferSizeZ);
-        bufferRec = (Real*)malloc(sizeof(Real)*bufferSizeZ);
-    }
-
-    //pack data
-    imax = sizeLocal[0];
-    iref = sizeLocalGross[1]- halo;
-    for(int k=0;k<(sizeLocalOne[2]-1);k++)
-    {
-        for(int i=0;i<imax;i++)
-        {
-            bufferSend[i+k*imax]=(*rho).value(setIndex(sizeLocalGross,i+halo,iref,k+halo));
-        }
-    }
-    parallel.sendUp_dim1(bufferSend,bufferRec,bufferSizeY);
-    //unpack data
-    for(int k=0;k<(sizeLocalOne[2]-1);k++)
-    {
-        for(int i=0;i<imax;i++)(*rho).value(setIndex(sizeLocalGross,i+halo,halo,k+halo))+=bufferRec[i+k*imax];
-
-    }
-
-    //send halo in direction Z
-
-
-
-    //pack data
-    iref=sizeLocalGross[2]-halo;
-    for(int j=0;j<(sizeLocalOne[1]-2);j++)
-    {
-        for(int i=0;i<imax;i++)
-        {
-            bufferSend[i+j*imax]=(*rho).value(setIndex(sizeLocalGross,i+halo,j+halo,iref));
-        }
-    }
-
-    parallel.sendUp_dim0(bufferSend,bufferRec,bufferSizeZ);
-
-
-    //unpack data
-
-    for(int j=0;j<(sizeLocalOne[1]-2);j++)
-    {
-        for(int i=0;i<imax;i++)(*rho).value(setIndex(sizeLocalGross,i+halo,j+halo,halo))+=bufferRec[i+j*imax];
-    }
-
-    free(bufferRec);
-    free(bufferSend);
-
+  }
 }
+#endif
+
+
+ /*! \fn scalarProjectionCIC_comm(Field<Real> * rho)
+  \brief communication method associated to the cloud-in-cell projection of scalars .
+
+
+  \sa scalarProjectionCIC_project(...)
+ */
+ void scalarProjectionCIC_comm(Field<Real> * rho)
+ {
+
+     if(rho->lattice().halo() == 0)
+     {
+         cout<< "LATfield2::scalarProjectionCIC_proj: the field has to have at least a halo of 1" <<endl;
+         cout<< "LATfield2::scalarProjectionCIC_proj: aborting" <<endl;
+         exit(-1);
+     }
+
+     Real *bufferSend;
+     Real *bufferRec;
+
+
+     long bufferSizeY;
+     long bufferSizeZ;
+
+
+     int sizeLocal[3];
+     long sizeLocalGross[3];
+     int sizeLocalOne[3];
+     int halo = rho->lattice().halo();
+
+     for(int i=0;i<3;i++)
+     {
+         sizeLocal[i]=rho->lattice().sizeLocal(i);
+         sizeLocalGross[i] = sizeLocal[i] + 2 * halo;
+         sizeLocalOne[i]=sizeLocal[i]+2;
+     }
+
+     int distHaloOne = halo - 1;
+
+     int iref;
+     int imax;
+
+
+     iref = sizeLocalGross[0] - halo;
+     #pragma omp parallel for collapse(2)
+     for(int k=distHaloOne;k<sizeLocalOne[2]+distHaloOne;k++)
+     {
+         for(int j=distHaloOne;j<sizeLocalOne[1]+distHaloOne;j++)
+         {
+             rho->value(setIndex(sizeLocalGross,halo,j,k)) += rho->value(setIndex(sizeLocalGross,iref,j,k));
+         }
+     }
+
+
+     //send halo in direction Y
+     bufferSizeY =  (long)(sizeLocalOne[2]-1) * (long)sizeLocal[0];
+     bufferSizeZ = (long)sizeLocal[0] * (long)sizeLocal[1] ;
+     if(bufferSizeY>bufferSizeZ)
+     {
+         bufferSend = (Real*)malloc(sizeof(Real)*bufferSizeY);
+         bufferRec = (Real*)malloc(sizeof(Real)*bufferSizeY);
+     }
+     else
+     {
+         bufferSend = (Real*)malloc(sizeof(Real)*bufferSizeZ);
+         bufferRec = (Real*)malloc(sizeof(Real)*bufferSizeZ);
+     }
+
+     //pack data
+     imax = sizeLocal[0];
+     iref = sizeLocalGross[1]- halo;
+     #pragma omp parallel for collapse(2)
+     for(int k=0;k<(sizeLocalOne[2]-1);k++)
+     {
+         for(int i=0;i<imax;i++)
+         {
+             bufferSend[i+k*imax]=rho->value(setIndex(sizeLocalGross,i+halo,iref,k+halo));
+         }
+     }
+     parallel.sendUp_dim1(bufferSend,bufferRec,bufferSizeY);
+     //unpack data
+     #pragma omp parallel for collapse(2)
+     for(int k=0;k<(sizeLocalOne[2]-1);k++)
+     {
+         for(int i=0;i<imax;i++)
+         {
+           rho->value(setIndex(sizeLocalGross,i+halo,halo,k+halo))+=bufferRec[i+k*imax];
+         }
+     }
+
+     //send halo in direction Z
+
+
+
+     //pack data
+     iref=sizeLocalGross[2]-halo;
+     #pragma omp parallel for collapse(2)
+     for(int j=0;j<(sizeLocalOne[1]-2);j++)
+     {
+         for(int i=0;i<imax;i++)
+         {
+             bufferSend[i+j*imax]=rho->value(setIndex(sizeLocalGross,i+halo,j+halo,iref));
+         }
+     }
+
+     parallel.sendUp_dim0(bufferSend,bufferRec,bufferSizeZ);
+
+
+     //unpack data
+     #pragma omp parallel for collapse(2)
+     for(int j=0;j<(sizeLocalOne[1]-2);j++)
+     {
+         for(int i=0;i<imax;i++)
+         {
+           rho->value(setIndex(sizeLocalGross,i+halo,j+halo,halo))+=bufferRec[i+j*imax];
+         }
+     }
+
+     free(bufferRec);
+     free(bufferSend);
+
+ }
 
 //////vector projection
 
@@ -498,14 +644,18 @@ void vectorProjectionCICNGP_comm(Field<Real> * vel)
 
 
     iref =sizeLocalGross[0] - halo ;
-    for(int k=distHaloOne;k<sizeLocalOne[2]+distHaloOne;k++)
-    {
-        for(int j=distHaloOne;j<sizeLocalOne[1]+distHaloOne;j++)
-        {
-            for(int c=0;c<comp;c++)(*vel).value(setIndex(sizeLocalGross,halo,j,k),c) += (*vel).value(setIndex(sizeLocalGross,iref,j,k),c);
-        }
-    }
 
+    for(int c=0;c<comp;c++)
+    {
+      #pragma omp parallel for collapse(2)
+      for(int k=distHaloOne;k<sizeLocalOne[2]+distHaloOne;k++)
+      {
+          for(int j=distHaloOne;j<sizeLocalOne[1]+distHaloOne;j++)
+          {
+              (*vel).value(setIndex(sizeLocalGross,halo,j,k),c) += (*vel).value(setIndex(sizeLocalGross,iref,j,k),c);
+          }
+      }
+    }
 
     //send halo in direction Y
     bufferSizeY =  (long)(sizeLocalOne[2]-1)*sizeLocal[0] * comp;
@@ -525,27 +675,40 @@ void vectorProjectionCICNGP_comm(Field<Real> * vel)
     //pack data
     imax=sizeLocalGross[0]-2* halo;
     iref=sizeLocalGross[1]- halo;
-    for(int k=0;k<(sizeLocalOne[2]-1);k++)
+
+
+    for(int c=0;c<comp;c++)
     {
-        for(int i=0;i<imax;i++)
-        {
-            for(int c=0;c<comp;c++)bufferSend[c+comp*(i+k*imax)]=(*vel).value(setIndex(sizeLocalGross,i+halo,iref,k+halo),c);
-        }
+      #pragma omp parallel for collapse(2)
+      for(int k=0;k<(sizeLocalOne[2]-1);k++)
+      {
+          for(int i=0;i<imax;i++)
+          {
+              bufferSend[c+comp*(i+k*imax)]=(*vel).value(setIndex(sizeLocalGross,i+halo,iref,k+halo),c);
+          }
+      }
     }
+
 
 
     parallel.sendUp_dim1(bufferSend,bufferRec,bufferSizeY);
 
 
     //unpack data
-    for(int k=0;k<(sizeLocalOne[2]-1);k++)
-    {
-        for(int i=0;i<imax;i++)
-        {
-            for(int c=0;c<comp;c++)(*vel).value(setIndex(sizeLocalGross,i+halo,halo,k+halo),c)+=bufferRec[c+comp*(i+k*imax)];
-        }
 
+    for(int c=0;c<comp;c++)
+    {
+      #pragma omp parallel for collapse(2)
+      for(int k=0;k<(sizeLocalOne[2]-1);k++)
+      {
+          for(int i=0;i<imax;i++)
+          {
+              (*vel).value(setIndex(sizeLocalGross,i+halo,halo,k+halo),c)+=bufferRec[c+comp*(i+k*imax)];
+          }
+
+      }
     }
+
 
     //send halo in direction Z
 
@@ -554,26 +717,35 @@ void vectorProjectionCICNGP_comm(Field<Real> * vel)
     //cout<<"okok"<<endl;
 
     iref=sizeLocalGross[2]-halo;
-    for(int j=0;j<(sizeLocalOne[1]-2);j++)
+    for(int c=0;c<comp;c++)
     {
-        for(int i=0;i<imax;i++)
-        {
-            for(int c=0;c<comp;c++)bufferSend[c+comp*(i+j*imax)]=(*vel).value(setIndex(sizeLocalGross,i+halo,j+halo,iref),c);
-        }
+      #pragma omp parallel for collapse(2)
+      for(int j=0;j<(sizeLocalOne[1]-2);j++)
+      {
+          for(int i=0;i<imax;i++)
+          {
+              bufferSend[c+comp*(i+j*imax)]=(*vel).value(setIndex(sizeLocalGross,i+halo,j+halo,iref),c);
+          }
+      }
     }
+
 
     parallel.sendUp_dim0(bufferSend,bufferRec,bufferSizeZ);
 
 
     //unpack data
-
-    for(int j=0;j<(sizeLocalOne[1]-2);j++)
+    for(int c=0;c<comp;c++)
     {
-        for(int i=0;i<imax;i++)
-        {
-            for(int c=0;c<comp;c++)(*vel).value(setIndex(sizeLocalGross,i+halo,j+halo,halo),c)+=bufferRec[c+comp*(i+j*imax)];
-        }
+      #pragma omp parallel for collapse(2)
+      for(int j=0;j<(sizeLocalOne[1]-2);j++)
+      {
+          for(int i=0;i<imax;i++)
+          {
+              (*vel).value(setIndex(sizeLocalGross,i+halo,j+halo,halo),c)+=bufferRec[c+comp*(i+j*imax)];
+          }
+      }
     }
+
 
     free(bufferRec);
     free(bufferSend);
@@ -795,13 +967,19 @@ void symtensorProjectionCICNGP_comm(Field<Real> * Tij)
     int comp=6;
 
     iref = sizeLocalGross[0]-halo;
-    for(int k=distHaloOne;k<sizeLocalOne[2]+distHaloOne;k++)
+
+    for(int c=0;c<comp;c++)
     {
-        for(int j=distHaloOne;j<sizeLocalOne[1]+distHaloOne;j++)
-        {
-            for(int c=0;c<comp;c++)(*Tij).value(setIndex(sizeLocalGross,halo,j,k),c) += (*Tij).value(setIndex(sizeLocalGross,iref,j,k),c);
-        }
+      #pragma omp parallel for collapse(2)
+      for(int k=distHaloOne;k<sizeLocalOne[2]+distHaloOne;k++)
+      {
+          for(int j=distHaloOne;j<sizeLocalOne[1]+distHaloOne;j++)
+          {
+              (*Tij).value(setIndex(sizeLocalGross,halo,j,k),c) += (*Tij).value(setIndex(sizeLocalGross,iref,j,k),c);
+          }
+      }
     }
+
 
 
     //send halo in direction Y
@@ -822,52 +1000,72 @@ void symtensorProjectionCICNGP_comm(Field<Real> * Tij)
     //pack data
     imax=sizeLocalGross[0]-2* halo;
     iref=sizeLocalGross[1]- halo;
-    for(int k=0;k<(sizeLocalOne[2]-1);k++)
+
+    for(int c=0;c<comp;c++)
     {
-        for(int i=0;i<imax;i++)
-        {
-            for(int c=0;c<comp;c++)bufferSend[c+comp*(i+k*imax)]=(*Tij).value(setIndex(sizeLocalGross,i+halo,iref,k+halo),c);
-        }
+      #pragma omp parallel for collapse(2)
+      for(int k=0;k<(sizeLocalOne[2]-1);k++)
+      {
+          for(int i=0;i<imax;i++)
+          {
+              bufferSend[c+comp*(i+k*imax)]=(*Tij).value(setIndex(sizeLocalGross,i+halo,iref,k+halo),c);
+          }
+      }
     }
+
 
 
     parallel.sendUp_dim1(bufferSend,bufferRec,bufferSizeY);
 
 
     //unpack data
-    for(int k=0;k<(sizeLocalOne[2]-1);k++)
+    for(int c=0;c<comp;c++)
     {
-        for(int i=0;i<imax;i++)
-        {
-            for(int c=0;c<comp;c++)(*Tij).value(setIndex(sizeLocalGross,i+halo,halo,k+halo),c)+=bufferRec[c+comp*(i+k*imax)];
-        }
+      #pragma omp parallel for collapse(2)
+      for(int k=0;k<(sizeLocalOne[2]-1);k++)
+      {
+          for(int i=0;i<imax;i++)
+          {
+              (*Tij).value(setIndex(sizeLocalGross,i+halo,halo,k+halo),c)+=bufferRec[c+comp*(i+k*imax)];
+          }
 
+      }
     }
+
 
     //send halo in direction Z
 
     //pack data
     iref=sizeLocalGross[2]-halo;
-    for(int j=0;j<(sizeLocalOne[1]-2);j++)
+    for(int c=0;c<comp;c++)
     {
-        for(int i=0;i<imax;i++)
-        {
-            for(int c=0;c<comp;c++)bufferSend[c+comp*(i+j*imax)]=(*Tij).value(setIndex(sizeLocalGross,i+halo,j+halo,iref),c);
-        }
+      #pragma omp parallel for collapse(2)
+      for(int j=0;j<(sizeLocalOne[1]-2);j++)
+      {
+          for(int i=0;i<imax;i++)
+          {
+              bufferSend[c+comp*(i+j*imax)]=(*Tij).value(setIndex(sizeLocalGross,i+halo,j+halo,iref),c);
+          }
+      }
     }
+
 
     parallel.sendUp_dim0(bufferSend,bufferRec,bufferSizeZ);
 
 
     //unpack data
-
-    for(int j=0;j<(sizeLocalOne[1]-2);j++)
+    for(int c=0;c<comp;c++)
     {
-        for(int i=0;i<imax;i++)
-        {
-            for(int c=0;c<comp;c++)(*Tij).value(setIndex(sizeLocalGross,i+halo,j+halo,halo),c)+=bufferRec[c+comp*(i+j*imax)];
-        }
+      #pragma omp parallel for collapse(2)
+      for(int j=0;j<(sizeLocalOne[1]-2);j++)
+      {
+          for(int i=0;i<imax;i++)
+          {
+              (*Tij).value(setIndex(sizeLocalGross,i+halo,j+halo,halo),c)+=bufferRec[c+comp*(i+j*imax)];
+          }
+      }
     }
+
 
     free(bufferRec);
     free(bufferSend);
@@ -1132,15 +1330,19 @@ void vectorProjectionCIC_comm(Field<Real> * vel)
     int iref1=sizeLocalGross[0]-halo;
     int iref2=sizeLocalGross[0]-halo-1;
 
-    for(int k=distHaloOne;k<sizeLocalOne[2]+distHaloOne;k++)
+    for(int comp=0;comp<3;comp++)
     {
-        for(int j=distHaloOne;j<sizeLocalOne[1]+distHaloOne;j++)
-        {
-            for(int comp=0;comp<3;comp++)(*vel).value(setIndex(sizeLocalGross,halo,j,k),comp) += (*vel).value(setIndex(sizeLocalGross,iref1,j,k),comp);
-
-            for(int comp=0;comp<3;comp++)(*vel).value(setIndex(sizeLocalGross,iref2,j,k),comp) += (*vel).value(setIndex(sizeLocalGross,distHaloOne,j,k),comp);
-        }
+      #pragma omp parallel for collapse(2)
+      for(int k=distHaloOne;k<sizeLocalOne[2]+distHaloOne;k++)
+      {
+          for(int j=distHaloOne;j<sizeLocalOne[1]+distHaloOne;j++)
+          {
+              (*vel).value(setIndex(sizeLocalGross,halo,j,k),comp) += (*vel).value(setIndex(sizeLocalGross,iref1,j,k),comp);
+              (*vel).value(setIndex(sizeLocalGross,iref2,j,k),comp) += (*vel).value(setIndex(sizeLocalGross,distHaloOne,j,k),comp);
+          }
+      }
     }
+
 
     //communication
 
@@ -1173,35 +1375,58 @@ void vectorProjectionCIC_comm(Field<Real> * vel)
     imax=sizeLocal[0];
     iref1 = sizeLocalGross[1]- halo;
 
-
-    for(int k=0;k<sizeLocalOne[2];k++)
+    for(int comp =0;comp<3;comp++)
     {
-        for(int i=0;i<imax;i++)
-        {
-            for(int comp =0;comp<3;comp++)bufferSendUp[comp + 3l * (i+k*imax)]=(*vel).value(setIndex(sizeLocalGross,i+halo,iref1,k+distHaloOne),comp);
-        }
-        for(int i=0;i<imax;i++)
-        {
-            for(int comp =0;comp<3;comp++)bufferSendDown[comp + 3l * (i+k*imax)]=(*vel).value(setIndex(sizeLocalGross,i+halo,distHaloOne,k+distHaloOne),comp);
-        }
+      #pragma omp parallel for collapse(2)
+      for(int k=0;k<sizeLocalOne[2];k++)
+      {
+          for(int i=0;i<imax;i++)
+          {
+              bufferSendUp[comp + 3l * (i+k*imax)]=(*vel).value(setIndex(sizeLocalGross,i+halo,iref1,k+distHaloOne),comp);
+          }
+      }
     }
+
+    for(int comp =0;comp<3;comp++)
+    {
+      #pragma omp parallel for collapse(2)
+      for(int k=0;k<sizeLocalOne[2];k++)
+      {
+          for(int i=0;i<imax;i++)
+          {
+              bufferSendDown[comp + 3l * (i+k*imax)]=(*vel).value(setIndex(sizeLocalGross,i+halo,distHaloOne,k+distHaloOne),comp);
+          }
+      }
+    }
+
 
     parallel.sendUpDown_dim1(bufferSendUp,bufferRecUp,bufferSizeY * 3l,bufferSendDown,bufferRecDown,bufferSizeY * 3l);
 
     //unpack data
     iref1 = sizeLocalGross[1]- halo - 1;
 
-    for(int k=0;k<sizeLocalOne[2];k++)
+    for(int comp =0;comp<3;comp++)
     {
-        for(int i=0;i<imax;i++)
-        {
-            for(int comp =0;comp<3;comp++)(*vel).value(setIndex(sizeLocalGross,i+halo,halo,k+distHaloOne),comp) += bufferRecUp[comp + 3l * (i+k*imax)];
-        }
-        for(int i=0;i<imax;i++)
-        {
-            for(int comp =0;comp<3;comp++)(*vel).value(setIndex(sizeLocalGross,i+halo,iref1,k+distHaloOne),comp) += bufferRecDown[comp + 3l * (i+k*imax)];
+      #pragma omp parallel for collapse(2)
+      for(int k=0;k<sizeLocalOne[2];k++)
+      {
+          for(int i=0;i<imax;i++)
+          {
+              (*vel).value(setIndex(sizeLocalGross,i+halo,halo,k+distHaloOne),comp) += bufferRecUp[comp + 3l * (i+k*imax)];
+          }
+      }
+    }
 
-        }
+    for(int comp =0;comp<3;comp++)
+    {
+      #pragma omp parallel for collapse(2)
+      for(int k=0;k<sizeLocalOne[2];k++)
+      {
+          for(int i=0;i<imax;i++)
+          {
+              (*vel).value(setIndex(sizeLocalGross,i+halo,iref1,k+distHaloOne),comp) += bufferRecDown[comp + 3l * (i+k*imax)];
+          }
+      }
     }
 
     //workin on dim z
@@ -1210,18 +1435,30 @@ void vectorProjectionCIC_comm(Field<Real> * vel)
 
     iref1=sizeLocalGross[2]- halo;
 
-    for(int j=0;j<(sizeLocalOne[1]-2);j++)
+    for(int comp =0;comp<3;comp++)
     {
-        for(int i=0;i<imax;i++)
-        {
-            for(int comp =0;comp<3;comp++)bufferSendUp[comp + 3l * (i+j*imax)]=(*vel).value(setIndex(sizeLocalGross,i+halo,j+halo,iref1),comp);
-        }
-        for(int i=0;i<imax;i++)
-        {
-            for(int comp =0;comp<3;comp++)bufferSendDown[comp + 3l * (i+j*imax)]=(*vel).value(setIndex(sizeLocalGross,i+halo,j+halo,distHaloOne),comp);
-        }
-
+      #pragma omp parallel for collapse(2)
+      for(int j=0;j<(sizeLocalOne[1]-2);j++)
+      {
+          for(int i=0;i<imax;i++)
+          {
+              bufferSendUp[comp + 3l * (i+j*imax)]=(*vel).value(setIndex(sizeLocalGross,i+halo,j+halo,iref1),comp);
+          }
+      }
     }
+
+    for(int comp =0;comp<3;comp++)
+    {
+      #pragma omp parallel for collapse(2)
+      for(int j=0;j<(sizeLocalOne[1]-2);j++)
+      {
+          for(int i=0;i<imax;i++)
+          {
+              bufferSendDown[comp + 3l * (i+j*imax)]=(*vel).value(setIndex(sizeLocalGross,i+halo,j+halo,distHaloOne),comp);
+          }
+      }
+    }
+
 
     parallel.sendUpDown_dim0(bufferSendUp,bufferRecUp,bufferSizeY * 3l,bufferSendDown,bufferRecDown,bufferSizeY * 3l);
 
@@ -1229,18 +1466,30 @@ void vectorProjectionCIC_comm(Field<Real> * vel)
 
     iref1 = sizeLocalGross[2]- halo - 1;
 
-    for(int j=0;j<(sizeLocalOne[1]-2);j++)
+    for(int comp =0;comp<3;comp++)
     {
-        for(int i=0;i<imax;i++)
-        {
-            for(int comp =0;comp<3;comp++)(*vel).value(setIndex(sizeLocalGross,i+halo,j+halo,halo),comp) += bufferRecUp[comp + 3l * (i+j*imax)];
-        }
-        for(int i=0;i<imax;i++)
-        {
-            for(int comp =0;comp<3;comp++)(*vel).value(setIndex(sizeLocalGross,i+halo,j+halo,iref1),comp) += bufferRecDown[comp + 3l * (i+j*imax)];
-        }
-
+      #pragma omp parallel for collapse(2)
+      for(int j=0;j<(sizeLocalOne[1]-2);j++)
+      {
+          for(int i=0;i<imax;i++)
+          {
+              (*vel).value(setIndex(sizeLocalGross,i+halo,j+halo,halo),comp) += bufferRecUp[comp + 3l * (i+j*imax)];
+          }
+      }
     }
+
+    for(int comp =0;comp<3;comp++)
+    {
+      #pragma omp parallel for collapse(2)
+      for(int j=0;j<(sizeLocalOne[1]-2);j++)
+      {
+          for(int i=0;i<imax;i++)
+          {
+              (*vel).value(setIndex(sizeLocalGross,i+halo,j+halo,iref1),comp) += bufferRecDown[comp + 3l * (i+j*imax)];
+          }
+      }
+    }
+
 
 
     free(bufferSendUp);
@@ -1570,14 +1819,38 @@ void VecVecProjectionCIC_comm(Field<Real> * Tij)
     int iref1=sizeLocalGross[0]-halo;
     int iref2=sizeLocalGross[0]-halo-1;
 
+    for(int comp=0;comp<6;comp++)
+    {
+      #pragma omp parallel for collapse(2)
+      for(int k=distHaloOne;k<sizeLocalOne[2]+distHaloOne;k++)
+      {
+          for(int j=distHaloOne;j<sizeLocalOne[1]+distHaloOne;j++)
+          {
+              (*Tij).value(setIndex(sizeLocalGross,halo,j,k),comp) += (*Tij).value(setIndex(sizeLocalGross,iref1,j,k),comp);
+          }
+      }
+    }
+    #pragma omp parallel for collapse(2)
     for(int k=distHaloOne;k<sizeLocalOne[2]+distHaloOne;k++)
     {
         for(int j=distHaloOne;j<sizeLocalOne[1]+distHaloOne;j++)
         {
-            for(int comp=0;comp<6;comp++)(*Tij).value(setIndex(sizeLocalGross,halo,j,k),comp) += (*Tij).value(setIndex(sizeLocalGross,iref1,j,k),comp);
-
             (*Tij).value(setIndex(sizeLocalGross,iref2,j,k),0,1) += (*Tij).value(setIndex(sizeLocalGross,distHaloOne,j,k),0,1);
+        }
+    }
+    #pragma omp parallel for collapse(2)
+    for(int k=distHaloOne;k<sizeLocalOne[2]+distHaloOne;k++)
+    {
+        for(int j=distHaloOne;j<sizeLocalOne[1]+distHaloOne;j++)
+        {
             (*Tij).value(setIndex(sizeLocalGross,iref2,j,k),0,2) += (*Tij).value(setIndex(sizeLocalGross,distHaloOne,j,k),0,2);
+        }
+    }
+    #pragma omp parallel for collapse(2)
+    for(int k=distHaloOne;k<sizeLocalOne[2]+distHaloOne;k++)
+    {
+        for(int j=distHaloOne;j<sizeLocalOne[1]+distHaloOne;j++)
+        {
             (*Tij).value(setIndex(sizeLocalGross,iref2,j,k),1,2) += (*Tij).value(setIndex(sizeLocalGross,distHaloOne,j,k),1,2);
         }
     }
@@ -1618,21 +1891,39 @@ void VecVecProjectionCIC_comm(Field<Real> * Tij)
     iref1 = sizeLocalGross[1]- halo;
 
     //COUT<<(*Tij).value(setIndex(sizeLocalGross,6+halo,iref1,6+halo),0)<<endl;
-
+    for(int comp =0;comp<6;comp++)
+    {
+      for(int k=0;k<sizeLocalOne[2];k++)
+      {
+          for(int i=0;i<imax;i++)
+          {
+              bufferSendUp[comp + 6l * (i+k*imax)]=(*Tij).value(setIndex(sizeLocalGross,i+halo,iref1,k+distHaloOne),comp);
+          }
+      }
+    }
+    #pragma omp parallel for collapse(2)
     for(int k=0;k<sizeLocalOne[2];k++)
     {
-        for(int i=0;i<imax;i++)
-        {
-            for(int comp =0;comp<6;comp++)bufferSendUp[comp + 6l * (i+k*imax)]=(*Tij).value(setIndex(sizeLocalGross,i+halo,iref1,k+distHaloOne),comp);
-        }
-
-        for(int i=0;i<imax;i++)
-        {
-            bufferSendDown[    3l * (i+k*imax)]=(*Tij).value(setIndex(sizeLocalGross,i+halo,distHaloOne,k+distHaloOne),0,1);
-            bufferSendDown[1l + 3l * (i+k*imax)]=(*Tij).value(setIndex(sizeLocalGross,i+halo,distHaloOne,k+distHaloOne),0,2);
-            bufferSendDown[2l + 3l * (i+k*imax)]=(*Tij).value(setIndex(sizeLocalGross,i+halo,distHaloOne,k+distHaloOne),1,2);
-        }
-
+      for(int i=0;i<imax;i++)
+      {
+        bufferSendDown[    3l * (i+k*imax)]=(*Tij).value(setIndex(sizeLocalGross,i+halo,distHaloOne,k+distHaloOne),0,1);
+      }
+    }
+    #pragma omp parallel for collapse(2)
+    for(int k=0;k<sizeLocalOne[2];k++)
+    {
+      for(int i=0;i<imax;i++)
+      {
+        bufferSendDown[1l + 3l * (i+k*imax)]=(*Tij).value(setIndex(sizeLocalGross,i+halo,distHaloOne,k+distHaloOne),0,2);
+      }
+    }
+    #pragma omp parallel for collapse(2)
+    for(int k=0;k<sizeLocalOne[2];k++)
+    {
+      for(int i=0;i<imax;i++)
+      {
+          bufferSendDown[2l + 3l * (i+k*imax)]=(*Tij).value(setIndex(sizeLocalGross,i+halo,distHaloOne,k+distHaloOne),1,2);
+      }
     }
 
     //COUT<<bufferSendUp[0l + 6l * (6+7*imax)]<<endl;
@@ -1644,21 +1935,39 @@ void VecVecProjectionCIC_comm(Field<Real> * Tij)
     //unpack data
     iref1 = sizeLocalGross[1]- halo - 1;
 
-
+    for(int comp =0;comp<6;comp++)
+    {
+      for(int k=0;k<sizeLocalOne[2];k++)
+      {
+          for(int i=0;i<imax;i++)
+          {
+              (*Tij).value(setIndex(sizeLocalGross,i+halo,halo,k+distHaloOne),comp) += bufferRecUp[comp + 6l * (i+k*imax)];
+          }
+      }
+    }
+    #pragma omp parallel for collapse(2)
     for(int k=0;k<sizeLocalOne[2];k++)
     {
         for(int i=0;i<imax;i++)
         {
-            for(int comp =0;comp<6;comp++)(*Tij).value(setIndex(sizeLocalGross,i+halo,halo,k+distHaloOne),comp) += bufferRecUp[comp + 6l * (i+k*imax)];
+            (*Tij).value(setIndex(sizeLocalGross,i+halo,iref1,k+distHaloOne),0,1) += bufferRecDown[     3l * (i+k*imax)];
         }
-
+    }
+    #pragma omp parallel for collapse(2)
+    for(int k=0;k<sizeLocalOne[2];k++)
+    {
         for(int i=0;i<imax;i++)
         {
-            (*Tij).value(setIndex(sizeLocalGross,i+halo,iref1,k+distHaloOne),0,1) += bufferRecDown[     3l * (i+k*imax)];
             (*Tij).value(setIndex(sizeLocalGross,i+halo,iref1,k+distHaloOne),0,2) += bufferRecDown[1l + 3l * (i+k*imax)];
+        }
+    }
+    #pragma omp parallel for collapse(2)
+    for(int k=0;k<sizeLocalOne[2];k++)
+    {
+        for(int i=0;i<imax;i++)
+        {
             (*Tij).value(setIndex(sizeLocalGross,i+halo,iref1,k+distHaloOne),1,2) += bufferRecDown[2l + 3l * (i+k*imax)];
         }
-
     }
 
     //if(parallel.rank()==2)cout<<(*Tij).value(setIndex(sizeLocalGross,6+halo,halo ,6+halo),0)<<endl;
@@ -1669,19 +1978,40 @@ void VecVecProjectionCIC_comm(Field<Real> * Tij)
 
     iref1=sizeLocalGross[2]- halo;
 
+    for(int comp =0;comp<6;comp++)
+    {
+      #pragma omp parallel for collapse(2)
+      for(int j=0;j<(sizeLocalOne[1]-2);j++)
+      {
+          for(int i=0;i<imax;i++)
+          {
+              bufferSendUp[comp + 6l * (i+j*imax)]=(*Tij).value(setIndex(sizeLocalGross,i+halo,j+halo,iref1),comp);
+          }
+      }
+    }
+    #pragma omp parallel for collapse(2)
     for(int j=0;j<(sizeLocalOne[1]-2);j++)
     {
         for(int i=0;i<imax;i++)
         {
-            for(int comp =0;comp<6;comp++)bufferSendUp[comp + 6l * (i+j*imax)]=(*Tij).value(setIndex(sizeLocalGross,i+halo,j+halo,iref1),comp);
+            bufferSendDown[     3l * (i+j*imax)]=(*Tij).value(setIndex(sizeLocalGross,i+halo,j+halo,distHaloOne),0,1);
         }
+    }
+    #pragma omp parallel for collapse(2)
+    for(int j=0;j<(sizeLocalOne[1]-2);j++)
+    {
         for(int i=0;i<imax;i++)
         {
-            bufferSendDown[     3l * (i+j*imax)]=(*Tij).value(setIndex(sizeLocalGross,i+halo,j+halo,distHaloOne),0,1);
             bufferSendDown[1l + 3l * (i+j*imax)]=(*Tij).value(setIndex(sizeLocalGross,i+halo,j+halo,distHaloOne),0,2);
+        }
+    }
+    #pragma omp parallel for collapse(2)
+    for(int j=0;j<(sizeLocalOne[1]-2);j++)
+    {
+        for(int i=0;i<imax;i++)
+        {
             bufferSendDown[2l + 3l * (i+j*imax)]=(*Tij).value(setIndex(sizeLocalGross,i+halo,j+halo,distHaloOne),1,2);
         }
-
     }
 
     parallel.sendUpDown_dim0(bufferSendUp,bufferRecUp,bufferSizeZ * 6l,bufferSendDown,bufferRecDown,bufferSizeZ * 3l);
@@ -1690,22 +2020,40 @@ void VecVecProjectionCIC_comm(Field<Real> * Tij)
 
     iref1 = sizeLocalGross[2]- halo - 1;
 
+    for(int comp =0;comp<6;comp++)
+    {
+      #pragma omp parallel for collapse(2)
+      for(int j=0;j<(sizeLocalOne[1]-2);j++)
+      {
+          for(int i=0;i<imax;i++)
+          {
+              (*Tij).value(setIndex(sizeLocalGross,i+halo,j+halo,halo),comp) += bufferRecUp[comp + 6l * (i+j*imax)];
+          }
+      }
+    }
+    #pragma omp parallel for collapse(2)
     for(int j=0;j<(sizeLocalOne[1]-2);j++)
     {
         for(int i=0;i<imax;i++)
         {
-            for(int comp =0;comp<6;comp++)(*Tij).value(setIndex(sizeLocalGross,i+halo,j+halo,halo),comp) += bufferRecUp[comp + 6l * (i+j*imax)];
+            (*Tij).value(setIndex(sizeLocalGross,i+halo,j+halo,iref1),0,1) += bufferRecDown[     3l * (i+j*imax)];
         }
-
+    }
+    #pragma omp parallel for collapse(2)
+    for(int j=0;j<(sizeLocalOne[1]-2);j++)
+    {
         for(int i=0;i<imax;i++)
         {
-
-            (*Tij).value(setIndex(sizeLocalGross,i+halo,j+halo,iref1),0,1) += bufferRecDown[     3l * (i+j*imax)];
             (*Tij).value(setIndex(sizeLocalGross,i+halo,j+halo,iref1),0,2) += bufferRecDown[1l + 3l * (i+j*imax)];
-            (*Tij).value(setIndex(sizeLocalGross,i+halo,j+halo,iref1),1,2) += bufferRecDown[2l + 3l * (i+j*imax)];
         }
-
-
+    }
+    #pragma omp parallel for collapse(2)
+    for(int j=0;j<(sizeLocalOne[1]-2);j++)
+    {
+        for(int i=0;i<imax;i++)
+        {
+            (*Tij).value(setIndex(sizeLocalGross,i+halo,j+halo,iref1),0,1) += bufferRecDown[     3l * (i+j*imax)];
+        }
     }
 
     free(bufferSendUp);
