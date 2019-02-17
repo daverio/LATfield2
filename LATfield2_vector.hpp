@@ -81,7 +81,7 @@ LFvector<T>::LFvector(const LFvector& other)
   size_ = other.size_;
   data_= (T*)malloc(size_*sizeof(T));
   allocated_=true;
-  #pragma omp parallel for
+  #pragma omp parallel for simd
   for(int i = 0;i<size_;i++) *(data_+i) = other.data_[i];
 }
 
@@ -146,7 +146,7 @@ inline T& LFvector<T>::operator[](int i)
 template<class T>
 LFvector<T>& LFvector<T>::operator=(const LFvector<T>& source)
 {
-  #pragma omp parallel for
+  #pragma omp parallel for simd 
   for(int i = 0;i<size_;i++)
   {
     this->data_[i] = source.data_[i];
@@ -156,7 +156,7 @@ LFvector<T>& LFvector<T>::operator=(const LFvector<T>& source)
 template<class T>
 LFvector<T>& LFvector<T>::operator=(const T& a)
 {
-  #pragma omp parallel for
+  #pragma omp parallel for simd
   for(int i = 0;i<size_;i++)
   {
     this->data_[i] = a;
@@ -167,7 +167,7 @@ LFvector<T>& LFvector<T>::operator=(const T& a)
 template<class T>
 LFvector<T>& LFvector<T>::operator+=(const LFvector<T>& source)
 {
-  #pragma omp parallel for
+  #pragma omp parallel for simd
   for(int i = 0;i<size_;i++)
   {
     this->data_[i] += source.data_[i];
@@ -177,7 +177,7 @@ LFvector<T>& LFvector<T>::operator+=(const LFvector<T>& source)
 template<class T>
 LFvector<T>& LFvector<T>::operator+=(const T& a)
 {
-  #pragma omp parallel for
+  #pragma omp parallel for simd
   for(int i = 0;i<size_;i++)
   {
     this->data_[i] += a;
@@ -187,7 +187,7 @@ LFvector<T>& LFvector<T>::operator+=(const T& a)
 template<class T>
 LFvector<T>& LFvector<T>::operator-=(const LFvector<T>& source)
 {
-  #pragma omp parallel for
+  #pragma omp parallel for simd
   for(int i = 0;i<size_;i++)
   {
     this->data_[i] -= source.data_[i];
@@ -197,7 +197,7 @@ LFvector<T>& LFvector<T>::operator-=(const LFvector<T>& source)
 template<class T>
 LFvector<T>& LFvector<T>::operator-=(const T& a)
 {
-  #pragma omp parallel for
+  #pragma omp parallel for simd
   for(int i = 0;i<size_;i++)
   {
     this->data_[i] -= a;
@@ -207,7 +207,7 @@ LFvector<T>& LFvector<T>::operator-=(const T& a)
 template<class T>
 LFvector<T>& LFvector<T>::operator*=(const LFvector<T>& source)
 {
-  #pragma omp parallel for
+  #pragma omp parallel for simd
   for(int i = 0;i<size_;i++)
   {
     this->data_[i] *= source.data_[i];
@@ -217,7 +217,7 @@ LFvector<T>& LFvector<T>::operator*=(const LFvector<T>& source)
 template<class T>
 LFvector<T>& LFvector<T>::operator*=(const T& a)
 {
-  #pragma omp parallel for
+  #pragma omp parallel for simd
   for(int i = 0;i<size_;i++)
   {
     this->data_[i] *= a;
@@ -227,7 +227,7 @@ LFvector<T>& LFvector<T>::operator*=(const T& a)
 template<class T>
 LFvector<T>& LFvector<T>::operator/=(const LFvector<T>& source)
 {
-  #pragma omp parallel for
+  #pragma omp parallel for simd
   for(int i = 0;i<size_;i++)
   {
     this->data_[i] /= source.data_[i];
@@ -237,7 +237,7 @@ LFvector<T>& LFvector<T>::operator/=(const LFvector<T>& source)
 template<class T>
 LFvector<T>& LFvector<T>::operator/=(const T& a)
 {
-  #pragma omp parallel for
+  #pragma omp parallel for simd
   for(int i = 0;i<size_;i++)
   {
     this->data_[i] /= a;
@@ -251,7 +251,7 @@ template<class T>
 LFvector<T> LFvector<T>::operator+(const LFvector<T>& v1)
 {
   LFvector<T> result(this->size_,NULL);
-  #pragma omp parallel for
+  #pragma omp parallel for simd
   for(int i = 0;i<v1.size_;i++)
   {
     result.data_[i] = this->data_[i] + v1.data_[i];
@@ -263,7 +263,7 @@ template<class T>
 LFvector<T> LFvector<T>::operator+(const T& a)
 {
   LFvector<T> result(this->size_,NULL);
-  #pragma omp parallel for
+  #pragma omp parallel for simd
   for(int i = 0;i<size_;i++)
   {
     result.data_[i] = this->data_[i] + a;
@@ -274,7 +274,7 @@ LFvector<T> LFvector<T>::operator+(const T& a)
 template<class T>
 LFvector<T> operator+( const T& a, const LFvector<T>& v1 ) {
   LFvector<T> result(v1.size_,NULL);
-  #pragma omp parallel for
+  #pragma omp parallel for simd
   for(int i = 0;i<v1.size_;i++)
   {
     result.data_[i] = v1.data_[i] + a;
@@ -289,7 +289,7 @@ template<class T>
 LFvector<T> LFvector<T>::operator-(const LFvector<T>& v1)
 {
   LFvector<T> result(this->size_,NULL);
-  #pragma omp parallel for
+  #pragma omp parallel for simd
   for(int i = 0;i<size_;i++)
   {
     result.data_[i] = this->data_[i]-v1.data_[i];
@@ -300,7 +300,7 @@ template<class T>
 LFvector<T> LFvector<T>::operator-(const T& a)
 {
   LFvector<T> result(this->size_,NULL);
-  #pragma omp parallel for
+  #pragma omp parallel for simd
   for(int i = 0;i<size_;i++)
   {
     result.data_[i] = this->data_[i] - a;
@@ -310,7 +310,7 @@ LFvector<T> LFvector<T>::operator-(const T& a)
 template<class T>
 LFvector<T> operator-( const T& a, const LFvector<T>& v1 ) {
   LFvector<T> result(v1.size_,NULL);
-  #pragma omp parallel for
+  #pragma omp parallel for simd
   for(int i = 0;i<v1.size_;i++)
   {
     result.data_[i] = a - v1.data_[i];
@@ -323,7 +323,7 @@ template<class T>
 LFvector<T> LFvector<T>::operator*(const LFvector<T>& v1)
 {
   LFvector<T> result(this->size_,NULL);
-  #pragma omp parallel for
+  #pragma omp parallel for simd
   for(int i = 0;i<size_;i++)
   {
     result.data_[i] = this->data_[i]*v1.data_[i];
@@ -334,7 +334,7 @@ template<class T>
 LFvector<T> LFvector<T>::operator*(const T& a)
 {
   LFvector<T> result(this->size_,NULL);
-  #pragma omp parallel for
+  #pragma omp parallel for simd
   for(int i = 0;i<size_;i++)
   {
     result.data_[i] = this->data_[i] * a;
@@ -345,7 +345,7 @@ LFvector<T> LFvector<T>::operator*(const T& a)
 template<class T>
 LFvector<T> operator*( const T& a, const LFvector<T>& v1 ) {
   LFvector<T> result(v1.size_,NULL);
-  #pragma omp parallel for
+  #pragma omp parallel for simd
   for(int i = 0;i<v1.size_;i++)
   {
     result.data_[i] = v1.data_[i] * a;
@@ -358,7 +358,7 @@ template<class T>
 LFvector<T> LFvector<T>::operator/(const LFvector<T>& v1)
 {
   LFvector<T> result(this->size_,NULL);
-  #pragma omp parallel for
+  #pragma omp parallel for simd
   for(int i = 0;i<size_;i++)
   {
     result.data_[i] = this->data_[i]/v1.data_[i];
@@ -369,7 +369,7 @@ template<class T>
 LFvector<T> LFvector<T>::operator/(const T& a)
 {
   LFvector<T> result(this->size_,NULL);
-  #pragma omp parallel for
+  #pragma omp parallel for simd
   for(int i = 0;i<size_;i++)
   {
     result.data_[i] = this->data_[i] / a;
@@ -380,7 +380,7 @@ LFvector<T> LFvector<T>::operator/(const T& a)
 template<class T>
 LFvector<T> operator/( const T& a, const LFvector<T>& v1 ) {
   LFvector<T> result(v1.size_,NULL);
-  #pragma omp parallel for
+  #pragma omp parallel for simd
   for(int i = 0;i<v1.size_;i++)
   {
     result.data_[i] =  a / v1.data_[i];
@@ -391,7 +391,7 @@ LFvector<T> operator/( const T& a, const LFvector<T>& v1 ) {
 
 template<class T>
 T& operator+=(T& res, const LFvector<T>& v1){
-      #pragma omp parallel for reduction(+:res)
+      #pragma omp parallel for simd  reduction(+:res)
       for(int i = 0;i<v1.size_;i++)
       {
         res += v1.data_[i];
@@ -403,7 +403,7 @@ template<class T>
 T vsum(const LFvector<T>& v1)
 {
   T result = 0.0;
-  #pragma omp parallel for reduction(+:result)
+  #pragma omp parallel for simd  reduction(+:result)
   for(int i = 0;i<v1.size_;i++)
   {
     result += v1.data_[i];
@@ -415,7 +415,7 @@ template<class T>
 T vmax(const LFvector<T>& v1)
 {
   T result = 0.0;
-  #pragma omp parallel for reduction(max:result)
+  #pragma omp parallel for simd  reduction(max:result)
   for(int i = 0;i<v1.size_;i++)
   {
     if(result<v1.data_[i])result = v1.data_[i];
@@ -429,7 +429,7 @@ template<class T>
 T vmin(const LFvector<T>& v1)
 {
   T result = 1000000000000000.0;
-  #pragma omp parallel for reduction(min:result)
+  #pragma omp parallel for simd  reduction(min:result)
   for(int i = 0;i<v1.size_;i++)
   {
     if(result>v1.data_[i])result = v1.data_[i];
@@ -442,7 +442,7 @@ T vmin(const LFvector<T>& v1)
 LFvector<double> vpow(const LFvector<double> v, double n)
 {
   LFvector<double> result(v.size_);
-  #pragma omp parallel for
+  #pragma omp parallel for simd
   for(int i = 0;i<v.size_;i++)
   {
     result.data_[i] = pow(v.data_[i],n);
@@ -453,7 +453,7 @@ LFvector<double> vpow(const LFvector<double> v, double n)
 LFvector<double> vsqrt(const LFvector<double> v)
 {
   LFvector<double> result(v.size_);
-  #pragma omp parallel for
+  #pragma omp parallel for simd
   for(int i = 0;i<v.size_;i++)
   {
     result.data_[i] = sqrt(v.data_[i]);
@@ -465,7 +465,7 @@ LFvector<double> vsqrt(const LFvector<double> v)
 LFvector<double> vexp(const LFvector<double> v)
 {
   LFvector<double> result(v.size_);
-  #pragma omp parallel for
+  #pragma omp parallel for simd
   for(int i = 0;i<v.size_;i++)
   {
     result.data_[i] = exp(v.data_[i]);
@@ -476,7 +476,7 @@ LFvector<double> vexp(const LFvector<double> v)
 LFvector<double> vabs(const LFvector<double> v)
 {
   LFvector<double> result(v.size_);
-  #pragma omp parallel for
+  #pragma omp parallel for simd
   for(int i = 0;i<v.size_;i++)
   {
     result.data_[i] = fabs(v.data_[i]);

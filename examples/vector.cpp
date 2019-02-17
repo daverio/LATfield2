@@ -104,7 +104,7 @@ int main(int argc, char **argv)
       if(phi.value(x) != 8)cout<<" projection error: phi"<<x <<"= "<<phi.value(x)<<endl;
     }
 
-    phi.saveHDF5("phi.h5");
+    //phi.saveHDF5("phi.h5");
 
 
     //-----------------------   end   ------------------------
@@ -140,7 +140,7 @@ int main(int argc, char **argv)
 
     rho.updateHalo();
 
-
+/*
     for(x.first();x.test();x.nextValue())
     {
 
@@ -231,7 +231,7 @@ int main(int argc, char **argv)
 
 
     }
-
+*/
     rho.updateHalo();
 
 
@@ -256,13 +256,13 @@ int main(int argc, char **argv)
     //rho.loadHDF5("rho.h5","rho");
     //phi.loadHDF5("phi.h5");
 
-
+/*
     for(x.first();x.test();x.nextValue())
     {
        for(int i=0;i<3;i++)if(rho.value(x,i) != x.coord(i))cout<<"error"<<endl;
        if(phi.value(x)!=(rho.value(x+0,0)+rho.value(x+1,1)+rho.value(x+2,2)))cout<<"error"<<endl;
     }
-
+*/
 
     COUT<<"projection time: "<<timer.timer(T_PROJ)<<endl;
     COUT<<"field op time: "<<timer.timer(T_FOP)<<endl;
