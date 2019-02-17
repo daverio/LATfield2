@@ -24,14 +24,30 @@ Parallel2d::Parallel2d() : neverFinalizeMPI(false)
 #ifndef EXTERNAL_IO
 	lat_world_comm_ = MPI_COMM_WORLD;
     world_comm_ = MPI_COMM_WORLD;
+
+
+#ifdef OPENMP
+	int provided;
+	MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED,&provided);
+	cout<<MPI_THREAD_FUNNELED<< " "<<provided<<endl;
+#else
 	MPI_Init( &argc, &argv );
+#endif
+
+
 	MPI_Comm_rank( lat_world_comm_, &lat_world_rank_ );
 	MPI_Comm_size( lat_world_comm_, &lat_world_size_ );
-    MPI_Comm_rank( world_comm_, &world_rank_ );
+  MPI_Comm_rank( world_comm_, &world_rank_ );
 	MPI_Comm_size( world_comm_, &world_size_ );
 #else
     world_comm_ = MPI_COMM_WORLD;
+#ifdef OPENMP
+	int provided;
+	MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED,&provided);
+	cout<<MPI_THREAD_FUNNELED<< " "<<provided<<endl;
+#else
 	MPI_Init( &argc, &argv );
+#endif
     MPI_Comm_rank( world_comm_, &world_rank_ );
 	MPI_Comm_size( world_comm_, &world_size_ );
 
