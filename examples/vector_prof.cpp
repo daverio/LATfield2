@@ -56,7 +56,7 @@ int main(int argc, char **argv)
     //int latSize = 256;
     int halo = 2;
     int vectorSize = 64;//latSize / 2;
-    Lattice lat(dim,latSize,halo,);
+    Lattice lat(dim,latSize,halo);
     Lattice lat_part(dim,latSize,0);
 
     Site x(lat);
@@ -110,7 +110,7 @@ int main(int argc, char **argv)
         timer.start(T_FDER3_OLD);
         for(x.first();x.test();x.next())
         {
-          for(int i = 0;i<3;i++)beta.value(x,i)=phi.value(x+i)-phi.value(x-i);
+          for(int i = 0;i<3;i++)beta(x,i)=phi(x+i)-phi(x-i);
         }
         timer.stop(T_FDER3_OLD);
       }
