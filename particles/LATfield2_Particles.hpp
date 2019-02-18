@@ -56,6 +56,7 @@
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 #include "LATfield2_particle_simple.hpp"
+#include "LATfield2_particle_rk4.hpp"
 #include "particles_tools.hpp"
 #endif
 #include "move_function.hpp"
@@ -196,6 +197,11 @@ public:
      \param int noutput: size of the arrays output and reduce_type.
 
      */
+
+
+
+    void prepare_RK();
+
     Real updateVel(Real (*updateVel_funct)(double,double,part*,double *,part_info,Field<Real> **,Site *,int,double*,double*,int),
                    double dtau,
                    Field<Real> ** fields=NULL,
@@ -301,10 +307,7 @@ protected:
   Real  lat_resolution_;
   Real boxSize_[3];
 
-
-
-  Field<partList<part> > field_part_;
-
+  Field<partList<part>> field_part_;
 
   int mass_type_;
   size_t mass_offset_;
@@ -533,8 +536,31 @@ void Particles<part,part_info,part_dataType>::cout_particle_velocity_stats(const
   }
   COUT<<"----------------------"<<setprecision(6)<<endl;
 
+}
+
+template <typename part, typename part_info, typename part_dataType>
+void Particles<part,part_info,part_dataType>::prepare_RK()
+{
+  Site  xPart(lat_part_);
+  typename std::list<part>::iterator it;
+
+  for(xPart.first() ; xPart.test(); xPart.next())
+  {
+    if(field_part_(xPart).size!=0)
+    {
+      for (it=(field_part_)(xPart).parts.begin(); it != (field_part_)(xPart).parts.end(); ++it)
+      {
+        for (int l=0; l<3; l++)
+        {
+          (*it).pos_in[l] = (*it).pos[l];
+          (*it).pos_out[l] = (*it).pos[l];
+        }
+      }
+    }
+  }
 
 }
+
 
 template <typename part, typename part_info, typename part_dataType>
 Real Particles<part,part_info,part_dataType>::updateVel(Real (*updateVel_funct)(double,double,part*,double *,part_info,Field<Real> **,Site *,int,double*,double*,int),
@@ -599,8 +625,21 @@ Real Particles<part,part_info,part_dataType>::updateVel(Real (*updateVel_funct)(
         {
             for (it=(field_part_)(xPart).parts.begin(); it != (field_part_)(xPart).parts.end(); ++it)
             {
+                //old fashion uncompatible with runge kutta, frac is in [0,1], but shoud be allowed to be in [-1,2]
+                //to take into account displacements during the runge kutta steps....
+                //when using runge kutta, one have to use the proper projections methods...!!!
+                //what a crap:
+                // new method still compatible with previous methodology.... but! frac is still the offeset of the particles
+                // in respect to the lowest corner of the cell where the particle is. (but in the runge kutta step, it is the cells
+                // where the particle is at the beginning of the runge kutta (NOT THE ONE OF THE RK SUBSTEP!!!!))
+
+                //for (int l=0; l<3; l++)
+                //    frac[l] = modf( (*it).pos[l] / lat_resolution_, &x0);
                 for (int l=0; l<3; l++)
-                    frac[l] = modf( (*it).pos[l] / lat_resolution_, &x0);
+                {
+                  frac[l] =  (*it).pos[l]/lat_resolution_ - xPart.coord(l);
+                }
+
 
 
                 v2 = updateVel_funct(dtau,
@@ -1937,5 +1976,8 @@ void Particles<part,part_info,part_dataType>::saveHDF5_server_write(string filen
 }
 #endif
 /**@}*/
+
+
+
 
 #endif
