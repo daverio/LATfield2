@@ -369,16 +369,15 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
 
 #ifdef H5_HAVE_PARALLEL	//Parallel version, H5_HAVE_PARALLEL definition is needed by hdf5 to run in parallel too
 
-
-        MPI_Comm comm  = parallel.lat_world_comm();
-		MPI_Info info  = MPI_INFO_NULL;
-
+      MPI_Comm comm  = parallel.lat_world_comm();
+		  MPI_Info info  = MPI_INFO_NULL;
 
 		plist_id = H5Pcreate(H5P_FILE_ACCESS);
 		H5Pset_fapl_mpio(plist_id, comm, info);
 
 		file_id = H5Fopen(filename,H5F_ACC_RDWR,plist_id);
 		H5Pclose(plist_id);
+
 
         if(comp==1)
         {
@@ -431,23 +430,15 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
                 H5Sclose(filespace);
                 H5Sclose(memspace);
                 H5Pclose(plist_id);
-                H5Fclose(file_id);
+
 
 
             }
+            H5Fclose(file_id);
 
         }
-		delete[] filename;
-		delete[] sizeGlobal;
-		delete[] localSize;
-		delete[] offset;
-		delete[] offsetf;
-		delete[] count;
-
-
 
 		free(filename);
-
 		return 1;
 
 
@@ -536,14 +527,21 @@ int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,i
         }
 
 
-		free(filename);
+
 		return 1;
 
 
 
 #endif
 
-        return -1;
+    delete[] filename;
+
+
+    delete[] sizeGlobal;
+    delete[] localSize;
+    delete[] offset;
+    delete[] offsetf;
+    delete[] count;
 	}
 
 
