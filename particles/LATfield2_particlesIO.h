@@ -351,7 +351,7 @@ int save_hdf5_particles(string filename_str,
   if(mpi_rank==0){
 
     plist_id = H5Pcreate(H5P_FILE_ACCESS);
-    file_id = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
+    file_id = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, plist_id);
     H5Pclose(plist_id);
 
     filespace_id = H5Screate_simple(1,&globalNumParts,NULL);
@@ -445,7 +445,7 @@ int save_hdf5_particles(string filename_str,
       if(mpi_rank==p){
 
           plist_id = H5Pcreate(H5P_FILE_ACCESS);
-          file_id = H5Fopen(filename.c_str(),H5F_ACC_RDWR,plist_id);
+          file_id = H5Fopen(filename,H5F_ACC_RDWR,plist_id);
           H5Pclose(plist_id);
 
           dataset_id = H5Dopen(file_id, "/data", H5P_DEFAULT);
