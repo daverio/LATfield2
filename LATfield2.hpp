@@ -14,6 +14,7 @@
 #include <string>
 #include <typeinfo>
 #include <list>
+#include <iomanip>
 
 #ifdef FFT3D
 #include "fftw3.h"
@@ -61,6 +62,28 @@
   #endif
 #endif
 
+
+#if defined(B_SSE2)
+  #define ALIGNEMENT 16
+  #define NUM_FLOATS  4
+  #define NUM_DOUBLES 2
+  #define VECT_DOUBLE Vec2d
+  #define VECT_FLOAT  Vec4f
+#elif defined(B_AVX)
+  #define ALIGNEMENT 32
+  #define NUM_FLOATS  8
+  #define NUM_DOUBLES 4
+#elif defined(B_AVX512)
+  #define ALIGNEMENT 64
+  #define NUM_FLOATS 16
+  #define NUM_DOUBLES 8
+#elif defined(NO_VECTORIZATION)
+  #define ALIGNEMENT 1 /* not used */
+  #define NUM_FLOATS 1
+#else
+	#error “Choose the build target, please.”
+#endif
+
 using namespace std;
 
 namespace LATfield2
@@ -102,7 +125,7 @@ namespace LATfield2
 
 //macros
         #include  "looping_macro.hpp"
-
+        #include "timer.hpp"
 
 }
 

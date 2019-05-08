@@ -27,14 +27,14 @@ void Site::operator=(const long index)
 
 //NEIGHBOURING SITE OPERATORS==
 
-long Site::operator+(int direction)
+Site Site::operator+(int direction)
 {
-	return index_ + lattice_->jump(direction) ;
+	return Site(*lattice_,index_ + lattice_->jump(direction)) ;
 }
 
-long Site::operator-(int direction)
+Site Site::operator-(int direction)
 {
-	return index_ - lattice_->jump(direction);
+	return Site(*lattice_,index_ - lattice_->jump(direction)) ;
 }
 
 long Site::move(int direction, int step)
@@ -47,7 +47,7 @@ long Site::move(int * steps)
 	for(int i=0;i<lattice_->dim();i++)index += steps[i]*lattice_->jump(i);
 	return index;
 }
-long Site::move3d(int sx, int sy, int sz)
+long Site::move(int sx, int sy, int sz)
 {
 	return index_ + (sx*lattice_->jump(0)) + (sy*lattice_->jump(1)) + (sz*lattice_->jump(2));
 }
@@ -59,7 +59,7 @@ void Site::first() { index_=lattice_->siteFirst(); }
 bool Site::test() { return index_ <= lattice_->siteLast(); }
 
 
-void Site::nextValue()
+void Site::next()
 {
 	index_++;
 	//If coordLocal(0) != sizeLocal(0) then next site reached
@@ -78,7 +78,7 @@ void Site::nextValue()
 	}
 }
 
-void Site::next()
+void Site::nextVector()
 {
 	index_+= lattice_->vectorSize();
 	//If coordLocal(0) != sizeLocal(0) then next site reached
@@ -250,6 +250,20 @@ cKSite cKSite::operator-(int asked_direction)
 {
     return cKSite( *lattice_, index_ - lattice_->jump(directions_[asked_direction]));
 }
+long cKSite::move(int asked_direction, int step)
+{
+	return index_ + step * step*lattice_->jump(directions_[asked_direction]);
+}
+long cKSite::move(int * steps)
+{
+	double index = index_;
+	for(int i=0;i<lattice_->dim();i++)index += steps[i]*lattice_->jump(directions_[i]);
+	return index;
+}
+long cKSite::move(int sx, int sy, int sz)
+{
+	return index_ + (sx*lattice_->jump(directions_[0])) + (sy*lattice_->jump(directions_[1])) + (sz*lattice_->jump(directions_[2]));
+}
 int cKSite::coord(int asked_direction) ////////sensible a quelle dim est scatter (seul modif a faire ici)
 {
 	int direction= directions_[asked_direction] ;
@@ -350,6 +364,23 @@ rKSite rKSite::operator-(int asked_direction)
 {
     return rKSite( *lattice_, index_ - lattice_->jump(directions_[asked_direction]));
 }
+long rKSite::move(int asked_direction, int step)
+{
+	return index_ + step * step*lattice_->jump(directions_[asked_direction]);
+}
+long rKSite::move(int * steps)
+{
+	double index = index_;
+	for(int i=0;i<lattice_->dim();i++)index += steps[i]*lattice_->jump(directions_[i]);
+	return index;
+}
+long rKSite::move(int sx, int sy, int sz)
+{
+	return index_ + (sx*lattice_->jump(directions_[0])) + (sy*lattice_->jump(directions_[1])) + (sz*lattice_->jump(directions_[2]));
+}
+
+
+
 int rKSite::coord(int asked_direction) ////////sensible a quelle dim est scatter (seul modif a faire ici)
 {
 	int direction= directions_[asked_direction] ;
@@ -437,15 +468,32 @@ bool rKSite::setCoord(int x, int y=0, int z=0)
 	return this->setCoord(r);
 }
 
-
-ostream& operator<<(ostream& os, const Site& x)
+ostream& operator<<(ostream& os,  rKSite& x)
 {
-	int size = x.lattice_->dim();
-  os << " ( ";
-	for(int i = 0; i<size-1;i++)os << x.coord(i)<< " , ";
-	os << x.coord(size-1)<< " ) ";
-  return os;
+    os << " (";
+    int i=0;
+    for(;i < (x.lattice().dim()-1); )
+    {
+	os << x.coord(i) << " , ";
+	i++;
+    }
+    os << x.coord(i) << ") ";
+    return os;
 }
+
+ostream& operator<<(ostream& os,  cKSite& x)
+{
+    os << " (";
+    int i=0;
+    for(;i < (x.lattice().dim()-1); )
+    {
+	os << x.coord(i) << " , ";
+	i++;
+    }
+    os << x.coord(i) << ") ";
+    return os;
+}
+
 
 #endif
 

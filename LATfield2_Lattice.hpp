@@ -87,26 +87,34 @@ void Lattice::initialize(int dim, const int* size, int halo, int vectorSize)
 
 
 	//setting the vector size...
-	if(vectorSize == 0)
+
+	if(size[0] % NUM_FLOATS != 0)
 	{
-		vectorSize_ = size[0];
-		COUT<<"initialization of the lattice with vectorSize_ = size[0] = "<< size_[0] <<endl;
-		COUT<<"Might creat large memory consumption for large lattice!"<<endl;
+		COUT<< "Lattice size[0] must be a multiple of NUM_FLOATS: "<<NUM_FLOATS<<endl;
+		COUT<< "Vectorization impossible, aborting"<<endl;
+		parallel.abortForce();
+	}
+
+	if(vectorSize < NUM_FLOATS)
+	{
+		COUT<<"initialization of the lattice with vectorSize < NUM_FLOATS" <<endl;
+		COUT<<"reseting vectorSize_ to NUM_FLOATS: "<< NUM_FLOATS <<endl;
+		COUT<<"Might not be optimize!!"<<endl;
+		vectorSize_ = NUM_FLOATS;
+	}
+
+	if(vectorSize % NUM_FLOATS != 0)
+	{
+		COUT<<"initialization of the lattice with wrong vector size, vectorSize_ % NUM_FLOATS != 0"<<endl;
+		COUT<<"reseting vectorSize_ to NUM_FLOATS: "<< NUM_FLOATS <<endl;
+		COUT<<"Might not be optimize!!"<<endl;
+		vectorSize_ = NUM_FLOATS;
 	}
 	else
 	{
-		if(size[0] % vectorSize != 0)
-		{
-			COUT<<"initialization of the lattice with wrong vector size, size[0] % vectorSize_ != 0"<<endl;
-			COUT<<"reseting vectorSize_ to size[0]"<<endl;
-			COUT<<"might increase memory consumption for large lattice, fix it if memory bounded!"<<endl;
-			vectorSize_ = size[0];
-		}
-		else
-		{
-			vectorSize_ = vectorSize;
-		}
+		vectorSize_ = vectorSize;
 	}
+
 
 
 
@@ -114,10 +122,10 @@ void Lattice::initialize(int dim, const int* size, int halo, int vectorSize)
 
 	//Calculate local size
 	sizeLocal_=new int[dim_];
-	sizeLocal_[dim_-1]=int(ceil( (parallel.grid_size()[0]-parallel.grid_rank()[0])*size_[dim_-1]/float(parallel.grid_size()[0]) ));
-	sizeLocal_[dim_-1]-=int(ceil((parallel.grid_size()[0]-parallel.grid_rank()[0]-1)*size_[dim_-1]/float(parallel.grid_size()[0]) ));
-	sizeLocal_[dim_-2]=int(ceil( (parallel.grid_size()[1]-parallel.grid_rank()[1])*size_[dim_-2]/float(parallel.grid_size()[1]) ));
-	sizeLocal_[dim_-2]-=int(ceil((parallel.grid_size()[1]-parallel.grid_rank()[1]-1)*size_[dim_-2]/float(parallel.grid_size()[1]) ));
+	sizeLocal_[dim_-1]=int(std::ceil( (parallel.grid_size()[0]-parallel.grid_rank()[0])*size_[dim_-1]/float(parallel.grid_size()[0]) ));
+	sizeLocal_[dim_-1]-=int(std::ceil((parallel.grid_size()[0]-parallel.grid_rank()[0]-1)*size_[dim_-1]/float(parallel.grid_size()[0]) ));
+	sizeLocal_[dim_-2]=int(std::ceil( (parallel.grid_size()[1]-parallel.grid_rank()[1])*size_[dim_-2]/float(parallel.grid_size()[1]) ));
+	sizeLocal_[dim_-2]-=int(std::ceil((parallel.grid_size()[1]-parallel.grid_rank()[1]-1)*size_[dim_-2]/float(parallel.grid_size()[1]) ));
 	for(i=0;i<dim_-2;i++) sizeLocal_[i]=size_[i];
 
     sizeLocalAllProcDim0_ = new int[parallel.grid_size()[0]];
@@ -125,13 +133,13 @@ void Lattice::initialize(int dim, const int* size, int halo, int vectorSize)
 
 	for(i=0;i<parallel.grid_size()[0];i++)
     {
-	    sizeLocalAllProcDim0_[i] = int(ceil( (parallel.grid_size()[0]-i)*size_[dim_-1]/float(parallel.grid_size()[0]) ));
-	    sizeLocalAllProcDim0_[i] -= int(ceil((parallel.grid_size()[0]-i-1)*size_[dim_-1]/float(parallel.grid_size()[0]) ));
+	    sizeLocalAllProcDim0_[i] = int(std::ceil( (parallel.grid_size()[0]-i)*size_[dim_-1]/float(parallel.grid_size()[0]) ));
+	    sizeLocalAllProcDim0_[i] -= int(std::ceil((parallel.grid_size()[0]-i-1)*size_[dim_-1]/float(parallel.grid_size()[0]) ));
     }
 	for(i=0;i<parallel.grid_size()[1];i++)
     {
-	    sizeLocalAllProcDim1_[i] = int(ceil( (parallel.grid_size()[1]-i)*size_[dim_-2]/float(parallel.grid_size()[1]) ));
-	    sizeLocalAllProcDim1_[i] -= int(ceil((parallel.grid_size()[1]-i-1)*size_[dim_-2]/float(parallel.grid_size()[1]) ));
+	    sizeLocalAllProcDim1_[i] = int(std::ceil( (parallel.grid_size()[1]-i)*size_[dim_-2]/float(parallel.grid_size()[1]) ));
+	    sizeLocalAllProcDim1_[i] -= int(std::ceil((parallel.grid_size()[1]-i-1)*size_[dim_-2]/float(parallel.grid_size()[1]) ));
     }
 
 	//Calculate index jumps

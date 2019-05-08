@@ -3,8 +3,8 @@
 /*! \file Imag.hpp
     \brief Imag.hpp Contains the Imag class definition
     \author Neil Bevis
- 
- */ 
+
+ */
 
 #ifdef SINGLE
 typedef float Real; /*! \typedef Real
@@ -16,9 +16,9 @@ typedef double Real;
 
 /*! \class Imag
     \brief A utility class for complex arithmetic, invested from LATfield 1.0
- 
+
     Complex number, defined as Real[2] if FFT capability of latfield are not used, and with FFTW complex if it is use. Commun operation over complex number are also defined.
- 
+
  */
 
 class Imag
@@ -27,7 +27,7 @@ class Imag
 
 
  private:
-	
+
 #ifndef FFT
 	Real data[2];
 #endif
@@ -37,9 +37,9 @@ class Imag
 #endif
 #ifndef SINGLE
 	fftw_complex data;
-#endif	
 #endif
-	
+#endif
+
  public:
   //CONSTRUCTORS
   Imag() {;};
@@ -47,7 +47,7 @@ class Imag
 
   //NEGATION OPERATOR
   Imag operator-() { return Imag(-data[0],-data[1]); }
-  
+
   //IMAGINARY-IMAGINARY ADDITION, ETC OPERATORS
   Imag operator+(Imag z) { return Imag( data[0]+z.real(), data[1]+z.imag() ); }
   Imag operator-(Imag z) { return Imag( data[0]-z.real(), data[1]-z.imag() ); }
@@ -82,7 +82,7 @@ class Imag
   //COMPLEX NUMBER FUNCTIONS
   Real& real() { return data[0]; }
   Real& imag() { return data[1]; }
-  Real phase() { return acos( data[0]/sqrt(data[0]*data[0]+data[1]*data[1]) ) * ( data[1] < 0 ? -1 : 1 ); }
+  Real phase() { return acos( data[0]/std::sqrt(data[0]*data[0]+data[1]*data[1]) ) * ( data[1] < 0 ? -1 : 1 ); }
   Imag  conj() { return Imag(data[0],-data[1]); }
   Real  norm() { return data[0]*data[0] + data[1]*data[1]; }
 

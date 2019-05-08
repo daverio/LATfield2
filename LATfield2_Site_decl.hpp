@@ -76,24 +76,25 @@ public:
 
     /*!
  Method to jump to the next index which is not in the halo. This method is used for loopping over the all lattice sites:
- for(site.first();site.test();site.nextValue());
+ for(site.first();site.test();site.next());
  This method loop over every value (without vectorization,
  therefor if this looping method is used one should use the Field's method: value(...)
 
  \sa first()
  \sa test()
  */
-  void nextValue();
+  void next();
 
   /*!
    Method to jump to the next index which is not in the halo. This method is used for loopping over the all lattice sites:
+	 Looping method when using vectorization. (field.vector() instead of field() )
 
-   for(site.first();site.test();site.next());
+   for(site.first();site.test();site.nextVector());
 
    \sa first()
    \sa test()
    */
-		void next();
+		void nextVector();
 
   void nextInSlice(int offset,int thickness);
 
@@ -141,17 +142,17 @@ public:
    The + operator is used to make a displacement of +1 site the the asked direction.
    \param direction : direction of the displacement
    */
-		long operator+(int direction);
+		Site operator+(int direction);
   /*!
    Overloaded operator -
    The - operator is used to make a displacement of -1 site the the asked direction.
    \param direction : direction of the displacement
    */
-		long operator-(int direction);
+		Site operator-(int direction);
 
 		long move(int direction, int step);
 		long move(int * steps);
-		long move3d(int sx, int sy, int sz);
+		long move(int sx, int sy, int sz);
 
 		//SITE INDEX ADVANCE===========
   /*!
@@ -212,7 +213,7 @@ protected:
 		long index_;
 		//
 		//lattice info: does it speeds things ?
-		
+
 };
 
 
@@ -242,6 +243,9 @@ public:
 
   cKSite operator+(int asked_direction);
   cKSite operator-(int asked_direction);
+	long move(int asked_direction, int step);
+	long move(int * steps);
+	long move(int sx, int sy, int sz);
 
 
   int coordLocal(int asked_direction);
@@ -280,6 +284,9 @@ public:
 
   rKSite operator+(int asked_direction);
   rKSite operator-(int asked_direction);
+	long move(int asked_direction, int step);
+	long move(int * steps);
+	long move(int sx, int sy, int sz);
 
 
   int coordLocal(int asked_direction);

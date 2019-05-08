@@ -23,7 +23,7 @@ public:
      \param size : array containing the size of each dimension.
      \param halo : size of the halo (ghost cells, same for each dimension)
      */
-    Lattice(int dim, const int* size, int halo, int vectorSize = 0);
+    Lattice(int dim, const int* size, int halo, int vectorSize = NUM_FLOATS);
 
     /*!
      Constructor with initialization
@@ -32,7 +32,7 @@ public:
      \param size : size of each dimension (same for each dimension)
      \param halo : size of the halo (same for each dimension)
      */
-    Lattice(int dim, const int size, int halo, int vectorSize = 0);
+    Lattice(int dim, const int size, int halo, int vectorSize = NUM_FLOATS);
 
     //! Destructor.
     ~Lattice();
@@ -44,7 +44,7 @@ public:
      \param size : array containing the size of each dimension.
      \param halo : size of the halo (same for each dimension)
      */
-    void initialize(int dim, const int* size, int halo, int vectorSize = 0);
+    void initialize(int dim, const int* size, int halo, int vectorSize = NUM_FLOATS);
 
     /*!
      Initialization of a dim-dimensional lattice, each dimension have the same size. The ghost cell number (halo) is the same for each dimension.
@@ -54,7 +54,7 @@ public:
      \param size : size of each dimension (same for each dimension)
      \param halo : size of the halo (same for each dimension)
      */
-    void initialize(int dim, const int size, int halo, int vectorSize = 0);
+    void initialize(int dim, const int size, int halo, int vectorSize = NUM_FLOATS);
 
 #ifdef FFT3D
 
