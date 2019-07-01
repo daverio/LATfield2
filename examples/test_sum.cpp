@@ -49,8 +49,8 @@ int main(int argc, char **argv)
     cout<<parallel.rank()<<" , parallel.sum (a_double) : "<<a_double<<endl;
     cout<<parallel.rank()<<" , parallel.sum (a_float) : "<<a_float<<endl;
     cout<<parallel.rank()<<" , parallel.sum (a_long) : "<<a_long<<endl;
-
-    //parallel.barrier();
+    cout<<flush;
+    parallel.barrier();
     COUT<<"============================================="<<endl;
     COUT<<"============================================="<<endl;
 
@@ -59,20 +59,20 @@ int main(int argc, char **argv)
     a_long = 1;
     a_float = 1;
     a_double = 1;
-    //parallel.sum_to(a_int);
+    parallel.sum_to(a_int);
     parallel.sum_to(a_double);
-    //parallel.sum_to(a_float);
-    //parallel.sum_to(a_long);
+    parallel.sum_to(a_float);
+    parallel.sum_to(a_long);
     cout<<parallel.rank()<<" , parallel.sum_to 0 (a_int) : "<<a_int<<endl;
     cout<<parallel.rank()<<" , parallel.sum_to 0 (a_double) : "<<a_double<<endl;
     cout<<parallel.rank()<<" , parallel.sum_to 0 (a_float) : "<<a_float<<endl;
     cout<<parallel.rank()<<" , parallel.sum_to 0 (a_long) : "<<a_long<<endl;
-
+    cout<<flush;
     parallel.barrier();
     COUT<<"============================================="<<endl;
     COUT<<"============================================="<<endl;
 
-    /*
+
     a_int  = 1;
     a_long = 1;
     a_float = 1;
@@ -85,7 +85,7 @@ int main(int argc, char **argv)
     cout<<parallel.rank()<<" , parallel.sum_to 1 (a_double) : "<<a_double<<endl;
     cout<<parallel.rank()<<" , parallel.sum_to 1 (a_float) : "<<a_float<<endl;
     cout<<parallel.rank()<<" , parallel.sum_to 1 (a_long) : "<<a_long<<endl;
-
+    cout<<flush;
     parallel.barrier();
     COUT<<"============================================="<<endl;
     COUT<<"============================================="<<endl;
@@ -102,7 +102,7 @@ int main(int argc, char **argv)
     cout<<parallel.rank()<<" , parallel.min (a_double) : "<<a_double<<endl;
     cout<<parallel.rank()<<" , parallel.min (a_float) : "<<a_float<<endl;
     cout<<parallel.rank()<<" , parallel.min (a_long) : "<<a_long<<endl;
-
+    cout<<flush;
     parallel.barrier();
     COUT<<"============================================="<<endl;
     COUT<<"============================================="<<endl;
@@ -119,7 +119,7 @@ int main(int argc, char **argv)
     cout<<parallel.rank()<<" , parallel.min_to 0 (a_double) : "<<a_double<<endl;
     cout<<parallel.rank()<<" , parallel.min_to 0 (a_float) : "<<a_float<<endl;
     cout<<parallel.rank()<<" , parallel.min_to 0 (a_long) : "<<a_long<<endl;
-
+    cout<<flush;
     parallel.barrier();
     COUT<<"============================================="<<endl;
     COUT<<"============================================="<<endl;
@@ -136,8 +136,8 @@ int main(int argc, char **argv)
     cout<<parallel.rank()<<" , parallel.min_to 1 (a_double) : "<<a_double<<endl;
     cout<<parallel.rank()<<" , parallel.min_to 1 (a_float) : "<<a_float<<endl;
     cout<<parallel.rank()<<" , parallel.min_to 1 (a_long) : "<<a_long<<endl;
-
-    */
+    cout<<flush;
+    
 
 
     //--------------------------------------------------------
