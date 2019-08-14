@@ -23,7 +23,7 @@ double time2second(string time_str)
   int ptr;
   size_t size = time_str.length();
   string snum;
-  
+
   pos = time_str.find('-');
   if(pos!=string::npos)
   {
@@ -76,8 +76,8 @@ public:
   void initialize(int n);
 
   double timer(int i){return timers_[i];}
-  double aveTimer(int i){return timers_[i]/counts_[i];}
-  double count(int i){return counts_[i];}
+  double aveTimer(int i){if(parallel.rank()==0)return timers_[i]/counts_[i];else return 0;}
+  double count(int i){if(parallel.rank()==0) return counts_[i];else return 0;}
 
 private:
   int n_;
