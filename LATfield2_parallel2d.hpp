@@ -21,10 +21,29 @@ Parallel2d::Parallel2d() : neverFinalizeMPI(false)
 	int argc=1;
 	char** argv = new char*[argc];
 	for(int i=0; i<argc; i++) { argv[i]=new char[20]; }
+
+#ifndef OPENMP
+	MPI_Init( &argc, &argv );
+#else
+	int type;
+	MPI_Init_thread( &argc, &argv,
+	 								MPI_THREAD_FUNNELE, &type);
+	if(type != MPI_THREAD_FUNNELE)
+	{
+		cout<< "issue intitializing threads... aborting"<<endl;
+		int finalized;
+	  MPI_Finalized(&finalized);
+		exit(0);
+	}
+#endif
+
+
+
+
 #ifndef EXTERNAL_IO
 	lat_world_comm_ = MPI_COMM_WORLD;
     world_comm_ = MPI_COMM_WORLD;
-	MPI_Init( &argc, &argv );
+
 	MPI_Comm_rank( lat_world_comm_, &lat_world_rank_ );
 	MPI_Comm_size( lat_world_comm_, &lat_world_size_ );
     MPI_Comm_rank( world_comm_, &world_rank_ );
