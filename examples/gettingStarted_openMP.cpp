@@ -88,39 +88,38 @@ int main(int argc, char **argv)
 
     }
 
-    
     long index;
-    for(int i  = halo; i< halo + lat.sizeLocal(0);i++)
-      for(int j  = halo; j< halo + lat.sizeLocal(0);j++)
-        for(int k  = halo; k< halo + lat.sizeLocal(0);k++)
+    for(int k  = halo; k< halo + lat.sizeLocal(2);k++)
+      for(int j  = halo; j< halo + lat.sizeLocal(1);j++)
+        for(int i  = halo; i< halo + lat.sizeLocal(0);i++)
     {
-        index  = i + lat.sizeLocalGross(0) * (j + lat.sizeLocalGross(1)*k);
-
-        gradPhi(index,0) = (phi(index+lat.jump(0))-phi(index-lat.jump(0)));
-        gradPhi(index,1) = (phi(index+lat.jump(1))-phi(index-lat.jump(1)));
-        gradPhi(index,2) = (phi(index+lat.jump(2))-phi(index-lat.jump(2)));
+        index  = i + lat.sizeLocalGross(0) * (j + lat.sizeLocalGross(1) * k);//i + lat.sizeLocalGross(0) * (j + lat.sizeLocalGross(1)*k);
+        gradPhi(index,0) = 1;//(phi(index+lat.jump(0))-phi(index-lat.jump(0)));
+        gradPhi(index,1) = 1;//(phi(index+lat.jump(1))-phi(index-lat.jump(1)));
+        gradPhi(index,2) = 1;//(phi(index+lat.jump(2))-phi(index-lat.jump(2)));
 
         rho(index)=0;
-        for(int i=0;i<3;i++)rho(x) += phi(index+lat.jump(i)) - 2 * phi(index) + phi(index-lat.jump(i));
-
+        for(int i=0;i<3;i++)rho(index) += phi(index+lat.jump(i)) - 2 * phi(index) + phi(index-lat.jump(i));
     }
 
-    /*
-    for(int i  = halo; i< halo + lat.sizeLocal(0);i++)
-      for(int j  = halo; j< halo + lat.sizeLocal(0);j++)
-        for(int k  = halo; k< halo + lat.sizeLocal(0);k++)
-    {
-        x.setIndex(i + lat.sizeLocalGross(0) * (j + lat.sizeLocalGross(1)*k));
+    //#pragma omp parallel for collapse(3) private(x)
+    for(int k  = halo; k< halo + lat.sizeLocal(2);k++)
+      for(int j  = halo; j< halo + lat.sizeLocal(1);j++)
+        for(int i  = halo; i< halo + lat.sizeLocal(0);i++)
+      {
+          x.setIndex(i + lat.sizeLocalGross(0) * (j + lat.sizeLocalGross(1)*k));
 
-        gradPhi(x,0) = (phi(x+0)-phi(x-0));
-        gradPhi(x,1) = (phi(x+1)-phi(x-1));
-        gradPhi(x,2) = (phi(x+2)-phi(x-2));
+          gradPhi(x,0) = (phi(x+0)-phi(x-0));
+          gradPhi(x,1) = (phi(x+1)-phi(x-1));
+          gradPhi(x,2) = (phi(x+2)-phi(x-2));
 
-        rho(x)=0;
-        for(int i=0;i<3;i++)rho(x) += phi(x+i) - 2 * phi(x) + phi(x-i);
+          rho(x)=0;
+          for(int i=0;i<3;i++)rho(x) += phi(x+i) - 2 * phi(x) + phi(x-i);
+      }
 
 
-    }
-    */
+
+
+
 
 }

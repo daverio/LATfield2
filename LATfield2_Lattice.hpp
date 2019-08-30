@@ -96,9 +96,9 @@ void Lattice::initialize(int dim, const int* size, int halo)
 	for(i=0;i<dim_-2;i++) sizeLocal_[i]=size_[i];
 
 	sizeLocalGross_ = new int[dim_];
-	for(i=0;i<dim_;i++)sizeLocalGross_[i] = sizeLocal_[i] * 2*halo_;
+	for(i=0;i<dim_;i++)sizeLocalGross_[i] = sizeLocal_[i] + 2*halo_;
 
-    sizeLocalAllProcDim0_ = new int[parallel.grid_size()[0]];
+  sizeLocalAllProcDim0_ = new int[parallel.grid_size()[0]];
 	sizeLocalAllProcDim1_ = new int[parallel.grid_size()[1]];
 
 	for(i=0;i<parallel.grid_size()[0];i++)
