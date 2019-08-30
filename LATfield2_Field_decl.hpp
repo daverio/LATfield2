@@ -884,19 +884,24 @@ template <class FieldType>
 void Field<FieldType>::updateHalo()
 {
 
-	Site site(*lattice_);
+  Site site(*lattice_);
 	int copyfrom;
 
 	int  dim=lattice_->dim();
+  int  halo=lattice_->halo();
 	int* jump=new int[dim];
 	int* size=new int[dim];
+  long *sizeGross = new long[dim];
+  long index;
 
 	for(int i=0; i<dim; i++)
 	{
 		jump[i]=lattice_->jump(i);
 		size[i]=lattice_->sizeLocal(i);
+    sizeGross[i]=lattice_->sizeLocalGross(i);
 	}
 
+#ifndef OPENMP
 	for(site.haloFirst(); site.haloTest(); site.haloNext())
 	{
 		//Work out where to copy from
@@ -917,12 +922,47 @@ void Field<FieldType>::updateHalo()
 		{
 			data_[site.index()*components_+i] = data_[copyfrom*components_+i];
 			//memcpy(data_[site.index()*components_+i],data_[copyfrom*components_+i],sizeof_fieldType_);
-
 		}
 	}
+#else
+  if(dim!=3)
+  {
+    COUT<<"OpenMP version of updateHalo only implemented for 3d, aborting"<<endl;
+    parallel.abortForce();
+  }
+  else
+  {
+    #pragma omp parallel for collapse(2) private(index,copyfrom)
+    for(long j = halo; j < size[1]+halo;j++)
+    {
+      for(long k = halo; k < size[2]+halo;k++)
+      {
+        for(long i = 0;i < halo;i++)
+        {
+          for(int c=0; c<components_; c++)
+        	{
+            index = i+sizeGross[0]*(j+sizeGross[1]*k);
+            copyfrom = index + size[0];
+            data_[index*components_ + c] = data_[copyfrom*components_ + c];
+          }
+        }
+        for(long i = halo + size[0]; i<sizeGross[0] ; i++)
+        {
+          for(int c=0; c<components_; c++)
+        	{
+            index = i+sizeGross[0]*(j+sizeGross[1]*k);
+            copyfrom = index - size[0];
+            data_[index*components_ + c] = data_[copyfrom*components_ + c];
+          }
+        }
+      }
+    }
+  }
+#endif
 
 	delete[] jump;
 	delete[] size;
+  delete[] sizeGross;
 
 	if( parallel.size()>1 ) { updateHaloComms(); }
 }
@@ -930,7 +970,7 @@ void Field<FieldType>::updateHalo()
 template <class FieldType>
 void Field<FieldType>::updateHaloComms()
 {
-
+  #ifndef OPENMP
 	int buffer_size0, buffer_size1,temp;
 	int i,j;
 
@@ -1193,6 +1233,123 @@ void Field<FieldType>::updateHaloComms()
 	delete[] buffer_rec;
 
 
+  #else
+
+  long buffer_size1, buffer_size0;
+	int i,j, si, sj;
+
+	FieldType* pointer_send_up;
+	FieldType* pointer_send_down;
+	FieldType* pointer_rec_up;
+	FieldType* pointer_rec_down;
+
+	buffer_size1 = components_ * lattice_->halo() * lattice_->jump(lattice_->dim()-2) * lattice_->sizeLocal(lattice_->dim()-1);
+  buffer_size0 = lattice_->halo() * components_*lattice_->jump(lattice_->dim()-1);
+	FieldType* buffer_send = new FieldType[buffer_size1];
+	FieldType* buffer_rec = new FieldType[buffer_size1];
+
+
+
+	pointer_send_up = data_ + (lattice_->halo()+1)*lattice_->jump(lattice_->dim()-1) - 2*lattice_->halo()*lattice_->jump(lattice_->dim()-2);
+	pointer_rec_up = data_ + (lattice_->halo())*lattice_->jump(lattice_->dim()-1);
+
+	pointer_send_down = data_ +  (lattice_->halo())*lattice_->jump(lattice_->dim()-1) + lattice_->halo()*lattice_->jump(lattice_->dim()-2)  ;
+	pointer_rec_down = data_ + (lattice_->halo()+1)*lattice_->jump(lattice_->dim()-1) - lattice_->halo()*lattice_->jump(lattice_->dim()-2) ;
+
+
+
+	//send up dim1_comm
+	//pack data
+
+	si=lattice_->halo() * lattice_->jump(lattice_->dim()-2);
+	sj=lattice_->sizeLocal(lattice_->dim()-1);
+
+  #pragma omp parallel for collapse(2)
+  for(j=0;j<sj;j++)
+  {
+    for(i=0;i<si ;i++)
+    {
+      for(int comp = 0; comp<components_;comp++)
+    	{
+        buffer_send[(i+si*j)*components_ + comp] =
+                    pointer_send_up[(i+j*lattice_->jump(lattice_->dim()-1))*components_ + comp];
+      }
+    }
+  }
+
+	//send up dim1
+	parallel.sendUp_dim1(buffer_send,buffer_rec, buffer_size1);
+
+	//unpackdata.
+  #pragma omp parallel for collapse(2)
+	for(j=0;j<sj;j++)
+	{
+		for(i=0;i<si ;i++)
+		{
+      for(int comp = 0; comp<components_;comp++)
+      {
+			     pointer_rec_up[(i+j*lattice_->jump(lattice_->dim()-1))*components_ + comp] = buffer_rec[(i+si*j)*components_ + comp];
+      }
+		}
+	}
+
+	//send down dim1_comm
+	for(comp = 0; comp<components_;comp++)
+	{
+    #pragma omp parallel for collapse(2)
+		for(j=0;j<sj;j++)
+		{
+			for(i=0;i<si ;i++)
+			{
+				buffer_send[i+si*(j+sj*comp)] = pointer_send_down[i+j*lattice_->jump(lattice_->dim()-1)];
+			}
+		}
+		pointer_send_down += sitesLocalGross_;
+	}
+
+
+  #pragma omp parallel for collapse(2)
+	for(j=0;j<sj;j++)
+	{
+		for(i=0;i<si ;i++)
+		{
+      for(int comp = 0; comp<components_;comp++)
+      {
+			  buffer_send[(i+si*j)*components_ + comp] = pointer_send_down[(i+j*lattice_->jump(lattice_->dim()-1))*components_ + comp];
+      }
+    }
+	}
+
+	//send down dim1
+	parallel.sendDown_dim1(buffer_send,buffer_rec, buffer_size1);
+
+	//unpackdata.
+  #pragma omp parallel for collapse(2)
+  for(j=0;j<sj;j++)
+  {
+    for(i=0;i<si ;i++)
+    {
+      for(int comp = 0; comp<components_;comp++)
+    	{
+        pointer_rec_down[(i+j*lattice_->jump(lattice_->dim()-1))*components_ + comp] = buffer_rec[(i+si*j)*components_ + comp];
+      }
+    }
+  }
+
+	//work on dim 0
+
+  pointer_send_up = data_ + lattice_->sitesLocalGross() * components_ - 2*buffer_size0;
+	pointer_rec_up = data_ + lattice_->sitesLocalGross() * components_ - buffer_size0;
+
+	pointer_send_down = data_ + buffer_size0;
+	pointer_rec_down = data_;
+
+	parallel.sendUpDown_dim0(pointer_send_up, pointer_rec_up, buffer_size0,
+		 											 pointer_send_down, pointer_rec_down, buffer_size0);
+
+
+
+  #endif
 }
 
 

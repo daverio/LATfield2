@@ -17,6 +17,11 @@
 //#if PARALLEL_MPI   //Define for MPI parallelism
 
 #include "mpi.h"
+
+#ifdef OPENMP
+//#include "omp.h"
+#endif
+
 #define COUT if(parallel.isRoot())cout
 
 
