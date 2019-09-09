@@ -27,8 +27,8 @@ Parallel2d::Parallel2d() : neverFinalizeMPI(false)
 #else
 	int type;
 	MPI_Init_thread( &argc, &argv,
-	 								MPI_THREAD_FUNNELE, &type);
-	if(type != MPI_THREAD_FUNNELE)
+	 								MPI_THREAD_FUNNELED, &type);
+	if(type != MPI_THREAD_FUNNELED)
 	{
 		cout<< "issue intitializing threads... aborting"<<endl;
 		int finalized;

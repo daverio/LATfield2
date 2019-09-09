@@ -89,6 +89,7 @@ int main(int argc, char **argv)
     }
 
     long index;
+    #pragma omp parallel for collapse(1) private(index)
     for(int k  = halo; k< halo + lat.sizeLocal(2);k++)
       for(int j  = halo; j< halo + lat.sizeLocal(1);j++)
         for(int i  = halo; i< halo + lat.sizeLocal(0);i++)
@@ -102,9 +103,10 @@ int main(int argc, char **argv)
         for(int i=0;i<3;i++)rho(index) += phi(index+lat.jump(i)) - 2 * phi(index) + phi(index-lat.jump(i));
     }
 
-    //#pragma omp parallel for collapse(3) private(x)
+
     for(int k  = halo; k< halo + lat.sizeLocal(2);k++)
       for(int j  = halo; j< halo + lat.sizeLocal(1);j++)
+	//#pragma omp parallel for collapse(1) private(x)
         for(int i  = halo; i< halo + lat.sizeLocal(0);i++)
       {
           x.setIndex(i + lat.sizeLocalGross(0) * (j + lat.sizeLocalGross(1)*k));

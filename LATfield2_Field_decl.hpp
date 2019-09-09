@@ -1294,7 +1294,7 @@ void Field<FieldType>::updateHaloComms()
 	}
 
 	//send down dim1_comm
-	for(comp = 0; comp<components_;comp++)
+	for(int comp = 0; comp<components_;comp++)
 	{
     #pragma omp parallel for collapse(2)
 		for(j=0;j<sj;j++)
@@ -1304,7 +1304,7 @@ void Field<FieldType>::updateHaloComms()
 				buffer_send[i+si*(j+sj*comp)] = pointer_send_down[i+j*lattice_->jump(lattice_->dim()-1)];
 			}
 		}
-		pointer_send_down += sitesLocalGross_;
+		pointer_send_down += lattice_->sitesLocalGross();// sitesLocalGross_;
 	}
 
 

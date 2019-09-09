@@ -18,9 +18,9 @@
 
 #include "mpi.h"
 
-#ifdef OPENMP
+//#ifdef OPENMP
 //#include "omp.h"
-#endif
+//#endif
 
 #define COUT if(parallel.isRoot())cout
 
