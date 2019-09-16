@@ -265,7 +265,7 @@ void Parallel2d::barrier()
 
 template<class Type> void Parallel2d::sum(Type& number)
 {
-	sum( &number,1 );
+	sum(&number,1);
 }
 
 template<class Type> void Parallel2d::sum(Type* array, int len)
@@ -295,6 +295,25 @@ template<class Type> void Parallel2d::sum(Type* array, int len)
 	if(rank() == root() ) delete[] gather;
 }
 
+//specializations: using MPI_ALLREDUCE...
+template<> void Parallel2d::sum<double>(double* array, int len)
+{
+	MPI_Allreduce(MPI_IN_PLACE,array,len, MPI_DOUBLE,MPI_SUM,lat_world_comm_);
+}
+template<> void Parallel2d::sum<float>(float* array, int len)
+{
+	MPI_Allreduce(MPI_IN_PLACE,array,len, MPI_FLOAT,MPI_SUM,lat_world_comm_);
+}
+template<> void Parallel2d::sum<int>(int* array, int len)
+{
+	MPI_Allreduce(MPI_IN_PLACE,array,len, MPI_INT,MPI_SUM,lat_world_comm_);
+}
+template<> void Parallel2d::sum<long>(long* array, int len)
+{
+	MPI_Allreduce(MPI_IN_PLACE,array,len, MPI_LONG,MPI_SUM,lat_world_comm_);
+}
+
+
 template<class Type> void Parallel2d::sum_dim0(Type& number)
 {
 	sum_dim0( &number,1 );
@@ -303,14 +322,11 @@ template<class Type> void Parallel2d::sum_dim0(Type& number)
 template<class Type> void Parallel2d::sum_dim0(Type* array, int len)
 {
 	int i,j,comm_rank;
-
-	//Gather numbers at root
 	Type* gather;
 	if( grid_rank()[0] == 0 ) gather = new Type[len*grid_size_[0]];
 
-    MPI_Gather( array, len*sizeof(Type), MPI_BYTE,gather, len*sizeof(Type), MPI_BYTE, 0,dim0_comm_[grid_rank_[1]]);
+  MPI_Gather( array, len*sizeof(Type), MPI_BYTE,gather, len*sizeof(Type), MPI_BYTE, 0,dim0_comm_[grid_rank_[1]]);
 
-	//Sum on root
 	if( grid_rank()[0] == 0)
 	{
 		for(i=0; i<grid_size()[0]; i++)
@@ -321,14 +337,29 @@ template<class Type> void Parallel2d::sum_dim0(Type* array, int len)
 			}
 		}
 	}
-
-	//Broadcast result
-
-    MPI_Bcast( array, len*sizeof(Type), MPI_BYTE, 0, dim0_comm_[grid_rank_[1]]);
-
-	// Tidy up (bug found by MDP 12/4/06)
+	MPI_Bcast( array, len*sizeof(Type), MPI_BYTE, 0, dim0_comm_[grid_rank_[1]]);
 	if( grid_rank()[0] == 0 ) delete[] gather;
 }
+
+//specializations: using MPI_ALLREDUCE...
+template<> void Parallel2d::sum_dim0<double>(double* array, int len)
+{
+	MPI_Allreduce(MPI_IN_PLACE,array,len, MPI_DOUBLE,MPI_SUM,dim0_comm_[grid_rank_[1]]);
+}
+template<> void Parallel2d::sum_dim0<float>(float* array, int len)
+{
+	MPI_Allreduce(MPI_IN_PLACE,array,len, MPI_FLOAT,MPI_SUM,dim0_comm_[grid_rank_[1]]);
+}
+template<> void Parallel2d::sum_dim0<int>(int* array, int len)
+{
+	MPI_Allreduce(MPI_IN_PLACE,array,len, MPI_INT,MPI_SUM,dim0_comm_[grid_rank_[1]]);
+}
+template<> void Parallel2d::sum_dim0<long>(long* array, int len)
+{
+	MPI_Allreduce(MPI_IN_PLACE,array,len, MPI_LONG,MPI_SUM,dim0_comm_[grid_rank_[1]]);
+}
+
+
 template<class Type> void Parallel2d::sum_dim1(Type& number)
 {
 	sum_dim1( &number,1 );
@@ -337,15 +368,11 @@ template<class Type> void Parallel2d::sum_dim1(Type& number)
 template<class Type> void Parallel2d::sum_dim1(Type* array, int len)
 {
 	int i,j,comm_rank;
-
-	//Gather numbers at root
 	Type* gather;
 	if( grid_rank_[1] == 0 ) gather = new Type[len*grid_size_[1]];
 
+	MPI_Gather( array, len*sizeof(Type), MPI_BYTE,gather, len*sizeof(Type), MPI_BYTE, 0,dim1_comm_[grid_rank_[0]]);
 
-    MPI_Gather( array, len*sizeof(Type), MPI_BYTE,gather, len*sizeof(Type), MPI_BYTE, 0,dim1_comm_[grid_rank_[0]]);
-
-	//Sum on root
 	if( grid_rank()[1] == 0)
 	{
 		for(i=0; i<grid_size()[1]; i++)
@@ -357,10 +384,212 @@ template<class Type> void Parallel2d::sum_dim1(Type* array, int len)
 		}
 	}
 
-
-    MPI_Bcast( array, len*sizeof(Type), MPI_BYTE, 0, dim1_comm_[grid_rank_[0]]);
-
+	MPI_Bcast( array, len*sizeof(Type), MPI_BYTE, 0, dim1_comm_[grid_rank_[0]]);
 	if( grid_rank()[1] == 0 ) delete[] gather;
+}
+
+//specializations: using MPI_ALLREDUCE...
+template<> void Parallel2d::sum_dim1<double>(double* array, int len)
+{
+	MPI_Allreduce(MPI_IN_PLACE,array,len, MPI_DOUBLE,MPI_SUM,dim1_comm_[grid_rank_[0]]);
+}
+template<> void Parallel2d::sum_dim1<float>(float* array, int len)
+{
+	MPI_Allreduce(MPI_IN_PLACE,array,len, MPI_FLOAT,MPI_SUM,dim1_comm_[grid_rank_[0]]);
+}
+template<> void Parallel2d::sum_dim1<int>(int* array, int len)
+{
+	MPI_Allreduce(MPI_IN_PLACE,array,len, MPI_INT,MPI_SUM,dim1_comm_[grid_rank_[0]]);
+}
+template<> void Parallel2d::sum_dim1<long>(long* array, int len)
+{
+	MPI_Allreduce(MPI_IN_PLACE,array,len, MPI_LONG,MPI_SUM,dim1_comm_[grid_rank_[0]]);
+}
+
+
+template<class Type>
+void Parallel2d::sum_to(Type& number, int dest)
+{
+	this->sum_to(&number,1,dest);
+}
+template<class Type>
+void Parallel2d::sum_to(Type* array, int len, int dest)
+{
+	Type* gather;
+	if( rank() == dest ) gather = new Type[len*size()];
+	MPI_Gather( array, len*sizeof(Type), MPI_BYTE,
+			   gather, len*sizeof(Type), MPI_BYTE, dest, lat_world_comm_);
+
+	if( rank() == dest )
+	{
+		int i, j;
+		for(i=0; i<size(); i++)
+		{
+			if( i!=dest ) for(j=0; j<len; j++)
+			{
+				array[j] = array[j] + gather[len*i+j];
+			}
+		}
+	}
+
+	if(rank() == dest ) delete[] gather;
+}
+
+//specializations using MPI_REDUCE:
+template<>
+void Parallel2d::sum_to<double>(double* array, int len, int dest)
+{
+	if(rank() == dest)
+		MPI_Reduce(MPI_IN_PLACE,(void*)array,len,MPI_DOUBLE,MPI_SUM,dest,lat_world_comm_);
+	else
+		MPI_Reduce((void*)array,(void*)array,len,MPI_DOUBLE,MPI_SUM,dest,lat_world_comm_);
+}
+template<>
+void Parallel2d::sum_to<float>(float* array, int len, int dest)
+{
+	if(rank() == dest)
+		MPI_Reduce(MPI_IN_PLACE,(void*)array,len,MPI_FLOAT,MPI_SUM,dest,lat_world_comm_);
+	else
+		MPI_Reduce((void*)array,(void*)array,len,MPI_FLOAT,MPI_SUM,dest,lat_world_comm_);
+}
+template<>
+void Parallel2d::sum_to<int>(int* array, int len, int dest)
+{
+	if(rank() == dest)
+		MPI_Reduce(MPI_IN_PLACE,(void*)array,len,MPI_INT,MPI_SUM,dest,lat_world_comm_);
+	else
+		MPI_Reduce((void*)array,(void*)array,len,MPI_INT,MPI_SUM,dest,lat_world_comm_);
+}
+template<>
+void Parallel2d::sum_to<long>(long* array, int len, int dest)
+{
+	if(rank() == dest)
+		MPI_Reduce(MPI_IN_PLACE,(void*)array,len,MPI_LONG,MPI_SUM,dest,lat_world_comm_);
+	else
+		MPI_Reduce((void*)array,(void*)array,len,MPI_LONG,MPI_SUM,dest,lat_world_comm_);
+}
+
+template<class Type>
+void Parallel2d::sum_dim0_to(Type& number, int dest)
+{
+	this->sum_dim0_to(&number,1,dest);
+}
+template<class Type>
+void Parallel2d::sum_dim0_to(Type* array, int len, int dest)
+{
+	int i,j,comm_rank;
+	Type* gather;
+	if( grid_rank_[0] == dest ) gather = new Type[len*grid_size_[0]];
+
+  MPI_Gather(array, len*sizeof(Type), MPI_BYTE,gather,
+	 					 len*sizeof(Type), MPI_BYTE, dest,dim0_comm_[grid_rank_[1]]);
+
+	if( grid_rank_[0] == dest)
+	{
+		for(i=0; i<grid_size_[0]; i++)
+		{
+			if( i!=dest ) for(j=0; j<len; j++)
+			{
+				array[j] = array[j] + gather[len*i+j];
+			}
+		}
+ 		delete[] gather;
+	}
+}
+
+//specializations using MPI_REDUCE:
+template<>
+void Parallel2d::sum_dim0_to<double>(double* array, int len, int dest)
+{
+	if(grid_rank_[0] == dest)
+		MPI_Reduce(MPI_IN_PLACE,(void*)array,len,MPI_DOUBLE,MPI_SUM,dest,dim0_comm_[grid_rank_[1]]);
+	else
+		MPI_Reduce((void*)array,(void*)array,len,MPI_DOUBLE,MPI_SUM,dest,dim0_comm_[grid_rank_[1]]);
+}
+template<>
+void Parallel2d::sum_dim0_to<float>(float* array, int len, int dest)
+{
+	if(grid_rank_[0] == dest)
+		MPI_Reduce(MPI_IN_PLACE,(void*)array,len,MPI_FLOAT,MPI_SUM,dest,dim0_comm_[grid_rank_[1]]);
+	else
+		MPI_Reduce((void*)array,(void*)array,len,MPI_FLOAT,MPI_SUM,dest,dim0_comm_[grid_rank_[1]]);
+}
+template<>
+void Parallel2d::sum_dim0_to<int>(int* array, int len, int dest)
+{
+	if(grid_rank_[0] == dest)
+		MPI_Reduce(MPI_IN_PLACE,(void*)array,len,MPI_INT,MPI_SUM,dest,dim0_comm_[grid_rank_[1]]);
+	else
+		MPI_Reduce((void*)array,(void*)array,len,MPI_INT,MPI_SUM,dest,dim0_comm_[grid_rank_[1]]);
+}
+template<>
+void Parallel2d::sum_dim0_to<long>(long* array, int len, int dest)
+{
+	if(grid_rank_[0] == dest)
+		MPI_Reduce(MPI_IN_PLACE,(void*)array,len,MPI_LONG,MPI_SUM,dest,dim0_comm_[grid_rank_[1]]);
+	else
+		MPI_Reduce((void*)array,(void*)array,len,MPI_LONG,MPI_SUM,dest,dim0_comm_[grid_rank_[1]]);
+}
+
+template<class Type>
+void Parallel2d::sum_dim1_to(Type& number, int dest)
+{
+	this->sum_dim1_to(&number,1,dest);
+}
+template<class Type>
+void Parallel2d::sum_dim1_to(Type* array, int len, int dest)
+{
+	int i,j,comm_rank;
+	Type* gather;
+	if( grid_rank_[1] == dest ) gather = new Type[len*grid_size_[1]];
+
+	MPI_Gather( array, len*sizeof(Type), MPI_BYTE,gather, len*sizeof(Type), MPI_BYTE, dest,dim1_comm_[grid_rank_[0]]);
+
+	if( grid_rank_[1] == dest)
+	{
+		for(i=0; i<grid_size_[1]; i++)
+		{
+			if( i!=dest ) for(j=0; j<len; j++)
+			{
+				array[j] = array[j] + gather[len*i+j];
+			}
+		}
+		delete[] gather;
+	}
+}
+
+//specializations using MPI_REDUCE:
+template<>
+void Parallel2d::sum_dim1_to<double>(double* array, int len, int dest)
+{
+	if(grid_rank_[1] == dest)
+		MPI_Reduce(MPI_IN_PLACE,(void*)array,len,MPI_DOUBLE,MPI_SUM,dest,dim1_comm_[grid_rank_[0]]);
+	else
+		MPI_Reduce((void*)array,(void*)array,len,MPI_DOUBLE,MPI_SUM,dest,dim1_comm_[grid_rank_[0]]);
+}
+template<>
+void Parallel2d::sum_dim1_to<float>(float* array, int len, int dest)
+{
+	if(grid_rank_[1] == dest)
+		MPI_Reduce(MPI_IN_PLACE,(void*)array,len,MPI_FLOAT,MPI_SUM,dest,dim1_comm_[grid_rank_[0]]);
+	else
+		MPI_Reduce((void*)array,(void*)array,len,MPI_FLOAT,MPI_SUM,dest,dim1_comm_[grid_rank_[0]]);
+}
+template<>
+void Parallel2d::sum_dim1_to<int>(int* array, int len, int dest)
+{
+	if(grid_rank_[1] == dest)
+		MPI_Reduce(MPI_IN_PLACE,(void*)array,len,MPI_INT,MPI_SUM,dest,dim1_comm_[grid_rank_[0]]);
+	else
+		MPI_Reduce((void*)array,(void*)array,len,MPI_INT,MPI_SUM,dest,dim1_comm_[grid_rank_[0]]);
+}
+template<>
+void Parallel2d::sum_dim1_to<long>(long* array, int len, int dest)
+{
+	if(grid_rank_[1] == dest)
+		MPI_Reduce(MPI_IN_PLACE,(void*)array,len,MPI_LONG,MPI_SUM,dest,dim1_comm_[grid_rank_[0]]);
+	else
+		MPI_Reduce((void*)array,(void*)array,len,MPI_LONG,MPI_SUM,dest,dim1_comm_[grid_rank_[0]]);
 }
 
 template<class Type> void Parallel2d::max(Type& number)
@@ -395,6 +624,23 @@ template<class Type> void Parallel2d::max(Type* array, int len)
     if( rank() == root() ) delete[] gather;
 }
 
+template<> void Parallel2d::max<double>(double* array, int len)
+{
+	MPI_Allreduce(MPI_IN_PLACE,array,len, MPI_DOUBLE,MPI_MAX,lat_world_comm_);
+}
+template<> void Parallel2d::max<float>(float* array, int len)
+{
+	MPI_Allreduce(MPI_IN_PLACE,array,len, MPI_FLOAT,MPI_MAX,lat_world_comm_);
+}
+template<> void Parallel2d::max<int>(int* array, int len)
+{
+	MPI_Allreduce(MPI_IN_PLACE,array,len, MPI_INT,MPI_MAX,lat_world_comm_);
+}
+template<> void Parallel2d::max<long>(long* array, int len)
+{
+	MPI_Allreduce(MPI_IN_PLACE,array,len, MPI_LONG,MPI_MAX,lat_world_comm_);
+}
+
 template<class Type> void Parallel2d::max_dim0(Type& number)
 {
     max_dim0( &number,1 );
@@ -426,6 +672,24 @@ template<class Type> void Parallel2d::max_dim0(Type* array, int len)
     if( grid_rank_[0] == 0  ) delete[] gather;
 }
 
+//specializations: using MPI_ALLREDUCE...
+template<> void Parallel2d::max_dim0<double>(double* array, int len)
+{
+	MPI_Allreduce(MPI_IN_PLACE,array,len, MPI_DOUBLE,MPI_MAX,dim0_comm_[grid_rank_[1]]);
+}
+template<> void Parallel2d::max_dim0<float>(float* array, int len)
+{
+	MPI_Allreduce(MPI_IN_PLACE,array,len, MPI_FLOAT,MPI_MAX,dim0_comm_[grid_rank_[1]]);
+}
+template<> void Parallel2d::max_dim0<int>(int* array, int len)
+{
+	MPI_Allreduce(MPI_IN_PLACE,array,len, MPI_INT,MPI_MAX,dim0_comm_[grid_rank_[1]]);
+}
+template<> void Parallel2d::max_dim0<long>(long* array, int len)
+{
+	MPI_Allreduce(MPI_IN_PLACE,array,len, MPI_LONG,MPI_MAX,dim0_comm_[grid_rank_[1]]);
+}
+
 template<class Type> void Parallel2d::max_dim1(Type& number)
 {
     max_dim1( &number,1 );
@@ -455,6 +719,214 @@ template<class Type> void Parallel2d::max_dim1(Type* array, int len)
     MPI_Bcast( array, len*sizeof(Type), MPI_BYTE, 0,dim1_comm_[grid_rank_[0]]);
     // Tidy up (bug found by MDP 12/4/06)
     if( grid_rank_[1] == 0  ) delete[] gather;
+}
+
+//specializations: using MPI_ALLREDUCE...
+template<> void Parallel2d::max_dim1<double>(double* array, int len)
+{
+	MPI_Allreduce(MPI_IN_PLACE,array,len, MPI_DOUBLE,MPI_MAX,dim1_comm_[grid_rank_[0]]);
+}
+template<> void Parallel2d::max_dim1<float>(float* array, int len)
+{
+	MPI_Allreduce(MPI_IN_PLACE,array,len, MPI_FLOAT,MPI_MAX,dim1_comm_[grid_rank_[0]]);
+}
+template<> void Parallel2d::max_dim1<int>(int* array, int len)
+{
+	MPI_Allreduce(MPI_IN_PLACE,array,len, MPI_INT,MPI_MAX,dim1_comm_[grid_rank_[0]]);
+}
+template<> void Parallel2d::max_dim1<long>(long* array, int len)
+{
+	MPI_Allreduce(MPI_IN_PLACE,array,len, MPI_LONG,MPI_MAX,dim1_comm_[grid_rank_[0]]);
+}
+
+
+template<class Type>
+void Parallel2d::max_to(Type& number, int dest)
+{
+	max_to(&number,1,dest);
+}
+template<class Type>
+void Parallel2d::max_to(Type* array, int len, int dest)
+{
+	Type* gather;
+	if( rank() == dest ) gather = new Type[len*size()];
+	MPI_Gather( array, len*sizeof(Type), MPI_BYTE,
+						 gather, len*sizeof(Type), MPI_BYTE, dest, lat_world_comm_);
+
+	if(rank() == dest )
+	{
+			int i, j;
+			for(i=0; i<size(); i++)
+			{
+					if( i!=dest) for(j=0; j<len; j++)
+					{
+							if( gather[len*i+j] > array[j] ) array[j] = gather[len*i+j];
+					}
+			}
+			delete[] gather;
+	}
+}
+
+//specializations using MPI_REDUCE:
+template<>
+void Parallel2d::max_to<double>(double* array, int len, int dest)
+{
+	if(rank() == dest)
+		MPI_Reduce(MPI_IN_PLACE,(void*)array,len,MPI_DOUBLE,MPI_MAX,dest,lat_world_comm_);
+	else
+		MPI_Reduce((void*)array,(void*)array,len,MPI_DOUBLE,MPI_MAX,dest,lat_world_comm_);
+}
+template<>
+void Parallel2d::max_to<float>(float* array, int len, int dest)
+{
+	if(rank() == dest)
+		MPI_Reduce(MPI_IN_PLACE,(void*)array,len,MPI_FLOAT,MPI_MAX,dest,lat_world_comm_);
+	else
+		MPI_Reduce((void*)array,(void*)array,len,MPI_FLOAT,MPI_MAX,dest,lat_world_comm_);
+}
+template<>
+void Parallel2d::max_to<int>(int* array, int len, int dest)
+{
+	if(rank() == dest)
+		MPI_Reduce(MPI_IN_PLACE,(void*)array,len,MPI_INT,MPI_MAX,dest,lat_world_comm_);
+	else
+		MPI_Reduce((void*)array,(void*)array,len,MPI_INT,MPI_MAX,dest,lat_world_comm_);
+}
+template<>
+void Parallel2d::max_to<long>(long* array, int len, int dest)
+{
+	if(rank() == dest)
+		MPI_Reduce(MPI_IN_PLACE,(void*)array,len,MPI_LONG,MPI_MAX,dest,lat_world_comm_);
+	else
+		MPI_Reduce((void*)array,(void*)array,len,MPI_LONG,MPI_MAX,dest,lat_world_comm_);
+}
+
+
+template<class Type>
+void Parallel2d::max_dim0_to(Type& number, int dest)
+{
+	max_dim0_to(&number,1,dest);
+}
+template<class Type>
+void Parallel2d::max_dim0_to(Type* array, int len, int dest)
+{
+	//Gather numbers at root
+	Type* gather;
+	if( grid_rank_[0] == dest ) gather = new Type[len*grid_size_[0]];
+	MPI_Gather( array, len*sizeof(Type), MPI_BYTE,
+						 gather, len*sizeof(Type), MPI_BYTE, dest,dim0_comm_[grid_rank_[1]]);
+
+	//Find max on root
+	if( grid_rank_[0] == dest )
+	{
+			int i, j;
+			for(i=0; i<grid_size_[0]; i++)
+			{
+					if( i!=dest ) for(j=0; j<len; j++)
+					{
+							if( gather[len*i+j] > array[j] ) array[j] = gather[len*i+j];
+					}
+			}
+			delete[] gather;
+	}
+}
+
+//specializations using MPI_REDUCE:
+template<>
+void Parallel2d::max_dim0_to<double>(double* array, int len, int dest)
+{
+	if(grid_rank_[0] == dest)
+		MPI_Reduce(MPI_IN_PLACE,(void*)array,len,MPI_DOUBLE,MPI_MAX,dest,dim0_comm_[grid_rank_[1]]);
+	else
+		MPI_Reduce((void*)array,(void*)array,len,MPI_DOUBLE,MPI_MAX,dest,dim0_comm_[grid_rank_[1]]);
+}
+template<>
+void Parallel2d::max_dim0_to<float>(float* array, int len, int dest)
+{
+	if(grid_rank_[0] == dest)
+		MPI_Reduce(MPI_IN_PLACE,(void*)array,len,MPI_FLOAT,MPI_MAX,dest,dim0_comm_[grid_rank_[1]]);
+	else
+		MPI_Reduce((void*)array,(void*)array,len,MPI_FLOAT,MPI_MAX,dest,dim0_comm_[grid_rank_[1]]);
+}
+template<>
+void Parallel2d::max_dim0_to<int>(int* array, int len, int dest)
+{
+	if(grid_rank_[0] == dest)
+		MPI_Reduce(MPI_IN_PLACE,(void*)array,len,MPI_INT,MPI_MAX,dest,dim0_comm_[grid_rank_[1]]);
+	else
+		MPI_Reduce((void*)array,(void*)array,len,MPI_INT,MPI_MAX,dest,dim0_comm_[grid_rank_[1]]);
+}
+template<>
+void Parallel2d::max_dim0_to<long>(long* array, int len, int dest)
+{
+	if(grid_rank_[0] == dest)
+		MPI_Reduce(MPI_IN_PLACE,(void*)array,len,MPI_LONG,MPI_MAX,dest,dim0_comm_[grid_rank_[1]]);
+	else
+		MPI_Reduce((void*)array,(void*)array,len,MPI_LONG,MPI_MAX,dest,dim0_comm_[grid_rank_[1]]);
+}
+
+
+template<class Type>
+void Parallel2d::max_dim1_to(Type& number, int dest)
+{
+	max_dim1_to(&number,1,dest);
+}
+template<class Type>
+void Parallel2d::max_dim1_to(Type* array, int len, int dest)
+{
+	//Gather numbers at root
+	Type* gather;
+	if( grid_rank_[1] == dest ) gather = new Type[len*grid_size_[1]];
+	MPI_Gather( array, len*sizeof(Type), MPI_BYTE,
+						 gather, len*sizeof(Type), MPI_BYTE, dest,dim1_comm_[grid_rank_[0]]);
+
+	//Find max on root
+	if( grid_rank_[1] == dest  )
+	{
+			int i, j;
+			for(i=0; i<grid_size_[1]; i++)
+			{
+					if( i!=dest ) for(j=0; j<len; j++)
+					{
+							if( gather[len*i+j] > array[j] ) array[j] = gather[len*i+j];
+					}
+			}
+			delete[] gather;
+	}
+}
+
+//specializations using MPI_REDUCE:
+template<>
+void Parallel2d::max_dim1_to<double>(double* array, int len, int dest)
+{
+	if(grid_rank_[1] == dest)
+		MPI_Reduce(MPI_IN_PLACE,(void*)array,len,MPI_DOUBLE,MPI_MAX,dest,dim1_comm_[grid_rank_[0]]);
+	else
+		MPI_Reduce((void*)array,(void*)array,len,MPI_DOUBLE,MPI_MAX,dest,dim1_comm_[grid_rank_[0]]);
+}
+template<>
+void Parallel2d::max_dim1_to<float>(float* array, int len, int dest)
+{
+	if(grid_rank_[1] == dest)
+		MPI_Reduce(MPI_IN_PLACE,(void*)array,len,MPI_FLOAT,MPI_MAX,dest,dim1_comm_[grid_rank_[0]]);
+	else
+		MPI_Reduce((void*)array,(void*)array,len,MPI_FLOAT,MPI_MAX,dest,dim1_comm_[grid_rank_[0]]);
+}
+template<>
+void Parallel2d::max_dim1_to<int>(int* array, int len, int dest)
+{
+	if(grid_rank_[1] == dest)
+		MPI_Reduce(MPI_IN_PLACE,(void*)array,len,MPI_INT,MPI_MAX,dest,dim1_comm_[grid_rank_[0]]);
+	else
+		MPI_Reduce((void*)array,(void*)array,len,MPI_INT,MPI_MAX,dest,dim1_comm_[grid_rank_[0]]);
+}
+template<>
+void Parallel2d::max_dim1_to<long>(long* array, int len, int dest)
+{
+	if(grid_rank_[1] == dest)
+		MPI_Reduce(MPI_IN_PLACE,(void*)array,len,MPI_LONG,MPI_MAX,dest,dim1_comm_[grid_rank_[0]]);
+	else
+		MPI_Reduce((void*)array,(void*)array,len,MPI_LONG,MPI_MAX,dest,dim1_comm_[grid_rank_[0]]);
 }
 
 template<class Type> void Parallel2d::min(Type& number)
@@ -491,6 +963,23 @@ template<class Type> void Parallel2d::min(Type* array, int len)
 
 }
 
+template<> void Parallel2d::min<double>(double* array, int len)
+{
+	MPI_Allreduce(MPI_IN_PLACE,array,len, MPI_DOUBLE,MPI_MIN,lat_world_comm_);
+}
+template<> void Parallel2d::min<float>(float* array, int len)
+{
+	MPI_Allreduce(MPI_IN_PLACE,array,len, MPI_FLOAT,MPI_MIN,lat_world_comm_);
+}
+template<> void Parallel2d::min<int>(int* array, int len)
+{
+	MPI_Allreduce(MPI_IN_PLACE,array,len, MPI_INT,MPI_MIN,lat_world_comm_);
+}
+template<> void Parallel2d::min<long>(long* array, int len)
+{
+	MPI_Allreduce(MPI_IN_PLACE,array,len, MPI_LONG,MPI_MIN,lat_world_comm_);
+}
+
 template<class Type> void Parallel2d::min_dim0(Type& number)
 {
     min_dim0( &number,1 );
@@ -520,6 +1009,24 @@ template<class Type> void Parallel2d::min_dim0(Type* array, int len)
     MPI_Bcast( array, len*sizeof(Type), MPI_BYTE, 0,dim0_comm_[grid_rank_[1]]);
     // Tidy up (bug found by MDP 12/4/06)
     if( grid_rank_[0] == 0  ) delete[] gather;
+}
+
+//specializations: using MPI_ALLREDUCE...
+template<> void Parallel2d::min_dim0<double>(double* array, int len)
+{
+	MPI_Allreduce(MPI_IN_PLACE,array,len, MPI_DOUBLE,MPI_MIN,dim0_comm_[grid_rank_[1]]);
+}
+template<> void Parallel2d::min_dim0<float>(float* array, int len)
+{
+	MPI_Allreduce(MPI_IN_PLACE,array,len, MPI_FLOAT,MPI_MIN,dim0_comm_[grid_rank_[1]]);
+}
+template<> void Parallel2d::min_dim0<int>(int* array, int len)
+{
+	MPI_Allreduce(MPI_IN_PLACE,array,len, MPI_INT,MPI_MIN,dim0_comm_[grid_rank_[1]]);
+}
+template<> void Parallel2d::min_dim0<long>(long* array, int len)
+{
+	MPI_Allreduce(MPI_IN_PLACE,array,len, MPI_LONG,MPI_MIN,dim0_comm_[grid_rank_[1]]);
 }
 
 template<class Type> void Parallel2d::min_dim1(Type& number)
@@ -553,6 +1060,213 @@ template<class Type> void Parallel2d::min_dim1(Type* array, int len)
     if( grid_rank_[1] == 0  ) delete[] gather;
 }
 
+//specializations: using MPI_ALLREDUCE...
+template<> void Parallel2d::min_dim1<double>(double* array, int len)
+{
+	MPI_Allreduce(MPI_IN_PLACE,array,len, MPI_DOUBLE,MPI_MIN,dim1_comm_[grid_rank_[0]]);
+}
+template<> void Parallel2d::min_dim1<float>(float* array, int len)
+{
+	MPI_Allreduce(MPI_IN_PLACE,array,len, MPI_FLOAT,MPI_MIN,dim1_comm_[grid_rank_[0]]);
+}
+template<> void Parallel2d::min_dim1<int>(int* array, int len)
+{
+	MPI_Allreduce(MPI_IN_PLACE,array,len, MPI_INT,MPI_MIN,dim1_comm_[grid_rank_[0]]);
+}
+template<> void Parallel2d::min_dim1<long>(long* array, int len)
+{
+	MPI_Allreduce(MPI_IN_PLACE,array,len, MPI_LONG,MPI_MIN,dim1_comm_[grid_rank_[0]]);
+}
+
+template<class Type>
+void Parallel2d::min_to(Type& number, int dest)
+{
+	this->min_to(&number,1,dest);
+}
+template<class Type>
+void Parallel2d::min_to(Type* array, int len, int dest)
+{
+	//Gather numbers at root
+	Type* gather;
+	if( rank() == dest ) gather = new Type[len*size()];
+	MPI_Gather( array, len*sizeof(Type), MPI_BYTE,
+						 gather, len*sizeof(Type), MPI_BYTE, dest, lat_world_comm_);
+
+	//Find min on root
+	if( rank() == dest )
+	{
+			int i, j;
+			for(i=0; i<size(); i++)
+			{
+					if( i!=dest) for(j=0; j<len; j++)
+					{
+							if( gather[len*i+j] < array[j] ) array[j] = gather[len*i+j];
+					}
+			}
+			delete[] gather;
+	}
+}
+
+//specializations using MPI_REDUCE:
+template<>
+void Parallel2d::min_to<double>(double* array, int len, int dest)
+{
+	if(rank() == dest)
+		MPI_Reduce(MPI_IN_PLACE,(void*)array,len,MPI_DOUBLE,MPI_MIN,dest,lat_world_comm_);
+	else
+		MPI_Reduce((void*)array,(void*)array,len,MPI_DOUBLE,MPI_MIN,dest,lat_world_comm_);
+}
+template<>
+void Parallel2d::min_to<float>(float* array, int len, int dest)
+{
+	if(rank() == dest)
+		MPI_Reduce(MPI_IN_PLACE,(void*)array,len,MPI_FLOAT,MPI_MIN,dest,lat_world_comm_);
+	else
+		MPI_Reduce((void*)array,(void*)array,len,MPI_FLOAT,MPI_MIN,dest,lat_world_comm_);
+}
+template<>
+void Parallel2d::min_to<int>(int* array, int len, int dest)
+{
+	if(rank() == dest)
+		MPI_Reduce(MPI_IN_PLACE,(void*)array,len,MPI_INT,MPI_MIN,dest,lat_world_comm_);
+	else
+		MPI_Reduce((void*)array,(void*)array,len,MPI_INT,MPI_MIN,dest,lat_world_comm_);
+}
+template<>
+void Parallel2d::min_to<long>(long* array, int len, int dest)
+{
+	if(rank() == dest)
+		MPI_Reduce(MPI_IN_PLACE,(void*)array,len,MPI_LONG,MPI_MIN,dest,lat_world_comm_);
+	else
+		MPI_Reduce((void*)array,(void*)array,len,MPI_LONG,MPI_MIN,dest,lat_world_comm_);
+}
+
+
+template<class Type>
+void Parallel2d::min_dim0_to(Type& number, int dest)
+{
+	this->min_to(&number,1,dest);
+}
+template<class Type>
+void Parallel2d::min_dim0_to(Type* array, int len, int dest)
+{
+	//Gather numbers at root
+	Type* gather;
+	if( grid_rank_[0] == dest ) gather = new Type[len*grid_size_[0]];
+	MPI_Gather( array, len*sizeof(Type), MPI_BYTE,
+						 gather, len*sizeof(Type), MPI_BYTE, dest,dim0_comm_[grid_rank_[1]]);
+
+	//Find min on root
+	if( grid_rank_[0] == dest  )
+	{
+			int i, j;
+			for(i=0; i<grid_size_[0]; i++)
+			{
+					if( i!=dest ) for(j=0; j<len; j++)
+					{
+							if( gather[len*i+j] < array[j] ) array[j] = gather[len*i+j];
+					}
+			}
+			delete[] gather;
+	}
+}
+
+//specializations using MPI_REDUCE:
+template<>
+void Parallel2d::min_dim0_to<double>(double* array, int len, int dest)
+{
+	if(grid_rank_[0] == dest)
+		MPI_Reduce(MPI_IN_PLACE,(void*)array,len,MPI_DOUBLE,MPI_MIN,dest,dim0_comm_[grid_rank_[1]]);
+	else
+		MPI_Reduce((void*)array,(void*)array,len,MPI_DOUBLE,MPI_MIN,dest,dim0_comm_[grid_rank_[1]]);
+}
+template<>
+void Parallel2d::min_dim0_to<float>(float* array, int len, int dest)
+{
+	if(grid_rank_[0] == dest)
+		MPI_Reduce(MPI_IN_PLACE,(void*)array,len,MPI_FLOAT,MPI_MIN,dest,dim0_comm_[grid_rank_[1]]);
+	else
+		MPI_Reduce((void*)array,(void*)array,len,MPI_FLOAT,MPI_MIN,dest,dim0_comm_[grid_rank_[1]]);
+}
+template<>
+void Parallel2d::min_dim0_to<int>(int* array, int len, int dest)
+{
+	if(grid_rank_[0] == dest)
+		MPI_Reduce(MPI_IN_PLACE,(void*)array,len,MPI_INT,MPI_MIN,dest,dim0_comm_[grid_rank_[1]]);
+	else
+		MPI_Reduce((void*)array,(void*)array,len,MPI_INT,MPI_MIN,dest,dim0_comm_[grid_rank_[1]]);
+}
+template<>
+void Parallel2d::min_dim0_to<long>(long* array, int len, int dest)
+{
+	if(grid_rank_[0] == dest)
+		MPI_Reduce(MPI_IN_PLACE,(void*)array,len,MPI_LONG,MPI_MIN,dest,dim0_comm_[grid_rank_[1]]);
+	else
+		MPI_Reduce((void*)array,(void*)array,len,MPI_LONG,MPI_MIN,dest,dim0_comm_[grid_rank_[1]]);
+}
+
+template<class Type>
+void Parallel2d::min_dim1_to(Type& number, int dest)
+{
+	this->min_to(&number,1,dest);
+}
+template<class Type>
+void Parallel2d::min_dim1_to(Type* array, int len, int dest)
+{
+	//Gather numbers at root
+	Type* gather;
+	if( grid_rank_[1] == dest ) gather = new Type[len*grid_size_[1]];
+	MPI_Gather( array, len*sizeof(Type), MPI_BYTE,
+						 gather, len*sizeof(Type), MPI_BYTE, dest,dim1_comm_[grid_rank_[0]]);
+
+	//Find min on root
+	if( grid_rank_[1] == dest  )
+	{
+			int i, j;
+			for(i=0; i<grid_size_[1]; i++)
+			{
+					if( i!=dest ) for(j=0; j<len; j++)
+					{
+							if( gather[len*i+j] < array[j] ) array[j] = gather[len*i+j];
+					}
+			}
+			delete[] gather;
+	}
+}
+
+//specializations using MPI_REDUCE:
+template<>
+void Parallel2d::min_dim1_to<double>(double* array, int len, int dest)
+{
+	if(grid_rank_[1] == dest)
+		MPI_Reduce(MPI_IN_PLACE,(void*)array,len,MPI_DOUBLE,MPI_MIN,dest,dim1_comm_[grid_rank_[0]]);
+	else
+		MPI_Reduce((void*)array,(void*)array,len,MPI_DOUBLE,MPI_MIN,dest,dim1_comm_[grid_rank_[0]]);
+}
+template<>
+void Parallel2d::min_dim1_to<float>(float* array, int len, int dest)
+{
+	if(grid_rank_[1] == dest)
+		MPI_Reduce(MPI_IN_PLACE,(void*)array,len,MPI_FLOAT,MPI_MIN,dest,dim1_comm_[grid_rank_[0]]);
+	else
+		MPI_Reduce((void*)array,(void*)array,len,MPI_FLOAT,MPI_MIN,dest,dim1_comm_[grid_rank_[0]]);
+}
+template<>
+void Parallel2d::min_dim1_to<int>(int* array, int len, int dest)
+{
+	if(grid_rank_[1] == dest)
+		MPI_Reduce(MPI_IN_PLACE,(void*)array,len,MPI_INT,MPI_MIN,dest,dim1_comm_[grid_rank_[0]]);
+	else
+		MPI_Reduce((void*)array,(void*)array,len,MPI_INT,MPI_MIN,dest,dim1_comm_[grid_rank_[0]]);
+}
+template<>
+void Parallel2d::min_dim1_to<long>(long* array, int len, int dest)
+{
+	if(grid_rank_[1] == dest)
+		MPI_Reduce(MPI_IN_PLACE,(void*)array,len,MPI_LONG,MPI_MIN,dest,dim1_comm_[grid_rank_[0]]);
+	else
+		MPI_Reduce((void*)array,(void*)array,len,MPI_LONG,MPI_MIN,dest,dim1_comm_[grid_rank_[0]]);
+}
 
 template<class Type> void Parallel2d::broadcast(Type& message, int from)
 {
