@@ -93,10 +93,23 @@ void MultiGrid::initialize(Lattice * lat_top, int levelNumber_max, int minGridpe
 		pLayer_[l] = npl_-1;
 	}
 
+
+
+	parallel.MultiGrid_createLayers(nl_,npl_,pLayer_);
+	parallel.MultiGrid_initTopLayer();
+	for(int i=1;i<npl_;i++)if(  parallel.layers()[i-1].isPartLayer() )parallel.MultiGrid_initLayer(i,plr0_[i],plr1_[i]);
+
+	lattice_ = new MultiLAT[nl_];
+	for(int i=0;i<nl_;i++)
+	{
+		if(parallel.layer(pLayer_[i]).isPartLayer())lattice_[i].initialize(lat_top->dim(),lat_size_[i],lat_top->halo(),pLayer_[i]);
+	}
+
+
 	#ifdef DEBUG_MULTIGRID
-	/*
-		cout<< "number of lattice layers: "<< nl_<<endl;
-		cout<< "number of parallel layers: "<< npl_<<endl;
+
+		COUT<< "number of lattice layers: "<< nl_<<endl;
+		COUT<< "number of parallel layers: "<< npl_<<endl;
 		MPI_Barrier(parallel.lat_world_comm());
 		COUT<< "list of layers:"<<endl;
 		for(int i=0;i<nl_;i++)
@@ -105,23 +118,11 @@ void MultiGrid::initialize(Lattice * lat_top, int levelNumber_max, int minGridpe
 			COUT<< "sizes: "<< lat_size_[i][0] << " , " << lat_size_[i][1] << " , "<< lat_size_[i][2] << endl;
 			COUT<< "parallel layer: "<< pLayer_[i] << endl;;
 			COUT<<"-----------"<<endl;
-
 		}
-
 		MPI_Barrier(parallel.lat_world_comm());
-		*/
 	#endif
 
 
-	parallel.MultiGrid_createLevels(npl_);
-	parallel.MultiGrid_initTopLevel();
-	for(int i=1;i<npl_;i++)if(  parallel.layers()[i-1].isPartLayer() )parallel.MultiGrid_initLevel(i,plr0_[i],plr1_[i]);
-
-	lattice_ = new MultiLAT[nl_];
-	for(int i=0;i<nl_;i++)
-	{
-		if(parallel.layer(pLayer_[i]).isPartLayer())lattice_[i].initialize(lat_top->dim(),lat_size_[i],lat_top->halo(),pLayer_[i]);
-	}
 
 }
 

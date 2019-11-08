@@ -57,8 +57,8 @@ public:
       int nl(){return nl_;}
       int npl(){return npl_;}
       int player(int level){return pLayer_[level];}
-      bool isPartLayer(int i){return parallel.layer(pLayer_[i]).isPartLayer();}
-      MultiLAT lattice(int i){return lattice_[i];}
+      bool isPartLayer(int level){return parallel.layer(pLayer_[level]).isPartLayer();}
+      MultiLAT lattice(int level){return lattice_[level];}
 private:
 
   MultiLAT * lattice_;

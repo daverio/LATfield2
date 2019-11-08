@@ -445,21 +445,23 @@ class Parallel2d{
   void PleaseNeverFinalizeMPI() { neverFinalizeMPI = true; }
 
   Parallel2d_layer* layers(){return layers_;}
-  Parallel2d_layer layer(int level){return layers_[level];}
+  Parallel2d_layer layer(int layer){return layers_[layer];}
+  Parallel2d_layer layer_from_level(int level){return layers_[pLayer_from_level_[level]];}
 
-  void MultiGrid_createLevels(int n_level)
+  void MultiGrid_createLayers(int n_level, int n_layer, int * pLayer)
     {
-      layers_ = new  Parallel2d_layer[n_level];
-      //for(int i=0;i<n_level;i++)layers_[i] = new Parallel2d_layer;
+      pLayer_from_level_ = new int[n_level];
+      layers_ = new  Parallel2d_layer[n_layer];
+      for(int i=0;i<n_level;i++)pLayer_from_level_[i] = pLayer[i];
     }
-  void MultiGrid_initTopLevel()
+  void MultiGrid_initTopLayer()
   {
     layers_[0].initialize_topLevel(lat_world_size_, grid_size_,lat_world_rank_,grid_rank_,
     root_, isRoot_, last_proc_,
     lat_world_comm_, dim0_comm_[grid_rank_[1]], dim1_comm_[grid_rank_[0]],
     lat_world_group_, dim0_group_[grid_rank_[1]], dim1_group_[grid_rank_[0]] );
   }
-  void MultiGrid_initLevel(int n,bool f_dim0,bool f_dim1)
+  void MultiGrid_initLayer(int n,bool f_dim0,bool f_dim1)
   {
 
     layers_[n].initialize(layers_[n-1].size(), layers_[n-1].rank(), layers_[n-1].grid_size(), layers_[n-1].grid_rank(),
@@ -502,6 +504,7 @@ private:
   bool neverFinalizeMPI;
 
   Parallel2d_layer * layers_;
+  int * pLayer_from_level_;
 
 
 };

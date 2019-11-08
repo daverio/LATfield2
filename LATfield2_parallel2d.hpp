@@ -228,6 +228,8 @@ void Parallel2d::initialize(int proc_size0, int proc_size1,int IO_total_size, in
 
 Parallel2d::~Parallel2d()
 {
+	delete[] pLayer_from_level_;
+	delete[] layers_;
 	int finalized;
   MPI_Finalized(&finalized);
   if((!finalized) && (!neverFinalizeMPI)) { MPI_Finalize(); }
