@@ -420,6 +420,7 @@ void MultiGrid::restrict3d_dpl(MultiField<FieldType> *& src, MultiField<FieldTyp
 		}
 		free(buffer);
 	}
+	MPI_Barrier(MPI_COMM_WORLD);
 }
 
 template<class FieldType>
@@ -704,6 +705,7 @@ void MultiGrid::restrict3d_dpl_fw(MultiField<FieldType> *& src, MultiField<Field
 		}
 		free(buffer);
 	}
+	MPI_Barrier(MPI_COMM_WORLD);
 }
 
 template<class FieldType>
@@ -726,7 +728,7 @@ void MultiGrid::prolong3d_spl(MultiField<FieldType> *& src, MultiField<FieldType
 
 		int components = src[level].components();
 
-		//field[level].updateHalo();
+		src[level].updateHalo();
 
 		for(xc.first();xc.test();xc.next())
 		{
@@ -767,6 +769,7 @@ void MultiGrid::prolong3d_spl(MultiField<FieldType> *& src, MultiField<FieldType
 			}
 		}
 	}
+	MPI_Barrier(MPI_COMM_WORLD);
 }
 
 template<class FieldType>
@@ -817,7 +820,7 @@ void MultiGrid::prolong3d_dpl(MultiField<FieldType> *& src, MultiField<FieldType
 
 		if(parallel.layer(pLayer_[level]).isPartLayer())
 		{
-			//field[level].updateHalo();
+			src[level].updateHalo();
 
 			Site xc(lattice_[level]);
 			//Site xf(lattice_[ldown]);
@@ -1127,6 +1130,7 @@ void MultiGrid::prolong3d_dpl(MultiField<FieldType> *& src, MultiField<FieldType
 
 
 	}
+	MPI_Barrier(MPI_COMM_WORLD);
 }
 
 
