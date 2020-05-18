@@ -310,8 +310,7 @@ extern "C"{
 
 #else // serial version, without H5_HAVE_PARALLEL definition hdf5 will run in serial !
 		int mpi_size,mpi_rank,p;
-		//MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
-		//MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+
 		mpi_size = parallel.size();
 		mpi_rank = parallel.rank();
 
@@ -347,7 +346,7 @@ extern "C"{
         H5Fclose(file_id);
 
 			}
-			MPI_Barrier(MPI_COMM_WORLD);
+			MPI_Barrier(parallel.lat_world_comm());
 
 		}
 

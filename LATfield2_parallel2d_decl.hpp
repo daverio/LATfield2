@@ -63,6 +63,12 @@ class Parallel2d{
    */
   void initialize(int proc_size0, int proc_size1);
 
+  void initialize(int proc_size0, int proc_size1, MPI_Comm & world_comm);
+
+  void initialize(int proc_size0, int proc_size1,int IO_total_size, int IO_node_size, MPI_Comm & world_comm);
+
+
+
   //ABORT AND BARRIER===============================
 
   /*!
@@ -495,6 +501,7 @@ private:
 
   /* for compatibility with OS X, when this library is linked in e.g. FalconIC */
   bool neverFinalizeMPI;
+  bool mpi_initialized_;
 
 
 };
