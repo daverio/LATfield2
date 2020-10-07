@@ -96,10 +96,10 @@ class Particles;
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 template <typename  part>
 struct  partList{
-    int size;
-    std::list<part>  parts;
-    std::list<part>  partsTemp;
-    partList() : size(0), parts(), partsTemp(){}
+//    int size;
+    std::forward_list<part>  parts;
+//    std::list<part>  partsTemp;
+    partList() : parts(){} //size(0), parts(), partsTemp(){}
 };
 #endif
 /**
@@ -220,7 +220,7 @@ public:
                    int * reduce_type=NULL,
                    int noutput=0);
 
-    template<typename mappingClass>
+/*    template<typename mappingClass>
     void moveParticles( void (*move_funct)(double,double,part*,double *,part_info,Field<Real> **,Site *,mappingClass *,int,double*,double*,int),
                        double dtau,
                        Field<Real> ** fields=NULL,
@@ -229,7 +229,7 @@ public:
                        double * params=NULL,
                        double * output=NULL,
                        int * reduce_type=NULL,
-                       int noutput=0);
+                       int noutput=0);*/
 
     void moveParticles( void (*move_funct)(double,double,part*,double *,part_info,Field<Real> **,Site *,int,double*,double*,int),
                        double dtau,
@@ -477,17 +477,17 @@ template <typename part, typename part_info, typename part_dataType>
 void Particles<part,part_info,part_dataType>::coutPart(long ID)
 {
     Site x(lat_part_);
-    typename std::list<part>::iterator it;
+    typename std::forward_list<part>::iterator it;
 
     for(x.first();x.test();x.next())
     {
-        if((field_part_)(x).size!=0)
-        {
-            for(it=(field_part_)(x).parts.begin(); it != (field_part_)(x).parts.end();++it)
-            {
-                if((*it).ID==ID)cout<< "Parallel ranks: ("<<parallel.grid_rank()[1]<<","<<parallel.grid_rank()[0]<<") ; "<< part_global_info_.type_name<<": "<<*it<< " , lattice position:"<<x <<endl;
-            }
-        }
+//        if((field_part_)(x).size!=0)
+//        {
+          for(it=(field_part_)(x).parts.begin(); it != (field_part_)(x).parts.end();++it)
+          {
+              if((*it).ID==ID)cout<< "Parallel ranks: ("<<parallel.grid_rank()[1]<<","<<parallel.grid_rank()[0]<<") ; "<< part_global_info_.type_name<<": "<<*it<< " , lattice position:"<<x <<endl;
+          }
+//        }
 
     }
 
@@ -504,8 +504,8 @@ bool Particles<part,part_info,part_dataType>::addParticle_global(part newPart)
 
   if(x.setCoord(coord))
     {
-      field_part_(x).size += 1;
-      field_part_(x).parts.push_back(newPart);
+      //field_part_(x).size += 1;
+      field_part_(x).parts.push_front(newPart);
       numParticles_ +=1;
       return true;
     }
@@ -519,7 +519,7 @@ template <typename part, typename part_info, typename part_dataType>
 void Particles<part,part_info,part_dataType>::cout_particle_velocity_stats(const string text)
 {
   Site  xPart(lat_part_);
-  typename std::list<part>::iterator it;
+  typename std::forward_list<part>::iterator it;
 
   double min[3] = {1000000000,1000000000,1000000000};
   double max[3] = {-1000000000,-1000000000,-1000000000};
@@ -528,8 +528,8 @@ void Particles<part,part_info,part_dataType>::cout_particle_velocity_stats(const
 
   for(xPart.first() ; xPart.test(); xPart.next())
   {
-    if(field_part_(xPart).size!=0)
-    {
+    //if(field_part_(xPart).size!=0)
+    //{
       for (it=(field_part_)(xPart).parts.begin(); it != (field_part_)(xPart).parts.end(); ++it)
       {
         for(int i=0;i<3;i++)
@@ -540,7 +540,7 @@ void Particles<part,part_info,part_dataType>::cout_particle_velocity_stats(const
         }
         count++;
       }
-    }
+    //}
   }
 
   parallel.min(min,3);
@@ -562,12 +562,12 @@ template <typename part, typename part_info, typename part_dataType>
 void Particles<part,part_info,part_dataType>::prepare_RK()
 {
   Site  xPart(lat_part_);
-  typename std::list<part>::iterator it;
+  typename std::forward_list<part>::iterator it;
 
   for(xPart.first() ; xPart.test(); xPart.next())
   {
-    if(field_part_(xPart).size!=0)
-    {
+    //if(field_part_(xPart).size!=0)
+    //{
       for (it=(field_part_)(xPart).parts.begin(); it != (field_part_)(xPart).parts.end(); ++it)
       {
         for (int l=0; l<3; l++)
@@ -576,7 +576,7 @@ void Particles<part,part_info,part_dataType>::prepare_RK()
           (*it).pos_out[l] = (*it).pos[l];
         }
       }
-    }
+    //}
   }
 
 }
@@ -606,7 +606,7 @@ Real Particles<part,part_info,part_dataType>::updateVel(Real (*updateVel_funct)(
       }
   }
 
-  typename std::list<part>::iterator it;
+  typename std::forward_list<part>::iterator it;
   double frac[3];
   Real x0;
   Real maxvel = 0.;
@@ -641,8 +641,8 @@ Real Particles<part,part_info,part_dataType>::updateVel(Real (*updateVel_funct)(
 
   for(xPart.first() ; xPart.test(); xPart.next())
   {
-      if(field_part_(xPart).size!=0)
-      {
+      //if(field_part_(xPart).size!=0)
+      //{
           for (it=(field_part_)(xPart).parts.begin(); it != (field_part_)(xPart).parts.end(); ++it)
           {
               //old fashion uncompatible with runge kutta, frac is in [0,1], but shoud be allowed to be in [-1,2]
@@ -697,7 +697,7 @@ Real Particles<part,part_info,part_dataType>::updateVel(Real (*updateVel_funct)(
 
 
           }
-      }
+      //}
       for(int i=0;i<nfields;i++) sites[i].next();
   }
 
@@ -749,7 +749,7 @@ Real Particles<part,part_info,part_dataType>::updateVel(Real (*updateVel_funct)(
         }
     }
 
-    typename std::list<part>::iterator it;
+    typename std::forward_list<part>::iterator it;
     double frac[3];
     Real x0;
     Real maxvel = 0.;
@@ -784,8 +784,8 @@ Real Particles<part,part_info,part_dataType>::updateVel(Real (*updateVel_funct)(
 
     for(xPart.first() ; xPart.test(); xPart.next())
     {
-        if(field_part_(xPart).size!=0)
-        {
+        //if(field_part_(xPart).size!=0)
+        //{
             for (it=(field_part_)(xPart).parts.begin(); it != (field_part_)(xPart).parts.end(); ++it)
             {
                 //old fashion uncompatible with runge kutta, frac is in [0,1], but shoud be allowed to be in [-1,2]
@@ -839,7 +839,7 @@ Real Particles<part,part_info,part_dataType>::updateVel(Real (*updateVel_funct)(
 
 
             }
-        }
+        //}
         for(int i=0;i<nfields;i++) sites[i].next();
     }
 
@@ -868,7 +868,7 @@ Real Particles<part,part_info,part_dataType>::updateVel(Real (*updateVel_funct)(
 
 }
 
-template <typename part, typename part_info, typename part_dataType>
+/*template <typename part, typename part_info, typename part_dataType>
 template<typename mappingClass>
 void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(double,double,part*,double *,part_info,Field<Real> **,Site *,mappingClass *,int,double*,double*,int),
                    double dtau,
@@ -1159,7 +1159,7 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
           }
       }
       delete[] output_temp;
-      /* this is wrong: sites gets deleted again later */
+      // this is wrong: sites gets deleted again later
       //    if(nfields!=0) {
       //      if(sites) delete[] sites;
       //      else { std::cerr << "WTF, nfields != 0, but sites is not initialized.\n"; exit(-1); }
@@ -1781,7 +1781,7 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
       delete[] recBuffer;
 
     if(nfields!=0 && sites) { delete[] sites; sites = NULL; };
-}
+}*/
 
 template <typename part, typename part_info, typename part_dataType>
 void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(double,double,part*,double *,part_info,Field<Real> **,Site *,int,double*,double*,int),
@@ -1805,14 +1805,14 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
     LATfield2::Site xNew(lat_part_);
     LATfield2::Site * sites = NULL;
 
-    typename std::list<part>::iterator it,itTemp;
+    typename std::forward_list<part>::iterator it,prev;
     //Real b[3];
     double frac[3];
     Real x0;
     int localCoord[3];
     int newLocalCoord[3];
 
-    bool flag[4];
+//    bool flag[4];
 
 
     part **sendBuffer;
@@ -1822,13 +1822,13 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
     sendBuffer = new part*[6];
     recBuffer = new part*[6];
 
-    part * pTemp;
+    //part * pTemp;
 
     long p;
     long bufferSize[6];
     long bufferSizeRec[6];
 
-    std::list<part>  part_moveProc[8];
+    std::vector<part>  part_moveProc[8];
 
 
     if(nfields!=0)
@@ -1866,17 +1866,83 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
         }
     }
 
-    part partTest;
+    //part partTest;
+    
+    for(x.first();x.test();x.next())
+    {
+        for(it=field_part_(x).parts.begin(); it != field_part_(x).parts.end(); it++)
+        {
+        	for (int l=0; l<3; l++)
+                    frac[l] = modf( (*it).pos[l] / lat_resolution_, &x0);
+
+
+                move_funct(dtau,
+                           lat_resolution_,
+                           &(*it),
+                           frac,
+                           part_global_info_,
+                           fields,
+                           sites,
+                           nfields,
+                           params,
+                           output_temp,
+                           noutput);
+
+
+                if(noutput>0)for(int i=0;i<noutput;i++)
+                {
+                    //COUT<<reduce_type[i]<<endl;
+                    if(reduce_type[i] & (SUM | SUM_LOCAL))
+                    {
+                        output[i]+=output_temp[i];
+                    }
+                    else if(reduce_type[i] & (MIN | MIN_LOCAL))
+                    {
+                        if(output[i]>output_temp[i])output[i]=output_temp[i];
+                    }
+                    else if(reduce_type[i] & (MAX | MAX_LOCAL))
+                    {
+                        if(output[i]<output_temp[i])output[i]=output_temp[i];
+                    }
+                }
+        }
+        
+        if(nfields!=0) for(int i=0;i<nfields;i++) sites[i].next();
+    }
+    
+    if(noutput>0)for(int i=0;i<noutput;i++)
+    {
+        //COUT<<reduce_type[i]<<endl;
+        if(reduce_type[i] & SUM)
+        {
+            parallel.sum(output[i]);
+        }
+        else if(reduce_type[i] & MIN)
+        {
+            parallel.min(output[i]);
+        }
+        else if(reduce_type[i] & MAX)
+        {
+            parallel.max(output[i]);
+        }
+    }
+    delete[] output_temp;
+    
+    int partRanks[2];
+    int thisRanks[2];
+    thisRanks[0] = parallel.grid_rank()[0];
+    thisRanks[1] = parallel.grid_rank()[1];
 
     for(x.first();x.test();x.next())
     {
-        if(field_part_(x).size!=0)
-        {
+//        if(field_part_(x).size!=0)
+//        {
             for(int i=0;i<3;i++)localCoord[i] = x.coordLocal(i);
-
-            for(it=field_part_(x).parts.begin(); it != field_part_(x).parts.end();)
+            
+			prev = field_part_(x).parts.before_begin();
+            for(it=field_part_(x).parts.begin(); it != field_part_(x).parts.end(); it++)
             {
-                itTemp = it;
+/*                itTemp = it;
                 ++it;
 
                 partTest = (*itTemp);
@@ -1926,152 +1992,154 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
                         if(output[i]<output_temp[i])output[i]=output_temp[i];
                     }
                 }
+*/
 
 
-
-                int partRanks[2];
-                int thisRanks[2];
-                getPartNewProcess((*itTemp),partRanks);
-                thisRanks[0] = parallel.grid_rank()[0];
-                thisRanks[1] = parallel.grid_rank()[1];
+//                int partRanks[2];
+//                int thisRanks[2];
+                getPartNewProcess((*it),partRanks);
+//                thisRanks[0] = parallel.grid_rank()[0];
+//                thisRanks[1] = parallel.grid_rank()[1];
 
                 for(int i=0;i<3;i++)
                 {
-                    if((*itTemp).pos[i]<0)itTemp->pos[i] +=  boxSize_[i];
-                    if((*itTemp).pos[i]>=boxSize_[i])itTemp->pos[i]-=boxSize_[i];
+                    if((*it).pos[i]<0)it->pos[i] +=  boxSize_[i];
+                    if((*it).pos[i]>=boxSize_[i])it->pos[i]-=boxSize_[i];
                 }
 
 
                 if(partRanks[0]==thisRanks[0] && partRanks[1]==thisRanks[1])
                 {
                     int r[3];
-                    getPartCoord(*itTemp, r);
+                    getPartCoord(*it, r);
                     if(!xNew.setCoord(r))
                     {
-                        cout<<"arg"<< *itTemp <<" ; "<< partRanks[0]<< " , " << thisRanks[0] <<endl;
+                        cout<<"arg"<< *it <<" ; "<< partRanks[0]<< " , " << thisRanks[0] <<endl;
                     }
 
-                    getPartCoordLocal(*itTemp, newLocalCoord);
+                    getPartCoordLocal(*it, newLocalCoord);
                     if(localCoord[0]!=newLocalCoord[0] || localCoord[1]!=newLocalCoord[1] || localCoord[2]!=newLocalCoord[2] )
                     {
                         xNew.setCoordLocal(newLocalCoord);
-                        field_part_(xNew).partsTemp.splice(field_part_(xNew).partsTemp.end(),field_part_(x).parts,itTemp);
-                        field_part_(xNew).size += 1;
-                        field_part_(x).size -= 1;
+                        //field_part_(xNew).partsTemp.splice(field_part_(xNew).partsTemp.end(),field_part_(x).parts,itTemp);
+                        field_part_(xNew).parts.splice_after(field_part_(xNew).parts.before_begin(),field_part_(x).parts,prev);
+                        //field_part_(xNew).size += 1;
+                        //field_part_(x).size -= 1;
+                        it = prev;
                     }
+                    else
+                    	prev++;
 
                 }
                 else if(partRanks[1]==thisRanks[1]-1)
                 {
                     if(partRanks[0]==thisRanks[0])
                     {
-                        part_moveProc[2].splice(part_moveProc[2].end(),field_part_(x).parts,itTemp);
-                        field_part_(x).size -= 1;
+                        //part_moveProc[2].splice(part_moveProc[2].end(),field_part_(x).parts,itTemp);
+                        part_moveProc[2].push_back(*it);
+                        //field_part_(x).size -= 1;
                     }
                     else if(partRanks[0]==thisRanks[0]-1)
                     {
-                        part_moveProc[0].splice(part_moveProc[0].end(),field_part_(x).parts,itTemp);
-                        field_part_(x).size -= 1;
+                        //part_moveProc[0].splice(part_moveProc[0].end(),field_part_(x).parts,itTemp);
+                        part_moveProc[0].push_back(*it);
+                        //field_part_(x).size -= 1;
                     }
                     else if(partRanks[0]==thisRanks[0]+1)
                     {
-                        part_moveProc[1].splice(part_moveProc[1].end(),field_part_(x).parts,itTemp);
-                        field_part_(x).size -= 1;
+                        //part_moveProc[1].splice(part_moveProc[1].end(),field_part_(x).parts,itTemp);
+                        part_moveProc[1].push_back(*it);
+                        //field_part_(x).size -= 1;
                     }
                     else
                     {
-                        cout<< "particle : "<<(*itTemp).ID<<" have move to far away (more than 1 proc)."<<endl;
-                        cout<< "particle position: "<< (*itTemp) <<endl;
-                        cout<< "particle position old: "<< partTest <<endl;
-                        cout<<"particle : "<<(*itTemp).ID<< " "<< thisRanks[0]<<" , "<< thisRanks[1]<<" , "<< partRanks[0]<<" , "<< partRanks[1]<<endl;
+                        cout<< "particle : "<<(*it).ID<<" have move to far away (more than 1 proc)."<<endl;
+                        cout<< "particle position: "<< (*it) <<endl;
+                        //cout<< "particle position old: "<< partTest <<endl;
+                        cout<<"particle : "<<(*it).ID<< " "<< thisRanks[0]<<" , "<< thisRanks[1]<<" , "<< partRanks[0]<<" , "<< partRanks[1]<<endl;
                     }
+                    field_part_(x).parts.erase_after(prev);
+                    it = prev;
                 }
                 else if(partRanks[1]==thisRanks[1]+1)
                 {
                     if(partRanks[0]==thisRanks[0])
                     {
-                        part_moveProc[5].splice(part_moveProc[5].end(),field_part_(x).parts,itTemp);
-                        field_part_(x).size -= 1;
+                        //part_moveProc[5].splice(part_moveProc[5].end(),field_part_(x).parts,itTemp);
+                        part_moveProc[5].push_back(*it);
+                        //field_part_(x).size -= 1;
                     }
                     else if(partRanks[0]==thisRanks[0]-1)
                     {
-                        part_moveProc[3].splice(part_moveProc[3].end(),field_part_(x).parts,itTemp);
-                        field_part_(x).size -= 1;
+                        //part_moveProc[3].splice(part_moveProc[3].end(),field_part_(x).parts,itTemp);
+                        part_moveProc[3].push_back(*it);
+                        //field_part_(x).size -= 1;
                     }
                     else if(partRanks[0]==thisRanks[0]+1)
                     {
-                        part_moveProc[4].splice(part_moveProc[4].end(),field_part_(x).parts,itTemp);
-                        field_part_(x).size -= 1;
+                        //part_moveProc[4].splice(part_moveProc[4].end(),field_part_(x).parts,itTemp);
+                        part_moveProc[4].push_back(*it);
+                        //field_part_(x).size -= 1;
                     }
                     else
                     {
-                        cout<< "particle : "<<(*itTemp).ID<<" have move to far away (more than 1 proc)."<<endl;
-                        cout<< "particle position: "<< (*itTemp) <<endl;
-                        cout<< "particle position old: "<< partTest <<endl;
-                        cout<<"particle : "<<(*itTemp).ID<< " "<< thisRanks[0]<<" , "<< thisRanks[1]<<" , "<< partRanks[0]<<" , "<< partRanks[1]<<endl;
+                        cout<< "particle : "<<(*it).ID<<" have move to far away (more than 1 proc)."<<endl;
+                        cout<< "particle position: "<< (*it) <<endl;
+                        //cout<< "particle position old: "<< partTest <<endl;
+                        cout<<"particle : "<<(*it).ID<< " "<< thisRanks[0]<<" , "<< thisRanks[1]<<" , "<< partRanks[0]<<" , "<< partRanks[1]<<endl;
                     }
+                    field_part_(x).parts.erase_after(prev);
+                    it = prev;
                 }
                 else if(partRanks[1]==thisRanks[1])
                 {
                     if(partRanks[0]==thisRanks[0]-1)
                     {
-                        part_moveProc[6].splice(part_moveProc[6].end(),field_part_(x).parts,itTemp);
-                        field_part_(x).size -= 1;
+                        //part_moveProc[6].splice(part_moveProc[6].end(),field_part_(x).parts,itTemp);
+                        part_moveProc[6].push_back(*it);
+                        //field_part_(x).size -= 1;
                     }
                     else if(partRanks[0]==thisRanks[0]+1)
                     {
-                        part_moveProc[7].splice(part_moveProc[7].end(),field_part_(x).parts,itTemp);
-                        field_part_(x).size -= 1;
+                        //part_moveProc[7].splice(part_moveProc[7].end(),field_part_(x).parts,itTemp);
+                        part_moveProc[7].push_back(*it);
+                        //field_part_(x).size -= 1;
                     }
                     else
                     {
-                        cout<< "particle : "<<(*itTemp).ID<<" has moved too much (more than 1 proc)."<<endl;
-                        cout<< "particle position: "<< (*itTemp) <<endl;
-                        cout<< "particle position old: "<< partTest <<endl;
-                        cout<<"particle : "<<(*itTemp).ID<< " "<< thisRanks[0]<<" , "<< thisRanks[1]<<" , "<< partRanks[0]<<" , "<< partRanks[1]<<endl;
+                        cout<< "particle : "<<(*it).ID<<" has moved too much (more than 1 proc)."<<endl;
+                        cout<< "particle position: "<< (*it) <<endl;
+                        //cout<< "particle position old: "<< partTest <<endl;
+                        cout<<"particle : "<<(*it).ID<< " "<< thisRanks[0]<<" , "<< thisRanks[1]<<" , "<< partRanks[0]<<" , "<< partRanks[1]<<endl;
                     }
+                    field_part_(x).parts.erase_after(prev);
+                    it = prev;
                 }
                 else
                 {
-                    cout<< "particle : "<<(*itTemp).ID<<" has moved too much (more than 1 proc)."<<endl;
-                    cout<< "particle position: "<< (*itTemp) <<endl;
-                    cout<< "particle position old: "<< partTest <<endl;
-                    cout<<"particle : "<<(*itTemp).ID<< " "<< thisRanks[0]<<" , "<< thisRanks[1]<<" , "<< partRanks[0]<<" , "<< partRanks[1]<<endl;
+                    cout<< "particle : "<<(*it).ID<<" has moved too much (more than 1 proc)."<<endl;
+                    cout<< "particle position: "<< (*it) <<endl;
+                    //cout<< "particle position old: "<< partTest <<endl;
+                    cout<<"particle : "<<(*it).ID<< " "<< thisRanks[0]<<" , "<< thisRanks[1]<<" , "<< partRanks[0]<<" , "<< partRanks[1]<<endl;
                 }
 
             }
-        }
+//        }
 
-        if(nfields!=0) for(int i=0;i<nfields;i++) sites[i].next();
+//        if(nfields!=0) for(int i=0;i<nfields;i++) sites[i].next();
 
     }
 
 
 
 
-    for(x.first();x.test();x.next())if((field_part_)(x).size!=0)(field_part_)(x).parts.splice((field_part_)(x).parts.end(), (field_part_)(x).partsTemp );
+    //for(x.first();x.test();x.next())if((field_part_)(x).size!=0)(field_part_)(x).parts.splice((field_part_)(x).parts.end(), (field_part_)(x).partsTemp );
 
 
      //cout<<"starting first dim"<<endl;
 
 
-    if(noutput>0)for(int i=0;i<noutput;i++)
-    {
-        //COUT<<reduce_type[i]<<endl;
-        if(reduce_type[i] & SUM)
-        {
-            parallel.sum(output[i]);
-        }
-        else if(reduce_type[i] & MIN)
-        {
-            parallel.min(output[i]);
-        }
-        else if(reduce_type[i] & MAX)
-        {
-            parallel.max(output[i]);
-        }
-    }
-    delete[] output_temp;
+    
     /* this is wrong: sites gets deleted again later */
     //    if(nfields!=0) {
     //      if(sites) delete[] sites;
@@ -2097,9 +2165,10 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
         bufferSize[i]=part_moveProc[i].size();
         if( bufferSize[i]!=0 )
         {
-            sendBuffer[i] = new part[bufferSize[i]];
-            for(it=part_moveProc[i].begin(),p=0; it != part_moveProc[i].end();++it,p++)sendBuffer[i][p] = (*it);
-            part_moveProc[i].clear();
+            //sendBuffer[i] = new part[bufferSize[i]];
+            //for(it=part_moveProc[i].begin(),p=0; it != part_moveProc[i].end();++it,p++)sendBuffer[i][p] = (*it);
+            //part_moveProc[i].clear();
+            sendBuffer[i] = part_moveProc[i].data();
         }
 
     }
@@ -2343,8 +2412,9 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
         this->getPartCoordLocal(recBuffer[2][i],newLocalCoord);
         x.setCoordLocal(newLocalCoord);
 
-        field_part_(x).size += 1;
-        field_part_(x).parts.push_back(recBuffer[2][i]);
+        //field_part_(x).size += 1;
+        //field_part_(x).parts.push_back(recBuffer[2][i]);
+        field_part_(x).parts.push_front(recBuffer[2][i]);
 #ifdef DEBUG_MOVE
         int verif;
         verif=addParticle_global(recBuffer[2][i]);
@@ -2366,8 +2436,9 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
 
         x.setCoordLocal(newLocalCoord);
 
-        field_part_(x).size += 1;
-        field_part_(x).parts.push_back(recBuffer[5][i]);
+        //field_part_(x).size += 1;
+        //field_part_(x).parts.push_back(recBuffer[5][i]);
+        field_part_(x).parts.push_front(recBuffer[5][i]);
 #ifdef DEBUG_MOVE
         int verif;
         verif=addParticle_global(recBuffer[5][i]);
@@ -2386,34 +2457,37 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
 #endif
 
     //cout<<"unpack done  "<<endl;
+    
+    for (int i = 0; i < 6; i++)
+    	part_moveProc[i].clear();
 
-    pTemp = sendBuffer[0];
+    //pTemp = sendBuffer[0];
     sendBuffer[0]=recBuffer[0];
-    recBuffer[0]=pTemp;
-    if(bufferSize[0]!=0)delete[] recBuffer[0];
+    //recBuffer[0]=pTemp;
+    //if(bufferSize[0]!=0)delete[] recBuffer[0];
     bufferSize[0]=bufferSizeRec[0];
 
-    pTemp = sendBuffer[1];
+    //pTemp = sendBuffer[1];
     sendBuffer[1]=recBuffer[3];
-    recBuffer[3]=pTemp;
-    if(bufferSize[1]!=0)delete[] recBuffer[3];
+    //recBuffer[3]=pTemp;
+    //if(bufferSize[1]!=0)delete[] recBuffer[3];
     bufferSize[1]=bufferSizeRec[3];
 
-    pTemp = sendBuffer[3];
+    //pTemp = sendBuffer[3];
     sendBuffer[3]=recBuffer[1];
-    recBuffer[1]=pTemp;
-    if(bufferSize[3]!=0)delete[] recBuffer[1];
+    //recBuffer[1]=pTemp;
+    //if(bufferSize[3]!=0)delete[] recBuffer[1];
     bufferSize[3]=bufferSizeRec[1];
 
-    pTemp = sendBuffer[4];
+    //pTemp = sendBuffer[4];
     sendBuffer[4]=recBuffer[4];
-    recBuffer[4]=pTemp;
-    if(bufferSize[4]!=0)delete[] recBuffer[4];
+    //recBuffer[4]=pTemp;
+    //if(bufferSize[4]!=0)delete[] recBuffer[4];
     bufferSize[4]=bufferSizeRec[4];
 
-    if(bufferSize[2]!=0)delete[] sendBuffer[2];
+    //if(bufferSize[2]!=0)delete[] sendBuffer[2];
     if(bufferSizeRec[2]!=0)delete[] recBuffer[2];
-    if(bufferSize[5]!=0)delete[] sendBuffer[5];
+    //if(bufferSize[5]!=0)delete[] sendBuffer[5];
     if(bufferSizeRec[5]!=0)delete[] recBuffer[5];
 
 
@@ -2423,18 +2497,20 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
     bufferSize[2]=part_moveProc[6].size();
     if( bufferSize[2]!=0 )
     {
-        sendBuffer[2] = new part[bufferSize[2]];
-        for(it=part_moveProc[6].begin(),p=0; it != part_moveProc[6].end();++it,p++)sendBuffer[2][p]=(*it);
-        part_moveProc[6].clear();
+        //sendBuffer[2] = new part[bufferSize[2]];
+        //for(it=part_moveProc[6].begin(),p=0; it != part_moveProc[6].end();++it,p++)sendBuffer[2][p]=(*it);
+        //part_moveProc[6].clear();
+        sendBuffer[2] = part_moveProc[6].data();
     }
 
 
     bufferSize[5]=part_moveProc[7].size();
     if( bufferSize[5]!=0 )
     {
-        sendBuffer[5] = new part[bufferSize[5]];
-        for(it=part_moveProc[7].begin(),p=0; it != part_moveProc[7].end();++it,p++)sendBuffer[5][p]=(*it);
-        part_moveProc[7].clear();
+        //sendBuffer[5] = new part[bufferSize[5]];
+        //for(it=part_moveProc[7].begin(),p=0; it != part_moveProc[7].end();++it,p++)sendBuffer[5][p]=(*it);
+        //part_moveProc[7].clear();
+        sendBuffer[5] = part_moveProc[7].data();
     }
    //send z
 
@@ -2679,17 +2755,20 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
 
             x.setCoordLocal(newLocalCoord);
 
-            field_part_(x).size += 1;
-            field_part_(x).parts.push_back(recBuffer[p][i]);
+            //field_part_(x).size += 1;
+            //field_part_(x).parts.push_back(recBuffer[p][i]);
+            field_part_(x).parts.push_front(recBuffer[p][i]);
         }
     }
 
 
     for(int i=0;i<6;i++)
     {
-        if(bufferSize[i]!=0)delete[] sendBuffer[i];
+        if(bufferSize[i]!=0 && i%3 < 2) delete[] sendBuffer[i];
         if(bufferSizeRec[i]!=0)delete[] recBuffer[i];
     }
+    part_moveProc[6].clear();
+    part_moveProc[7].clear();
     delete[] sendBuffer;
     delete[] recBuffer;
 
@@ -2725,7 +2804,7 @@ void Particles<part,part_info,part_dataType>::saveHDF5(string filename_base, int
     long index;
 
     LATfield2::Site x(lat_part_);
-    typename std::list<part>::iterator it;
+    typename std::forward_list<part>::iterator it;
     int rang[3];
 
 
@@ -2738,14 +2817,14 @@ void Particles<part,part_info,part_dataType>::saveHDF5(string filename_base, int
   index=0;
   for(x.first();x.test();x.next())
     {
-      if(field_part_(x).size!=0)
-        {
+      //if(field_part_(x).size!=0)
+      //  {
 	         for(it=field_part_(x).parts.begin(); it != field_part_(x).parts.end();++it)
            {
 	             partlist[index]=(*it);
                index++;
            }
-        }
+      //  }
     }
 
   fileDsc fd;
@@ -2953,7 +3032,7 @@ void Particles<part,part_info,part_dataType>::saveHDF5_server_write(string filen
     part * partlist;
     partlist = new part[numParticles_];
     LATfield2::Site x(lat_part_);
-    typename std::list<part>::iterator it;
+    typename std::forward_list<part>::iterator it;
     long index=0;
     for(x.first();x.test();x.next())
     {
