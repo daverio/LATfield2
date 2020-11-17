@@ -1,6 +1,6 @@
 bench_files =[ 
-    'benchmarks.cpp',
-    'benchmarks_server.cpp',
+#    'benchmarks.cpp',
+#    'benchmarks_server.cpp',
     'benchmarks_particles.cpp',
     'wave_test_back.cpp',
     'wave_test.cpp']
@@ -13,4 +13,4 @@ foreach f : bench_files
         dependencies: [mpi,hdf5,fftw3])
 endforeach
 
-subdir('particles')
+#subdir('particles')

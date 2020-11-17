@@ -8,8 +8,8 @@ int main(int argc, char **argv)
 {
     
     
-    int n,m;
-    int io_groupe_size,io_size;
+    int n=0,m=0;
+    int io_groupe_size=0,io_size=0;
     string str_filename;
     int npts = 512;
     int numparts = 512;
@@ -59,7 +59,7 @@ int main(int argc, char **argv)
 #endif
         int dim=3;
         int halo=1;
-        int khalo=1;
+        // int khalo=1;
         
         
         Lattice lat_part(dim,npts,0);
@@ -127,7 +127,7 @@ int main(int argc, char **argv)
         }
         */
         int ratio = numparts/npts;
-        ratio;
+        // ratio;
         
         Site xp(lat_part);
         for(xp.first();xp.test();xp.next())

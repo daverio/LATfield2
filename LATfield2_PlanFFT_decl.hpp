@@ -773,7 +773,7 @@ void PlanFFT<compType>::initialize(Field<double>*  rfield,Field<compType>*   kfi
 
   //COUT << rSize_[0] << "   "<< rSize_[1]<< "   "<< rSize_[2] <<endl;
 
-  if(rSize_[0]!=rSize_[1] | rSize_[1]!=rSize_[2])
+  if(rSize_[0]!=rSize_[1] or rSize_[1]!=rSize_[2])
   {
     if(parallel.isRoot())
     {
@@ -843,9 +843,6 @@ void PlanFFT<compType>::execute(int fft_type)
 
     if(fft_type == FFT_FORWARD)
     {
-      int i,j,k;
-      int comp;
-      int comm_rank;
 
 #ifdef SINGLE
       float *p_in;
@@ -855,7 +852,7 @@ void PlanFFT<compType>::execute(int fft_type)
       fftw_complex *p_out;
 #endif
 
-      for(comp=0;comp<components_;comp++)
+      for(int comp=0;comp<components_;comp++)
       {
 
 
@@ -884,10 +881,10 @@ void PlanFFT<compType>::execute(int fft_type)
 
         if(parallel.last_proc()[1])
         {
-          for(i=0;i<parallel.grid_size()[1];i++)transpose_0_2_last_proc(&temp1_[i*rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_],&temp_[i*rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_],rSizeLocal_[1],rSizeLocal_[2],r2cSizeLocal_as_);
+          for(int i=0;i<parallel.grid_size()[1];i++)transpose_0_2_last_proc(&temp1_[i*rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_],&temp_[i*rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_],rSizeLocal_[1],rSizeLocal_[2],r2cSizeLocal_as_);
           implement_local_0_last_proc(&temp1_[rSize_[0]/2*rSizeLocal_[1]*rSizeLocal_[2]],temp_,rSizeLocal_[1],rSizeLocal_[2],r2cSizeLocal_as_,parallel.grid_size()[1]);
         }
-        else for(i=0;i<parallel.grid_size()[1];i++)transpose_0_2(&temp1_[i*rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_],&temp_[i*rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_],rSizeLocal_[1],rSizeLocal_[2],r2cSizeLocal_as_);
+        else for(int i=0;i<parallel.grid_size()[1];i++)transpose_0_2(&temp1_[i*rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_],&temp_[i*rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_],rSizeLocal_[1],rSizeLocal_[2],r2cSizeLocal_as_);
 
 #ifdef SINGLE
         fftwf_execute(fPlan_j_);
@@ -900,7 +897,7 @@ void PlanFFT<compType>::execute(int fft_type)
         MPI_Barrier(parallel.dim0_comm()[parallel.grid_rank()[1]]);
 
 
-        for(i=0;i<parallel.grid_size()[0];i++)transpose_1_2(&temp1_[i*rSizeLocal_[2]*rSizeLocal_[2]*r2cSizeLocal_],&temp_[i*rSizeLocal_[2]*rSizeLocal_[2]*r2cSizeLocal_], r2cSizeLocal_,rSizeLocal_[2],rSizeLocal_[2]);
+        for(int i=0;i<parallel.grid_size()[0];i++)transpose_1_2(&temp1_[i*rSizeLocal_[2]*rSizeLocal_[2]*r2cSizeLocal_],&temp_[i*rSizeLocal_[2]*rSizeLocal_[2]*r2cSizeLocal_], r2cSizeLocal_,rSizeLocal_[2],rSizeLocal_[2]);
 
 #ifdef SINGLE
         for(int l=0;l<rSizeLocal_[2];l++)
@@ -936,8 +933,6 @@ void PlanFFT<compType>::execute(int fft_type)
     }
     if(fft_type == FFT_BACKWARD)
     {
-      int i,j,k,comp;
-      int comm_rank;
 
 #ifdef SINGLE
       float *p_out;
@@ -947,7 +942,7 @@ void PlanFFT<compType>::execute(int fft_type)
       fftw_complex *p_in;
 #endif
 
-      for(comp=0;comp<components_;comp++)
+      for(int comp=0;comp<components_;comp++)
       {
         b_arrange_data_0(kData_, temp_,kSizeLocal_[0],kSizeLocal_[1] ,kSizeLocal_[2], kHalo_, components_, comp);
         MPI_Barrier(parallel.lat_world_comm());
@@ -964,10 +959,10 @@ void PlanFFT<compType>::execute(int fft_type)
 
         if(parallel.last_proc()[1])
         {
-          for(i=0;i<parallel.grid_size()[1];i++)transpose_0_2_last_proc(&temp1_[i*rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_],&temp_[i*rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_],rSizeLocal_[1],rSizeLocal_[2],r2cSizeLocal_as_);
+          for(int i=0;i<parallel.grid_size()[1];i++)transpose_0_2_last_proc(&temp1_[i*rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_],&temp_[i*rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_],rSizeLocal_[1],rSizeLocal_[2],r2cSizeLocal_as_);
           implement_local_0_last_proc(&temp1_[rSize_[0]/2*rSizeLocal_[1]*rSizeLocal_[2]],temp_,rSizeLocal_[1],rSizeLocal_[2],r2cSizeLocal_as_,parallel.grid_size()[1]);
         }
-        else for(i=0;i<parallel.grid_size()[1];i++)transpose_0_2(&temp1_[i*rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_],&temp_[i*rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_],rSizeLocal_[1],rSizeLocal_[2],r2cSizeLocal_as_);
+        else for(int i=0;i<parallel.grid_size()[1];i++)transpose_0_2(&temp1_[i*rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_],&temp_[i*rSizeLocal_[1]*rSizeLocal_[2]*r2cSizeLocal_as_],rSizeLocal_[1],rSizeLocal_[2],r2cSizeLocal_as_);
 
 
 
@@ -985,7 +980,7 @@ void PlanFFT<compType>::execute(int fft_type)
         MPI_Barrier(parallel.dim0_comm()[parallel.grid_rank()[1]]);
 
 
-        for(i=0;i<parallel.grid_size()[0];i++)transpose_1_2(&temp1_[i*rSizeLocal_[2]*rSizeLocal_[2]*r2cSizeLocal_],&temp_[i*rSizeLocal_[2]*rSizeLocal_[2]*r2cSizeLocal_], r2cSizeLocal_,rSizeLocal_[2],rSizeLocal_[2]);
+        for(int i=0;i<parallel.grid_size()[0];i++)transpose_1_2(&temp1_[i*rSizeLocal_[2]*rSizeLocal_[2]*r2cSizeLocal_],&temp_[i*rSizeLocal_[2]*rSizeLocal_[2]*r2cSizeLocal_], r2cSizeLocal_,rSizeLocal_[2],rSizeLocal_[2]);
 
 
 
@@ -1048,9 +1043,6 @@ void PlanFFT<compType>::execute(int fft_type)
     		if(fft_type == FFT_FORWARD)
   			{
 
-  			         int i,j,k;
-  				 int comp;
-  				 int comm_rank;
 
   #ifdef SINGLE
   				 fftwf_complex *p_in;
@@ -1060,7 +1052,7 @@ void PlanFFT<compType>::execute(int fft_type)
   				 fftw_complex *p_out;
   #endif
 
-  				 for(comp=0;comp<components_;comp++)
+  				 for(int comp=0;comp<components_;comp++)
   				 {
 
   					for(int l = 0;l< rSizeLocal_[2] ;l++)
@@ -1079,7 +1071,7 @@ void PlanFFT<compType>::execute(int fft_type)
 
   				   MPI_Alltoall(temp_, 2* rSizeLocal_[1]*rSizeLocal_[2]*rSizeLocal_[1], MPI_DATA_PREC, temp1_, 2* rSizeLocal_[1]*rSizeLocal_[2]*rSizeLocal_[1], MPI_DATA_PREC, parallel.dim1_comm()[parallel.grid_rank()[0]]);
 
-  				   for(i=0;i<parallel.grid_size()[1];i++)transpose_0_2(&temp1_[i*rSizeLocal_[1]*rSizeLocal_[2]*rSizeLocal_[1]],&temp_[i*rSizeLocal_[1]*rSizeLocal_[2]*rSizeLocal_[1]],rSizeLocal_[1],rSizeLocal_[2],rSizeLocal_[1]);
+  				   for(int i=0;i<parallel.grid_size()[1];i++)transpose_0_2(&temp1_[i*rSizeLocal_[1]*rSizeLocal_[2]*rSizeLocal_[1]],&temp_[i*rSizeLocal_[1]*rSizeLocal_[2]*rSizeLocal_[1]],rSizeLocal_[1],rSizeLocal_[2],rSizeLocal_[1]);
 
   #ifdef SINGLE
   				   fftwf_execute(fPlan_j_);
@@ -1090,7 +1082,7 @@ void PlanFFT<compType>::execute(int fft_type)
 
   				   MPI_Alltoall(temp_,2*rSizeLocal_[2]*rSizeLocal_[2]*rSizeLocal_[1],MPI_DATA_PREC,temp1_,2*rSizeLocal_[2]*rSizeLocal_[2]*rSizeLocal_[1], MPI_DATA_PREC, parallel.dim0_comm()[parallel.grid_rank()[1]]);
 
-  				   for(i=0;i<parallel.grid_size()[0];i++)transpose_1_2(&temp1_[i*rSizeLocal_[2]*rSizeLocal_[2]*rSizeLocal_[1]],&temp_[i*rSizeLocal_[2]*rSizeLocal_[2]*rSizeLocal_[1]], rSizeLocal_[1],rSizeLocal_[2],rSizeLocal_[2]);
+  				   for(int i=0;i<parallel.grid_size()[0];i++)transpose_1_2(&temp1_[i*rSizeLocal_[2]*rSizeLocal_[2]*rSizeLocal_[1]],&temp_[i*rSizeLocal_[2]*rSizeLocal_[2]*rSizeLocal_[1]], rSizeLocal_[1],rSizeLocal_[2],rSizeLocal_[2]);
 
 
   				  for(int l = 0;l< rSizeLocal_[2] ;l++)
@@ -1115,9 +1107,6 @@ void PlanFFT<compType>::execute(int fft_type)
   			if(fft_type == FFT_BACKWARD)
   			{
 
-  			         int i,j,k;
-  				 int comp;
-  				 int comm_rank;
 
   #ifdef SINGLE
   				 fftwf_complex *p_in;
@@ -1129,7 +1118,7 @@ void PlanFFT<compType>::execute(int fft_type)
 
   				 //STEP 1 : SAME AS STEP ONE OF FORWARD
 
-  				  for(comp=0;comp<components_;comp++)
+  				  for(int comp=0;comp<components_;comp++)
   				 {
   					for(int l = 0;l< rSizeLocal_[2] ;l++)
   					{
@@ -1150,7 +1139,7 @@ void PlanFFT<compType>::execute(int fft_type)
 
   				  MPI_Alltoall(temp_,2*rSizeLocal_[2]*rSizeLocal_[2]*rSizeLocal_[1],MPI_DATA_PREC,temp1_,2*rSizeLocal_[2]*rSizeLocal_[2]*rSizeLocal_[1], MPI_DATA_PREC, parallel.dim0_comm()[parallel.grid_rank()[1]]);
 
-  				   for(i=0;i<parallel.grid_size()[0];i++)transpose_1_2(&temp1_[i*rSizeLocal_[2]*rSizeLocal_[2]*rSizeLocal_[1]],&temp_[i*rSizeLocal_[2]*rSizeLocal_[2]*rSizeLocal_[1]], rSizeLocal_[1],rSizeLocal_[2],rSizeLocal_[2]);
+  				   for(int i=0;i<parallel.grid_size()[0];i++)transpose_1_2(&temp1_[i*rSizeLocal_[2]*rSizeLocal_[2]*rSizeLocal_[1]],&temp_[i*rSizeLocal_[2]*rSizeLocal_[2]*rSizeLocal_[1]], rSizeLocal_[1],rSizeLocal_[2],rSizeLocal_[2]);
 
 
   #ifdef SINGLE
@@ -1162,7 +1151,7 @@ void PlanFFT<compType>::execute(int fft_type)
 
   				   MPI_Alltoall(temp_, 2* rSizeLocal_[1]*rSizeLocal_[2]*rSizeLocal_[1], MPI_DATA_PREC, temp1_, 2* rSizeLocal_[1]*rSizeLocal_[2]*rSizeLocal_[1], MPI_DATA_PREC, parallel.dim1_comm()[parallel.grid_rank()[0]]);
 
-  				   for(i=0;i<parallel.grid_size()[1];i++)transpose_0_2(&temp1_[i*rSizeLocal_[1]*rSizeLocal_[2]*rSizeLocal_[1]],&temp_[i*rSizeLocal_[1]*rSizeLocal_[2]*rSizeLocal_[1]],rSizeLocal_[1],rSizeLocal_[2],rSizeLocal_[1]);
+  				   for(int i=0;i<parallel.grid_size()[1];i++)transpose_0_2(&temp1_[i*rSizeLocal_[1]*rSizeLocal_[2]*rSizeLocal_[1]],&temp_[i*rSizeLocal_[1]*rSizeLocal_[2]*rSizeLocal_[1]],rSizeLocal_[1],rSizeLocal_[2],rSizeLocal_[1]);
 
 
   				    for(int l = 0;l< rSizeLocal_[2] ;l++)

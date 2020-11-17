@@ -1271,7 +1271,7 @@ void Parallel2d::min_dim1_to<long>(long* array, int len, int dest)
 template<class Type> void Parallel2d::broadcast(Type& message, int from)
 {
 	broadcast( &message, 1, from);
-};
+}
 
 template<class Type> void Parallel2d::broadcast(Type* array, int len, int from)
 {
@@ -1281,7 +1281,7 @@ template<class Type> void Parallel2d::broadcast(Type* array, int len, int from)
 template<class Type> void Parallel2d::broadcast_dim0(Type& message, int from)
 {
 	broadcast_dim0( &message, 1, from);
-};
+}
 
 template<class Type> void Parallel2d::broadcast_dim0(Type* array, int len, int from)
 {
@@ -1291,7 +1291,7 @@ template<class Type> void Parallel2d::broadcast_dim0(Type* array, int len, int f
 template<class Type> void Parallel2d::broadcast_dim1(Type& message, int from)
 {
 	broadcast_dim1( &message, 1, from);
-};
+}
 
 template<class Type> void Parallel2d::broadcast_dim1(Type* array, int len, int from)
 {

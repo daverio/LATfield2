@@ -35,8 +35,8 @@ LATfield2::Real get_lattice_resolution(int npts[3],LATfield2::Real boxSize[3])
     struct Fallback {int X; };               \
     struct Derived : T, Fallback { };        \
     template<typename C, C> struct ChT;      \
-    template<typename C,typename CC> int (f(ChT<int Fallback::*, &C::X>*)){return -1;}; \
-    template<typename C,typename CC> int (f(...)){return offsetof(T,X);}; \
+    template<typename C,typename CC> int f(ChT<int Fallback::*, &C::X>*){return -1;} \
+    template<typename C,typename CC> int f(...){return offsetof(T,X);} \
     int gos(){return f<Derived,T>(0);} \
 };
 

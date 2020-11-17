@@ -18,14 +18,14 @@ using namespace LATfield2;
 
 int main(int argc, char **argv)
 {
-    int n,m;
+    int n=0,m=0;
     int BoxSize = 64;
     int halo = 1;
     int khalo =0;
     int dim = 3;
     int comp = 1;
-    double sigma2=0.5;
-    double res =0.5;
+    // double sigma2=0.5;
+    // double res =0.5;
 
 
     for (int i=1 ; i < argc ; i++ ){
@@ -48,7 +48,7 @@ int main(int argc, char **argv)
 
 
     Lattice lat;
-    lat.initialize(3,BoxSize,halo);
+    lat.initialize(dim,BoxSize,halo);
 
 
     //Real to complex fourier transform

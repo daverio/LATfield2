@@ -15,8 +15,8 @@ int main(int argc, char **argv)
 {
 	
 	
-	int n,m;
-    int io_groupe_size,io_size;
+	int n=0,m=0;
+    int io_groupe_size=0,io_size=0;
 	
 	for (int i=1 ; i < argc ; i++ ){
 		if ( argv[i][0] != '-' )

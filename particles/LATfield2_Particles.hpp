@@ -1,8 +1,6 @@
 #ifndef LATFIELD2_PARTICLES_HPP
 #define LATFIELD2_PARTICLES_HPP
 
-
-
 /**
  * \defgroup partModule Particles Module
  * @{
@@ -751,7 +749,7 @@ Real Particles<part,part_info,part_dataType>::updateVel(Real (*updateVel_funct)(
 
     typename std::list<part>::iterator it;
     double frac[3];
-    Real x0;
+    // Real x0;
     Real maxvel = 0.;
     Real v2;
 
@@ -898,7 +896,6 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
       int localCoord[3];
       int newLocalCoord[3];
 
-      bool flag[4];
 
 
       part **sendBuffer;
@@ -1812,7 +1809,6 @@ void Particles<part,part_info,part_dataType>::moveParticles( void (*move_funct)(
     int localCoord[3];
     int newLocalCoord[3];
 
-    bool flag[4];
 
 
     part **sendBuffer;
@@ -2713,11 +2709,11 @@ void Particles<part,part_info,part_dataType>::saveHDF5(string filename_base, int
 
 
     int numProcPerFile = parallel.size()/fileNumber;
-    int numProcPerFileDim1 = parallel.grid_size()[1]/fileNumber;
+    // int numProcPerFileDim1 = parallel.grid_size()[1]/fileNumber;
     int whichFile  = parallel.grid_rank()[1] * fileNumber / parallel.grid_size()[1];
     //int rankInFile;
-    long numParts[numProcPerFile];
-    int ranksList[numProcPerFile];
+    // long numParts[numProcPerFile];
+    // int ranksList[numProcPerFile];
     MPI_Comm fileComm;
     MPI_Group fileGroup;
     part * partlist;
@@ -2765,17 +2761,17 @@ void Particles<part,part_info,part_dataType>::saveHDF5(string filename_base, int
     fd.localBoxOffset[2] = lat_resolution_ * (Real)(lat_part_.coordSkip()[0]);
 
 
-    Real fileBoxSize[fileNumber];
+    std::vector<Real> fileBoxSize(fileNumber);
     for(int i=0;i<fileNumber;i++)fileBoxSize[i]=0;
     fileBoxSize[whichFile]=fd.localBoxSize[1];
-    parallel.sum_dim1(fileBoxSize,fileNumber);
+    parallel.sum_dim1(fileBoxSize.data(),fileNumber);
 
 
 
-    Real fileBoxOffset[fileNumber];
+    std::vector<Real> fileBoxOffset(fileNumber);
     for(int i=0;i<fileNumber;i++)fileBoxOffset[i]=boxSize_[1]+1.;
     fileBoxOffset[whichFile]=fd.localBoxOffset[1];
-    parallel.min_dim1(fileBoxOffset,fileNumber);
+    parallel.min_dim1(fileBoxOffset.data(),fileNumber);
 
     fd.fileBoxSize = fileBoxSize[whichFile];
     fd.fileBoxOffset = fileBoxOffset[whichFile];
@@ -2805,7 +2801,8 @@ template <typename part, typename part_info, typename part_dataType>
 void Particles<part,part_info,part_dataType>::loadHDF5(string filename_base, int fileNumber)
 {
     //get_fd_global.
-    struct fileDsc fd[fileNumber];
+    std::vector<fileDsc> fd(fileNumber);
+    //struct fileDsc fd[fileNumber];
 
     part * partList;
     long partList_size,partList_offset;

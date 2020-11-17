@@ -15,13 +15,13 @@ double chop(const double val, const double tol)
 
 int main(int argc, char **argv)
 {
-    int n,m;
+    int n=0,m=0;
     int BoxSize = 64;
     int halo = 1;
     int khalo =0;
     int dim = 3;
     int comp = 1;
-    int i,j,l,rnk;
+    int i,j,l;
     double val_re, val_im;
     int count = 0;
 
@@ -94,7 +94,7 @@ int main(int argc, char **argv)
 #endif
 
 #ifdef FULL_OUTPUT
-		for (rnk = 0; rnk < parallel.size(); rnk++)
+		for (int rnk = 0; rnk < parallel.size(); rnk++)
 		{
 			MPI_Barrier(MPI_COMM_WORLD);
 			if (parallel.rank() == rnk)

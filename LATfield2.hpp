@@ -15,6 +15,7 @@
 #include <string>
 #include <typeinfo>
 #include <list>
+#include <vector>
 
 
 #ifdef FFT3D

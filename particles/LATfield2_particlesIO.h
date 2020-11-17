@@ -34,7 +34,7 @@ template<typename part_info,typename parts_datatype>
 void get_partInfo(string filename, part_info &partInfo, parts_datatype partdatatype)
 {
 #ifdef H5_HAVE_PARALLEL
-hid_t plist_id,file_id,attr_id,root_id,dataset_id;
+hid_t plist_id,file_id,dataset_id;//attr_id,root_id;
 
 
 MPI_Info info  = MPI_INFO_NULL;
@@ -85,7 +85,7 @@ void get_fileDsc_global(string filename,fileDsc &fd)
 
   #ifdef H5_HAVE_PARALLEL
 
-  hid_t plist_id,file_id,attr_id,root_id;
+  hid_t plist_id,file_id,attr_id;//root_id;
 
 
   MPI_Info info  = MPI_INFO_NULL;
@@ -189,7 +189,7 @@ void get_fileDsc_local(string filename,long * numParts, RealC * localBoxOffset, 
 {
   #ifdef H5_HAVE_PARALLEL
 
-  hid_t plist_id,file_id,attr_id,root_id,dataset_id;
+  hid_t plist_id,file_id,dataset_id;//attr_id,root_id;
 
 
   MPI_Info info  = MPI_INFO_NULL;

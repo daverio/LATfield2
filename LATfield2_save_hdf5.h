@@ -14,19 +14,19 @@ extern "C"{
    int save_hdf5_externC(char *data,long file_offset[2],int *size,int * sizeLocal,int halo, int lat_dim,int comp,hid_t array_type,int array_size,string  filename_str, string dataset_name_str)
    {
 
-	   hid_t file_id, plist_id,filespace,memspace,dset_id,dtype_id,dtbase_id,root_id;
+	   hid_t file_id, plist_id,filespace,memspace,dset_id,dtype_id{},dtbase_id;//root_id;
 	   hsize_t * components;
 
 	   char * filename;
 	   filename = (char*)malloc((filename_str.size()+1)*sizeof(char));
-     for(int i = 0;i<filename_str.size();i++)filename[i]=filename_str[i];
+     for(uint i = 0;i<filename_str.size();i++)filename[i]=filename_str[i];
      filename[filename_str.size()] = '\0';
 
 	   char  dataset_name[128];
-	   for(int i = 0;i<filename_str.size();i++)dataset_name[i]=dataset_name_str[i];
+	   for(uint i = 0;i<filename_str.size();i++)dataset_name[i]=dataset_name_str[i];
 	   dataset_name[dataset_name_str.size()] = '\0';
 
-	   herr_t status;
+	   //herr_t status;
 
 
 	   hsize_t * sizeGlobal;
@@ -60,7 +60,8 @@ extern "C"{
 	   if(comp == 1 && array_size ==1)
 	   {
 		   dtype_id = H5Tcopy(array_type);
-		   status = H5Tset_order(dtype_id, DATA_ORDER);
+		   //status = 
+           H5Tset_order(dtype_id, DATA_ORDER);
 		   components = new hsize_t[1]; //to be sure is allocated when freed
 	   }
 	   if(comp == 1 && array_size !=1)
@@ -68,7 +69,8 @@ extern "C"{
 		   components = new hsize_t[1];
 		   components[0] = array_size;
 		   dtbase_id = H5Tcopy(array_type);
-		   status = H5Tset_order(dtbase_id, DATA_ORDER);
+		   //status = 
+           H5Tset_order(dtbase_id, DATA_ORDER);
 		   dtype_id = H5Tarray_create(dtbase_id,1,components);
 	   }
 	   if(comp != 1 && array_size ==1)
@@ -76,7 +78,8 @@ extern "C"{
 		   components = new hsize_t[1];
 		   components[0] = comp;
 		   dtbase_id = H5Tcopy(array_type);
-		   status = H5Tset_order(dtbase_id, DATA_ORDER);
+		   //status = 
+           H5Tset_order(dtbase_id, DATA_ORDER);
 		   dtype_id = H5Tarray_create(dtbase_id,1,components);
 	   }
 	   if(comp != 1 && array_size !=1)
@@ -85,7 +88,8 @@ extern "C"{
 		   components[0] = array_size;
 		   components[1] = comp;
 		   dtbase_id = H5Tcopy(array_type);
-		   status = H5Tset_order(dtbase_id, DATA_ORDER);
+		   //status = 
+           H5Tset_order(dtbase_id, DATA_ORDER);
 		   dtype_id = H5Tarray_create(dtbase_id,2,components);
 	   }
 	   ///////////////////////////////
@@ -119,12 +123,15 @@ extern "C"{
 	   //save data
 
 	   filespace = H5Dget_space(dset_id);
-	   status = H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offsetf, NULL, count, NULL);
-	   status = H5Sselect_hyperslab(memspace, H5S_SELECT_SET, offset, NULL, count, NULL);
+	   //status = 
+       H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offsetf, NULL, count, NULL);
+	   //status = 
+       H5Sselect_hyperslab(memspace, H5S_SELECT_SET, offset, NULL, count, NULL);
 
 	   plist_id = H5Pcreate(H5P_DATASET_XFER);
 	   H5Pset_dxpl_mpio(plist_id, H5FD_MPIO_COLLECTIVE);
-	   status = H5Dwrite(dset_id, dtype_id, memspace, filespace, plist_id, data);
+	   //status = 
+       H5Dwrite(dset_id, dtype_id, memspace, filespace, plist_id, data);
 
 
 	   H5Dclose(dset_id);
@@ -190,13 +197,16 @@ extern "C"{
 
 			   memspace = H5Screate_simple(lat_dim,localSize,NULL);
 
-			   int status;
+			   //int status;
 
-			   status = H5Sselect_hyperslab(memspace, H5S_SELECT_SET, offset, NULL,count, NULL);
+			   //status = 
+               H5Sselect_hyperslab(memspace, H5S_SELECT_SET, offset, NULL,count, NULL);
 
-			   status = H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offsetf, NULL,count, NULL);
+			   //status = 
+               H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offsetf, NULL,count, NULL);
 
-			   status = H5Dwrite(dset_id, dtype_id, memspace, filespace, plist_id, data);
+			   //status = 
+               H5Dwrite(dset_id, dtype_id, memspace, filespace, plist_id, data);
 
 			   H5Pclose(plist_id);
 			   H5Sclose(filespace);
@@ -225,19 +235,20 @@ extern "C"{
 
 
 
-	    hid_t file_id, plist_id, plistxfer_id,filespace,memspace,dset_id,dtype_id,dtbase_id,group_id,root_id;
+	    hid_t file_id, plist_id,
+        plistxfer_id,filespace,memspace,dset_id,dtype_id,root_id;//dtbase_id,group_id;
 
 
 		char * filename;
 		filename = (char*)malloc((filename_str.size()+1)*sizeof(char));
-		for(int i = 0;i<filename_str.size();i++)filename[i]=filename_str[i];
+		for(uint i = 0;i<filename_str.size();i++)filename[i]=filename_str[i];
 		filename[filename_str.size()] = '\0';
 
 		char  dataset_name[128];
-		for(int i = 0;i<filename_str.size();i++)dataset_name[i]=dataset_name_str[i];
+		for(uint i = 0;i<filename_str.size();i++)dataset_name[i]=dataset_name_str[i];
 		dataset_name[dataset_name_str.size()] = '\0';
 
-		herr_t status;
+		//herr_t status;
 
 		hsize_t * sizeGlobal;
 		sizeGlobal = new hsize_t[lat_dim];
@@ -288,12 +299,15 @@ extern "C"{
 
 
         //// verifier si l "offset" ne doit pas tenire compte du ....
-		status = H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offsetf, NULL, count, NULL);
-		status = H5Sselect_hyperslab(memspace, H5S_SELECT_SET, offset, NULL, count, NULL);
+		//status = 
+        H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offsetf, NULL, count, NULL);
+		//status = 
+        H5Sselect_hyperslab(memspace, H5S_SELECT_SET, offset, NULL, count, NULL);
 
 		plistxfer_id = H5Pcreate(H5P_DATASET_XFER);
 		H5Pset_dxpl_mpio(plistxfer_id, H5FD_MPIO_COLLECTIVE);
-		status = H5Dread(dset_id, dtype_id, memspace, filespace, plistxfer_id, data);
+		//status = 
+        H5Dread(dset_id, dtype_id, memspace, filespace, plistxfer_id, data);
 
 		H5Dclose(dset_id);
 		H5Gclose(root_id);
@@ -332,11 +346,14 @@ extern "C"{
 
 				memspace = H5Screate_simple(lat_dim,localSize,NULL);
 
-				int status;
+				//int status;
 
-				status = H5Sselect_hyperslab(memspace, H5S_SELECT_SET, offset, NULL,count, NULL);
-				status = H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offsetf, NULL,count, NULL);
-				status = H5Dread(dset_id, dtype_id, memspace, filespace, plist_id, data);
+				//status = 
+                H5Sselect_hyperslab(memspace, H5S_SELECT_SET, offset, NULL,count, NULL);
+				//status = 
+                H5Sselect_hyperslab(filespace, H5S_SELECT_SET, offsetf, NULL,count, NULL);
+				//status = 
+                H5Dread(dset_id, dtype_id, memspace, filespace, plist_id, data);
 
 
         H5Pclose(plist_id);

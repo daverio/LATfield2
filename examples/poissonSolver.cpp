@@ -1,6 +1,5 @@
 #define FFT3D
 #define HDF5
-#define H5_HAVE_PARALLEL
 /*! file poissonSolver.cpp
     Created by David Daverio.
 
@@ -20,7 +19,7 @@ using namespace LATfield2;
 
 int main(int argc, char **argv)
 {
-    int n,m;
+    int n=0,m=0;
     int BoxSize = 64;
     int halo = 1;
     int khalo =0;

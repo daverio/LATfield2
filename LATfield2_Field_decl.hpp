@@ -407,8 +407,6 @@ class Field
 #ifdef HDF5
         void get_h5type();
 #endif
-    public:
-        FieldType* data_;
 	protected:
 		//MEMBER DATA
 		Lattice*   lattice_;
@@ -435,6 +433,8 @@ class Field
         int iof_offset_;
         int iof_thickness_;
 #endif
+    public:
+        FieldType* data_;
 
 	};
 
