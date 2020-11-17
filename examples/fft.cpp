@@ -1,3 +1,4 @@
+#define FFT3D
 /*! file poissonSolver.cpp
     Created by David Daverio.
 

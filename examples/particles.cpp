@@ -1,3 +1,6 @@
+#define FFT3D
+#define HDF5
+#define H5_HAVE_PARALLEL
 #include <stdlib.h>
 #include "LATfield2.hpp"
 

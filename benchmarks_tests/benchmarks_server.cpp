@@ -1,3 +1,6 @@
+#define EXTERNAL_IO
+#define FFT3D
+#define HDF5
 /*! file benchmarks.cpp
     Created by David Daverio.
  
@@ -5,6 +8,7 @@
  
  */
 
+#include <mpi.h>
 #include <unistd.h>
 
 #include <iostream>
