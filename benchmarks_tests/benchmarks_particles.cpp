@@ -1,3 +1,4 @@
+#define HDF5
 #include <stdlib.h>
 #include "LATfield2.hpp"
 

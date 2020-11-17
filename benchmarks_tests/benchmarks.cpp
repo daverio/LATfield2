@@ -1,3 +1,6 @@
+#define EXTERNAL_IO
+#define FFT3D
+#define HDF5
 /*! file benchmarks.cpp
     Created by David Daverio.
  
@@ -5,12 +8,13 @@
  
  */
 
+#include <mpi.h>
 #include <unistd.h>
 
 #include <iostream>
-#include "LATfield2d.hpp"
+#include "LATfield2.hpp"
 
-using namespace LATfield2d;
+using namespace LATfield2;
 
 
 
@@ -21,6 +25,7 @@ int main(int argc, char **argv)
     int runs=3;
     double maxTime=300;
     string str_filename;
+    int io_size{},io_groupe_size{};
     
     
     

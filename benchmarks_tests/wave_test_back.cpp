@@ -1,3 +1,4 @@
+#define FFT3D
 #include <iostream>
 #include <iomanip>
 #include "LATfield2.hpp"

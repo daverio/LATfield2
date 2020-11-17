@@ -1,3 +1,6 @@
+#define FFT3D
+#define HDF5
+#define H5_HAVE_PARALLEL
 /*! file poissonSolver.cpp
     Created by David Daverio.
 
