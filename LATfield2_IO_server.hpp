@@ -561,7 +561,7 @@ void IOserver::stop()
     if(isRoot_)
     {
         int send=0;
-        MPI_Ssend(&send,1,MPI::INT,0,SERVER_CONTROL_TAG,sync_global_comm_);
+        MPI_Ssend(&send,1,MPI_INT,0,SERVER_CONTROL_TAG,sync_global_comm_);
         //cout<< "call stop"<<endl;
     }
     
@@ -580,7 +580,7 @@ int IOserver::openOstream()
             MPI_Iprobe(0,SERVER_STATE_TAG,sync_global_comm_,&flag,&status);
             if(flag==true)
             {
-                MPI_Recv(&state_,1,MPI::INT,0,SERVER_STATE_TAG,sync_global_comm_,&status);
+                MPI_Recv(&state_,1,MPI_INT,0,SERVER_STATE_TAG,sync_global_comm_,&status);
             }
             else  getState=false;
         }
@@ -588,12 +588,12 @@ int IOserver::openOstream()
         if(state_ == SERVER_READY)
         {
             int send=CONTROL_OPEN_OSTREAM ;
-            MPI_Bsend(&send,1,MPI::INT,0,SERVER_CONTROL_TAG,sync_global_comm_);
+            MPI_Bsend(&send,1,MPI_INT,0,SERVER_CONTROL_TAG,sync_global_comm_);
             //cout << "call openostream"<<endl;
         }
     }
     
-    MPI_Bcast(&state_,1,MPI::INT,0,compute_world_comm_);
+    MPI_Bcast(&state_,1,MPI_INT,0,compute_world_comm_);
     
     
     
@@ -605,7 +605,7 @@ int IOserver::openOstream()
 void IOserver::closeOstream()
 {
     int send = CONTROL_CLOSE_OSTREAM;
-    MPI_Send(&send,1,MPI::INT,client_size_,CLOSE_OSTREAM_TAG,client_comm_);
+    MPI_Send(&send,1,MPI_INT,client_size_,CLOSE_OSTREAM_TAG,client_comm_);
 }
 
 ioserver_file IOserver::openFile(string file_name,
@@ -769,14 +769,14 @@ ioserver_file IOserver::openFile(string file_name,
     
     int fileInfo[2];
     
-    if(isClientRoot_)MPI_Bsend(send,send_size,MPI::CHAR,client_size_,FILE_OPEN_TAG,client_comm_);
+    if(isClientRoot_)MPI_Bsend(send,send_size,MPI_CHAR,client_size_,FILE_OPEN_TAG,client_comm_);
     
     
-    if(isClientFileRoot_)MPI_Recv(fileInfo,2,MPI::INT,client_size_,FILE_OPEN_TAG,client_comm_,&status);
+    if(isClientFileRoot_)MPI_Recv(fileInfo,2,MPI_INT,client_size_,FILE_OPEN_TAG,client_comm_,&status);
     
     
-    //(&fileID,1,MPI::INT,0,io_node_comm_);
-    MPI_Bcast(fileInfo,2,MPI::INT,0,compute_file_comm_);
+    //(&fileID,1,MPI_INT,0,io_node_comm_);
+    MPI_Bcast(fileInfo,2,MPI_INT,0,compute_file_comm_);
     
     file.ID=fileInfo[0];
     file.type = fileInfo[1];
@@ -806,7 +806,7 @@ void IOserver::closeFile(ioserver_file file)
         send[0]= file.ID;
         send[1]= file.type;
         
-        MPI_Bsend(send,2,MPI::INT,client_size_,FILE_CLOSE_TAG,client_comm_);
+        MPI_Bsend(send,2,MPI_INT,client_size_,FILE_CLOSE_TAG,client_comm_);
         file.is_open = false;
     }
 }
@@ -826,12 +826,12 @@ void IOserver::sendData(ioserver_file file, char * message,long size,int sendTyp
     sendinfo[1] = size;
     sendinfo[2] = file.type;
     
-    MPI_Bsend(sendinfo,3,MPI::LONG,client_size_,GET_DATA_TAG,client_comm_);
+    MPI_Bsend(sendinfo,3,MPI_LONG,client_size_,GET_DATA_TAG,client_comm_);
     
     //cout<< "send data to file id : "<<sendinfo[0]<<", size :"<<sendinfo[1]<<endl;
     
-    if(sendType == DEFAULT_SEND)MPI_Send(message,size,MPI::CHAR,client_size_,file.ID,client_comm_);
-    else if(sendType == BUFFERED_SEND)MPI_Bsend(message,size,MPI::CHAR,client_size_,file.ID,client_comm_);
+    if(sendType == DEFAULT_SEND)MPI_Send(message,size,MPI_CHAR,client_size_,file.ID,client_comm_);
+    else if(sendType == BUFFERED_SEND)MPI_Bsend(message,size,MPI_CHAR,client_size_,file.ID,client_comm_);
     //cout<< "send has been sent data to file id : "<<sendinfo[0]<<endl;
 }
 void IOserver::sendData(ioserver_file file, char * message,hsize_t * size, hsize_t * offset,int sendType = DEFAULT_SEND)
@@ -856,10 +856,10 @@ void IOserver::sendData(ioserver_file file, char * message,hsize_t * size, hsize
     for(int i = 0;i<file.dim;i++)sendinfo[3+file.dim+i] = offset[i];
     
     
-     MPI_Bsend(sendinfo,3 + (file.dim*2),MPI::LONG,client_size_,GET_DATA_TAG,client_comm_);
+     MPI_Bsend(sendinfo,3 + (file.dim*2),MPI_LONG,client_size_,GET_DATA_TAG,client_comm_);
     
-    if(sendType == DEFAULT_SEND)MPI_Send(message,sendinfo[1],MPI::CHAR,client_size_,file.ID,client_comm_);
-    else if(sendType == BUFFERED_SEND)MPI_Bsend(message,sendinfo[1],MPI::CHAR,client_size_,file.ID,client_comm_);
+    if(sendType == DEFAULT_SEND)MPI_Send(message,sendinfo[1],MPI_CHAR,client_size_,file.ID,client_comm_);
+    else if(sendType == BUFFERED_SEND)MPI_Bsend(message,sendinfo[1],MPI_CHAR,client_size_,file.ID,client_comm_);
 }
 
 
@@ -885,7 +885,7 @@ void IOserver::sendHeader(ioserver_file file,char* header,int size)
         memcpy(send + sizeof(int),(char*)&header_size,sizeof(int));
         memcpy(send + (2*sizeof(int)),header,header_size);
         
-        MPI_Bsend(send,send_size,MPI::CHAR,client_size_,GET_HEADER_TAG,client_comm_);
+        MPI_Bsend(send,send_size,MPI_CHAR,client_size_,GET_HEADER_TAG,client_comm_);
         delete[] send;
     }
     
@@ -929,7 +929,7 @@ void IOserver::sendATTR(ioserver_file file,string attr_name, char * attr, int si
         strcpy(send + (3*sizeof(int)) + sizeof(size_t)+ buf_datatype_size,attr_name.c_str());
         memcpy(send + (3*sizeof(int)) + sizeof(size_t)+ buf_datatype_size + attr_name_size,attr,attr_size * H5Tget_size(dtype));
         
-        MPI_Bsend(send,send_size,MPI::CHAR,client_size_,GET_ATTR_TAG,client_comm_);
+        MPI_Bsend(send,send_size,MPI_CHAR,client_size_,GET_ATTR_TAG,client_comm_);
         
         delete[] buf_datatype;
         delete[] send;
@@ -983,8 +983,8 @@ void IOserver::sendDataset(ioserver_file file,string dset_name, char * dset, hsi
             strcpy(send + (3*sizeof(int)) + sizeof(size_t) + buf_datatype_size + ((1+dim)*sizeof(hsize_t)),dset_name.c_str());
             memcpy(send + (3*sizeof(int)) + sizeof(size_t) + buf_datatype_size + ((1+dim)*sizeof(hsize_t)) + dset_name_size ,dset,dset_size);
             
-            MPI_Bsend(send,send_size,MPI::CHAR,client_size_,GET_DSET_TAG,client_comm_);
-            //MPI_Bsend(dset,dset_size,MPI::CHAR,client_size_,file.ID + OFFSET_DSET_TAG,client_comm_);
+            MPI_Bsend(send,send_size,MPI_CHAR,client_size_,GET_DSET_TAG,client_comm_);
+            //MPI_Bsend(dset,dset_size,MPI_CHAR,client_size_,file.ID + OFFSET_DSET_TAG,client_comm_);
             
             delete[] buf_datatype;
             delete[] send;
@@ -1006,12 +1006,12 @@ void IOserver::start()
         state_ = SERVER_READY;
         if(isRoot_)
         {
-            //MPI_Bsend(&state_,1,MPI::INT,1,SERVER_STATE_TAG,sync_global_comm_);
-            MPI_Isend(&state_,1,MPI::INT,1,SERVER_STATE_TAG,sync_global_comm_,&send_statut_request);
+            //MPI_Bsend(&state_,1,MPI_INT,1,SERVER_STATE_TAG,sync_global_comm_);
+            MPI_Isend(&state_,1,MPI_INT,1,SERVER_STATE_TAG,sync_global_comm_,&send_statut_request);
         
-            MPI_Recv(&control,1,MPI::INT,1,SERVER_CONTROL_TAG,sync_global_comm_,&status);
+            MPI_Recv(&control,1,MPI_INT,1,SERVER_CONTROL_TAG,sync_global_comm_,&status);
         }
-        MPI_Bcast(&control,1,MPI::INT,0,io_world_comm_);
+        MPI_Bcast(&control,1,MPI_INT,0,io_world_comm_);
         //cout<< "control: " <<control<<endl;
         
         if(control==CONTROL_STOP)
@@ -1021,7 +1021,7 @@ void IOserver::start()
         if(control==CONTROL_OPEN_OSTREAM)
         {
             state_ = SERVER_BUSY;
-            if(isRoot_)MPI_Isend(&state_,1,MPI::INT,1,SERVER_STATE_TAG,sync_global_comm_,&send_statut_request);
+            if(isRoot_)MPI_Isend(&state_,1,MPI_INT,1,SERVER_STATE_TAG,sync_global_comm_,&send_statut_request);
             
             //cout<< "ostream open"<<endl;
             
@@ -1073,7 +1073,7 @@ void IOserver::ostream()
         if(message_flag)
         {
             int msize;
-            MPI_Get_count(&status,MPI::CHAR,&msize);
+            MPI_Get_count(&status,MPI_CHAR,&msize);
             char getdata[msize];
             int fyleType;
             int filename_len;
@@ -1082,7 +1082,7 @@ void IOserver::ostream()
             
             MPI_Barrier(io_world_comm_);
             
-            MPI_Recv(getdata,msize,MPI::CHAR,0,FILE_OPEN_TAG,client_comm_,&status);
+            MPI_Recv(getdata,msize,MPI_CHAR,0,FILE_OPEN_TAG,client_comm_,&status);
             
             memcpy((char*)&fyleType,getdata,sizeof(int));
             memcpy( (char*)&filename_len,getdata + sizeof(int) ,sizeof(int));
@@ -1092,7 +1092,7 @@ void IOserver::ostream()
             fileID = newFile_ID;
             newFile_ID++;
             
-            MPI_Bcast(&fileID,1,MPI::INT,0,io_node_comm_);
+            MPI_Bcast(&fileID,1,MPI_INT,0,io_node_comm_);
             //cout<< "generated id "<< fileID <<endl;
             
             
@@ -1246,7 +1246,7 @@ void IOserver::ostream()
             isend[1]=fyleType;
             //cout<<fileID<<endl;
             
-            if(isIONodeRoot_)MPI_Send(isend,2,MPI::INT,0,FILE_OPEN_TAG,client_comm_);
+            if(isIONodeRoot_)MPI_Send(isend,2,MPI_INT,0,FILE_OPEN_TAG,client_comm_);
             
             
             allfiles_closed = false;
@@ -1267,7 +1267,7 @@ void IOserver::ostream()
             int client = status.MPI_SOURCE;
             
             
-            MPI_Recv(&iget,2,MPI::INT,client,FILE_CLOSE_TAG,client_comm_,&status);
+            MPI_Recv(&iget,2,MPI_INT,client,FILE_CLOSE_TAG,client_comm_,&status);
             ID = iget[0];
             
             //cout<< "closing file : "<<ID<< ", " << client<< " , "<<  iget[1]<<endl;
@@ -1332,7 +1332,7 @@ void IOserver::ostream()
         if(message_flag)
         {
             //close ostream
-            MPI_Recv(&control,1,MPI::INT,status.MPI_SOURCE,CLOSE_OSTREAM_TAG,client_comm_,&status2);
+            MPI_Recv(&control,1,MPI_INT,status.MPI_SOURCE,CLOSE_OSTREAM_TAG,client_comm_,&status2);
             if(control==CONTROL_CLOSE_OSTREAM)
             {
                 ostream_close_client_flags[status.MPI_SOURCE] = 1;
@@ -1347,12 +1347,12 @@ void IOserver::ostream()
             // get info data...
             int infosize;
             int source;
-            MPI_Get_count(&status,MPI::LONG,&infosize);
+            MPI_Get_count(&status,MPI_LONG,&infosize);
             source = status.MPI_SOURCE;
             long info[infosize];
             
             //cout<< infosize<<endl;//
-            MPI_Recv(info,infosize,MPI::LONG,source,GET_DATA_TAG,client_comm_,&status);
+            MPI_Recv(info,infosize,MPI_LONG,source,GET_DATA_TAG,client_comm_,&status);
             
             if(info[2]==UNSTRUCTURED_BIN_FILE)
             {
@@ -1362,7 +1362,7 @@ void IOserver::ostream()
                 
                 //cout<< "receiving usb data file:"<<info[0]<<" , size : "<<info[1]<<endl;
                 
-                MPI_Recv(message.data,info[1],MPI::CHAR,source,info[0],client_comm_,&status);
+                MPI_Recv(message.data,info[1],MPI_CHAR,source,info[0],client_comm_,&status);
                 wp_data_ += info[1];
                 for(it_usb=usb_files_.begin(); it_usb != usb_files_.end(); ++it_usb)
                 {
@@ -1384,7 +1384,7 @@ void IOserver::ostream()
                 
                 //cout<< "receiving ush data file:"<<info[0]<<" , size : "<<info[1]<<endl;
                 
-                MPI_Recv(message.data,info[1],MPI::CHAR,source,info[0],client_comm_,&status);
+                MPI_Recv(message.data,info[1],MPI_CHAR,source,info[0],client_comm_,&status);
                 wp_data_ += info[1];
                 
                 for(it_ush=ush_files_.begin(); it_ush != ush_files_.end(); ++it_ush)
@@ -1404,7 +1404,7 @@ void IOserver::ostream()
                 //cout<<"structured"<<endl;
                 struct_message message;
                 message.data = wp_data_;
-                MPI_Recv(message.data,info[1],MPI::CHAR,source,info[0],client_comm_,&status);
+                MPI_Recv(message.data,info[1],MPI_CHAR,source,info[0],client_comm_,&status);
                 wp_data_ += info[1];
                 
                 for(it_sh=sh_files_.begin(); it_sh != sh_files_.end(); ++it_sh)
@@ -1440,7 +1440,7 @@ void IOserver::ostream()
             {
                 int infosize;
                 int source;
-                MPI_Get_count(&status,MPI::CHAR,&infosize);
+                MPI_Get_count(&status,MPI_CHAR,&infosize);
                 source = status.MPI_SOURCE;
                 int file_id;
                 int header_size;
@@ -1450,7 +1450,7 @@ void IOserver::ostream()
                 
                 
                 
-                MPI_Recv(info,infosize,MPI::CHAR,source,GET_HEADER_TAG,client_comm_,&status);
+                MPI_Recv(info,infosize,MPI_CHAR,source,GET_HEADER_TAG,client_comm_,&status);
                 
                 memcpy((char*)&file_id,info,sizeof(int));
                 memcpy((char*)&header_size,info+sizeof(int),sizeof(int));
@@ -1486,7 +1486,7 @@ void IOserver::ostream()
                 h5_attr attr;
                 int infosize;
                 int source;
-                MPI_Get_count(&status,MPI::CHAR,&infosize);
+                MPI_Get_count(&status,MPI_CHAR,&infosize);
                 source = status.MPI_SOURCE;
                 char info[infosize];
                 size_t buf_dtype_size;
@@ -1498,7 +1498,7 @@ void IOserver::ostream()
                 list<struct_h5_file>::iterator it_sh;
                 bool notfinded = true;
                 
-                MPI_Recv(info,infosize,MPI::CHAR,source,GET_ATTR_TAG,client_comm_,&status);
+                MPI_Recv(info,infosize,MPI_CHAR,source,GET_ATTR_TAG,client_comm_,&status);
                 
                 memcpy((char*)&file_id,info,sizeof(int));
                 
@@ -1558,7 +1558,7 @@ void IOserver::ostream()
                 
                 int infosize;
                 int source;
-                MPI_Get_count(&status,MPI::CHAR,&infosize);
+                MPI_Get_count(&status,MPI_CHAR,&infosize);
                 source = status.MPI_SOURCE;
                 char info[infosize];
                 size_t buf_dtype_size;
@@ -1572,7 +1572,7 @@ void IOserver::ostream()
                 bool notfinded = true;
 
                 
-                MPI_Recv(info,infosize,MPI::CHAR,source,GET_DSET_TAG,client_comm_,&status);
+                MPI_Recv(info,infosize,MPI_CHAR,source,GET_DSET_TAG,client_comm_,&status);
                 
                 
                 memcpy((char*)&file_id,info,sizeof(int));
@@ -1744,7 +1744,7 @@ void IOserver::write_files()
              
              if(io_node_rank_ == io_node_size_-1)fileSize = file_offset+(*it_ush).totalSize;
              
-             MPI_Bcast(&fileSize,1,MPI::LONG,io_node_size_-1,io_node_comm_);
+             MPI_Bcast(&fileSize,1,MPI_LONG,io_node_size_-1,io_node_comm_);
              
              if(fileSize!=0)
              {

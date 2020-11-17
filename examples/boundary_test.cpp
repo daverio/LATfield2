@@ -62,7 +62,7 @@ int main(int argc, char **argv)
 
     for(int p=0;p<parallel.size();p++)
     {
-	MPI_Barrier(MPI::COMM_WORLD);
+	MPI_Barrier(MPI_COMM_WORLD);
 	if(parallel.rank()==0)
 	{
 	    for(x.first();x.test();x.next())
@@ -118,7 +118,7 @@ int main(int argc, char **argv)
 		}
 	    }
 	}
-	MPI_Barrier(MPI::COMM_WORLD);
+	MPI_Barrier(MPI_COMM_WORLD);
     }
     cout<<"process: "<<parallel.rank()<<", numer of error: "<<error_count<<endl;
 /*
