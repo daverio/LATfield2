@@ -9,8 +9,8 @@
  * @{
  */
 
-using namespace LATfield2;
-
+namespace LATfield2
+{
 
 void move_particles_simple(double dtau,
                                double lat_resolution,
@@ -30,7 +30,7 @@ void move_particles_simple(double dtau,
     for (int l=0;l<3;l++) (*part).pos[l] += dtau*(*part).vel[l];
    
 }
-
+}
 /**@}*/
 
 #endif

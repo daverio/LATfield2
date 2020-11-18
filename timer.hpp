@@ -1,6 +1,8 @@
 #ifndef TIMER_HPP
 #define TIMER_HPP
 
+namespace LATfield2
+{
 
 string second2time(double in)
 {
@@ -175,5 +177,5 @@ double MPI_timer::getTime(int i)
     return -1;
   }
 }
-
+}
 #endif

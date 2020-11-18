@@ -10,6 +10,14 @@
  
  
  */
+
+#include <string>
+
+namespace LATfield2
+{
+ 
+ using std::string;
+ 
 class Lattice
 {
 public:
@@ -217,4 +225,5 @@ private:
     
 };
 
+}
 #endif

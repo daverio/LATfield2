@@ -1,3 +1,5 @@
+#pragma once
+
 #ifdef BIG_ENDIAN_ORDER
 #define DATA_ORDER H5T_ORDER_BE
 #else
@@ -10,7 +12,6 @@
  */
 
 
-extern "C"{
 
 
 #include <math.h>
@@ -20,6 +21,10 @@ extern "C"{
 #include "int2string.hpp"
 #include <sys/stat.h>
 
+namespace LATfield2
+{
+
+extern "C"{
 inline bool file_exists(const std::string& name) {
   struct stat buffer;
   return (stat (name.c_str(), &buffer) == 0);
@@ -559,4 +564,6 @@ template<class fieldType>
 int load_hdf5(fieldType *data,long file_offset[2],int *size,int * sizeLocal,int halo, int lat_dim,int comp,string  filename_str, string dataset_name_str)
 {
     return load_hdf5_externC( (char*) data, file_offset, size, sizeLocal, comp, halo, lat_dim,  filename_str, dataset_name_str);
+}
+
 }

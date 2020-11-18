@@ -17,9 +17,11 @@
 //#if PARALLEL_MPI   //Define for MPI parallelism
 
 #include "mpi.h"
-#define COUT if(parallel.isRoot())cout
+#define COUT if(parallel.isRoot())std::cout
 
 
+namespace LATfield2
+{
 /*! \class Parallel2d
  \brief LATfield2d underliying class for paralleization
 
@@ -502,5 +504,5 @@ private:
 extern Parallel2d parallel;
 
 
-
+}
 #endif

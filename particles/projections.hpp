@@ -1,7 +1,11 @@
 #ifndef LATFIELD2_PROJECTIONS_HPP
 #define LATFIELD2_PROJECTIONS_HPP
 
+namespace LATfield2
+{
 
+template <typename part, typename part_info, typename part_dataType>
+class Particles;
 
 /*! \file projections.hpp
  \brief projection function for scalar, vector and tensor particle properties.
@@ -1814,6 +1818,6 @@ void VecVecProjectionCIC_comm(Field<Real> * Tij)
 }
 
 #endif
-
+}
 /**@}*/
 #endif

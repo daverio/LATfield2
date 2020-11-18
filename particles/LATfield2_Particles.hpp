@@ -66,6 +66,14 @@
 #include "LATfield2_particlesIO.h"
 #endif
 
+#define GLOBAL_MASS     0
+#define INDIVIDUAL_MASS 1
+#define NO_MASS         2
+#include "projections.hpp"
+
+namespace LATfield2 
+{
+
 CREATE_MEMBER_DETECTOR(mass)
 CREATE_MEMBER_DETECTOR(ID)
 CREATE_MEMBER_DETECTOR(vel)
@@ -73,9 +81,6 @@ CREATE_MEMBER_DETECTOR(pos)
 CREATE_MEMBER_DETECTOR(type_name)
 CREATE_MEMBER_DETECTOR_MAXI(mass)
 
-#define GLOBAL_MASS     0
-#define INDIVIDUAL_MASS 1
-#define NO_MASS         2
 
 
 #define SUM             1
@@ -87,11 +92,9 @@ CREATE_MEMBER_DETECTOR_MAXI(mass)
 
 #define MAX_NUMBER 9223372036854775807
 
-using namespace LATfield2;
 
 template <typename part, typename part_info, typename part_dataType>
 class Particles;
-#include "projections.hpp"
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 template <typename  part>
@@ -549,12 +552,12 @@ void Particles<part,part_info,part_dataType>::cout_particle_velocity_stats(const
   parallel.sum(mean,3);
   for(int i=0;i<3;i++)mean[i] /= count;
 
-  COUT<<"--- "<<text<<" velocity stats ---"<<setprecision(10)<<endl;
+  COUT<<"--- "<<text<<" velocity stats ---"<<std::setprecision(10)<<endl;
   for(int i=0;i<3;i++)
   {
     COUT<<"comp "<<i<< " : min "<<min[i]<< " ; max "<<max[i]<< " ; mean "<<mean[i]<<endl;
   }
-  COUT<<"----------------------"<<setprecision(6)<<endl;
+  COUT<<"----------------------"<<std::setprecision(6)<<endl;
 
 }
 
@@ -3055,6 +3058,6 @@ void Particles<part,part_info,part_dataType>::saveHDF5_server_write(string filen
 /**@}*/
 
 
-
+}
 
 #endif

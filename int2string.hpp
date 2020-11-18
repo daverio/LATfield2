@@ -8,6 +8,10 @@
  */
 
 #include <string>
+
+namespace LATfield2
+{
+
 using std::string;
 
 
@@ -44,4 +48,5 @@ string int2string(int number, int max = 999, bool zeropad = true)
   return output;
 }
 
+}
 #endif

@@ -3,7 +3,8 @@
 
 
 
-using namespace LATfield2;
+namespace LATfield2
+{
 
 /**
  * \addtogroup prartClass
@@ -38,5 +39,5 @@ Real updateVel_simple(double dtau,
 }
 
 /**@}*/
-
+}
 #endif

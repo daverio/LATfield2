@@ -1,7 +1,8 @@
 #ifndef LATFIELD2_PARTICLE_DEF_HPP
 #define LATFIELD2_PARTICLE_DEF_HPP
 
-
+namespace LATfield2
+{
 /*! \file LATfield2_particle_description_template.hpp
  \brief Template to create a particle description
  
@@ -141,5 +142,5 @@ struct particles_name_dataType{
 
 /**@}*/
 
-
+}
 #endif

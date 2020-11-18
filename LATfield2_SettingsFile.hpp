@@ -12,6 +12,8 @@
 #include <string>
 #include <sstream>
 
+namespace LATfield2
+{
 //CLASS PROTOTYPE======================
 
 
@@ -451,5 +453,5 @@ bool SettingsFile::search(const std::string searchString)
     }
   return stream_.good();
 }
-
+}
 #endif

@@ -6,7 +6,12 @@
  \author David Daverio, Neil Bevis
  */
 
+#include <fstream>
 
+namespace LATfield2
+{
+
+    using std::fstream;
 //Matrix-style component symmetry
 
 inline int getCompSym(int i,int j)
@@ -1963,5 +1968,5 @@ void defaultFieldLoad(fstream& file, FieldType* siteData, int components)
 	for(int i=0; i<components; i++) { file>>siteData[i]; }
 }
 
-
+}
 #endif

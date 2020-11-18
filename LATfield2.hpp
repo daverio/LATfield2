@@ -61,21 +61,22 @@
 
 #endif
 
-using namespace std;
 
-namespace LATfield2
-{
 #include "LATfield2_Lattice_decl.hpp"
-}
 
 #ifdef EXTERNAL_IO
 #include "LATfield2_IO_server.hpp"
-IOserver ioserver;
+namespace LATfield2
+{
+    IOserver ioserver;
+}
 #endif
 
 #include "LATfield2_parallel2d.hpp"
-Parallel2d parallel;
-
+namespace LATfield2
+{
+    Parallel2d parallel;
+}
 
 #include "LATfield2_SettingsFile.hpp"
 
@@ -91,27 +92,21 @@ Parallel2d parallel;
 #endif
 
 
-namespace LATfield2
-{
-        #include "int2string.hpp"
-        #include "Imag.hpp"
-        #include "LATfield2_Lattice.hpp"
-        #include "LATfield2_Site.hpp"
-        #include "LATfield2_Field.hpp"
-        #ifdef FFT3D
-            #include "LATfield2_PlanFFT.hpp"
-        #endif
-        #include "particles/LATfield2_Particles.hpp"
-        #ifdef CATALAT
-        #include "LATfield2_catalyst.hpp"
-        #endif
-
+#include "Imag.hpp"
+#include "int2string.hpp"
+#include "LATfield2_Lattice.hpp"
+#include "LATfield2_Site.hpp"
+#include "LATfield2_Field.hpp"
+#ifdef FFT3D
+    #include "LATfield2_PlanFFT.hpp"
+#endif
+#include "particles/LATfield2_Particles.hpp"
+#ifdef CATALAT
+    #include "LATfield2_catalyst.hpp"
+#endif
 
 //macros
-        #include  "looping_macro.hpp"
-
-
-}
+#include  "looping_macro.hpp"
 
 
 

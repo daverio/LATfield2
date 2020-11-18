@@ -13,8 +13,10 @@
 
 //Matrix-style component symmetry
 
+namespace LATfield2
+{
 int symmetric = 1;
 int unsymmetric = 0;
-
+}
 
 #endif

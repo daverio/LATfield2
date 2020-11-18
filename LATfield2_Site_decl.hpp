@@ -2,7 +2,8 @@
 #define LATFIELD2_SITE_DECL_HPP
 
 
-
+namespace LATfield2
+{
 /*! \class Site
  \brief A class for referencing values of an instance of the field class at a given point on a lattice.
 
@@ -278,5 +279,5 @@ private:
 
 #endif
 
-
+}
 #endif
