@@ -3,6 +3,13 @@
 
 
 #include "LATfield2_parallel2d_decl.hpp"
+#include <iostream>
+
+namespace LATfield2
+{
+    using std::cerr;
+    using std::endl;
+    using std::cout;
 
 /////////// add verif for the 2*2 process and dim>2.
 
@@ -1694,5 +1701,7 @@ template<class Type> void Parallel2d::sendUpDown_dim1(Type& bufferSendUp,Type& b
             this->send_dim1( bufferSendDown, lenDown  , this->grid_size()[1]-1);
         }
     }
+}
+
 }
 #endif

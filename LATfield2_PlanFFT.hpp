@@ -9,7 +9,8 @@
 #include "LATfield2_PlanFFT_decl.hpp"
 
 
-
+namespace LATfield2
+{
 
 const int FFT_FORWARD = 1;
 const int FFT_BACKWARD = -1;
@@ -98,6 +99,6 @@ int temporaryMemFFT::setTemp(long size)
 temporaryMemFFT tempMemory;
 
 
-
+}
 
 #endif

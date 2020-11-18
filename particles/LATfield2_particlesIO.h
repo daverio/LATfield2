@@ -1,6 +1,11 @@
 #ifndef LATFIELD_PARTICLESIO_H
 #define LATFIELD_PARTICLESIO_H
 
+#include <string>
+
+namespace LATfield2
+{
+    using std::string;
 
 #ifndef RealC
 #ifdef SINGLE
@@ -625,5 +630,5 @@ int save_hdf5_particles(string filename,
     return 0;
 }
 
-
+}
 #endif

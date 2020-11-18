@@ -56,7 +56,8 @@
 
 #define MPI_BSEND_BUFFER_SIZE 40960
 
-
+namespace LATfield2
+{
 
 /*! \struct ioserver_file
     \brief Structure describing a output server file (used by compute processes)
@@ -2174,5 +2175,5 @@ void IOserver::write_files()
     
     //cout<<"write done"<<endl;
 }
-
+}
 #endif

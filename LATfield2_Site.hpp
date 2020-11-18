@@ -8,6 +8,8 @@
 
 #include "LATfield2_Site_decl.hpp"
 
+namespace LATfield2
+{
 //CONSTRUCTORS===================
 
 Site::Site() {index_=0; lattice_ = NULL;}
@@ -196,7 +198,7 @@ bool Site::setCoordLocal(int *r)
 Lattice& Site::lattice() { return *lattice_ ; }
 
 
-ostream& operator<<(ostream& os,  Site& x)
+std::ostream& operator<<(std::ostream& os,  Site& x)
 {
     os << " (";
     int i=0;
@@ -418,5 +420,5 @@ bool rKSite::setCoord(int x, int y=0, int z=0)
 
 #endif
 
-
+}
 #endif

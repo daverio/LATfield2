@@ -22,6 +22,9 @@
 /* these are not the actual compiler variables, these are
    only the declaration that they exist somewhere at all. */
 
+namespace LATfield2
+{
+
 extern  const int FFT_FORWARD;
 extern  const int FFT_BACKWARD;
 extern  const int FFT_IN_PLACE;
@@ -1550,5 +1553,5 @@ void PlanFFT<compType>::b_implement_0(fftw_complex * in, fftw_complex * out,int 
 
 #endif
 
-
+}
 #endif

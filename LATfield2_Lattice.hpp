@@ -7,9 +7,12 @@
  \author David Daverio, Neil Bevis
  */ 
 
+#include <fstream>
 
+namespace LATfield2
+{
 
-
+    using std::fstream;
 
 
 //CONSTANTS=====================
@@ -431,5 +434,6 @@ long Lattice::siteLast() { return siteLast_; }
 int * Lattice::sizeLocalAllProcDim0(){ return sizeLocalAllProcDim0_; }
 int * Lattice::sizeLocalAllProcDim1(){ return sizeLocalAllProcDim1_; }
 
+}
 #endif
 

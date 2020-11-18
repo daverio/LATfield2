@@ -18,6 +18,10 @@
 #include <vtkPoints.h>
 #include <vtkPointData.h>
 
+namespace LATfield2
+{
+
+
 
 class CataLAT
 {
@@ -269,4 +273,6 @@ void CatalystCoProcess(int timeStep, double time, Field<double> * rho)
 
 
 */
+
+}
 #endif

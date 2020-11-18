@@ -1,6 +1,9 @@
 #ifndef LATFIELD2_PARTICLE_DEF_HPP
 #define LATFIELD2_PARTICLE_DEF_HPP
 
+namespace LATfield2
+{
+
 /*! \file LATfield2_particle_simple.hpp
  \brief Description of the particle type: "part_simple"
 
@@ -47,7 +50,7 @@ struct part_simple{
  \brief overloading of the << operator for individual property strucutre.
  \return ostream containing the ID, position and velocity of the particle.
  */
-ostream& operator<<(ostream& os, const part_simple& p)
+std::ostream& operator<<(std::ostream& os, const part_simple& p)
 {
     os << "ID: "<<p.ID<<" , Pos: ("<< p.pos[0]<<","<< p.pos[1]<<","<< p.pos[2]<<") , Vel: (" << p.vel[0]<<","<< p.vel[1]<<","<< p.vel[2]<<")";
     return os;
@@ -131,5 +134,5 @@ struct part_simple_dataType{
 
 /**@}*/
 
-
+}
 #endif
