@@ -4,6 +4,7 @@
 #include "LATfield2.hpp"
 
 using namespace LATfield2;
+using namespace std;
 
 #define TOLERANCE 1.0e-10
 

@@ -14,7 +14,7 @@
 #include "LATfield2.hpp"
 
 using namespace LATfield2;
-
+using namespace std;
 
 
 int main(int argc, char **argv)
