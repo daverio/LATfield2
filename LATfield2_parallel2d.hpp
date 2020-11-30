@@ -16,37 +16,28 @@
 
 Parallel2d::Parallel2d() : neverFinalizeMPI(false)
 {
-
-
-	int argc=1;
-	char** argv = new char*[argc];
-	for(int i=0; i<argc; i++) { argv[i]=new char[20]; }
-#ifndef EXTERNAL_IO
-	lat_world_comm_ = MPI_COMM_WORLD;
-    world_comm_ = MPI_COMM_WORLD;
-	MPI_Init( &argc, &argv );
-	MPI_Comm_rank( lat_world_comm_, &lat_world_rank_ );
-	MPI_Comm_size( lat_world_comm_, &lat_world_size_ );
-    MPI_Comm_rank( world_comm_, &world_rank_ );
-	MPI_Comm_size( world_comm_, &world_size_ );
-#else
-    world_comm_ = MPI_COMM_WORLD;
-	MPI_Init( &argc, &argv );
-    MPI_Comm_rank( world_comm_, &world_rank_ );
-	MPI_Comm_size( world_comm_, &world_size_ );
-
-#endif
-
 }
 
-void Parallel2d::initialize(int proc_size0, int proc_size1)
+void Parallel2d::initialize(MPI_Comm com,int proc_size0, int proc_size1)
 {
-    this->initialize(proc_size0, proc_size1,0,0);
+    this->initialize(com,proc_size0, proc_size1,0,0);
 }
 
 
-void Parallel2d::initialize(int proc_size0, int proc_size1,int IO_total_size, int IO_node_size)
+void Parallel2d::initialize(MPI_Comm com, int proc_size0, int proc_size1,int IO_total_size, int IO_node_size)
 {
+    #ifndef EXTERNAL_IO
+    lat_world_comm_ = com;
+    world_comm_ = com;
+    MPI_Comm_rank( lat_world_comm_, &lat_world_rank_ );
+    MPI_Comm_size( lat_world_comm_, &lat_world_size_ );
+    MPI_Comm_rank( world_comm_, &world_rank_ );
+    MPI_Comm_size( world_comm_, &world_size_ );
+    #else
+    world_comm_ = com;
+    MPI_Comm_rank( world_comm_, &world_rank_ );
+    MPI_Comm_size( world_comm_, &world_size_ );
+    #endif
 
     grid_size_[0]=proc_size0;
 	grid_size_[1]=proc_size1;
@@ -229,7 +220,9 @@ Parallel2d::~Parallel2d()
 {
 	int finalized;
   MPI_Finalized(&finalized);
-  if((!finalized) && (!neverFinalizeMPI)) { MPI_Finalize(); }
+  if((!finalized) && (!neverFinalizeMPI)) { 
+    // MPI_Finalize();
+  }
 }
 
 //ABORT AND BARRIER===============================

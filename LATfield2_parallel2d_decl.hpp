@@ -53,7 +53,7 @@ class Parallel2d{
    \param IO_total_size : number of MPI process reserved for the IO server.
    \param IO_node_size  : size of 1 goupe of process reserved for the IO server. Each group will write in a seperated file.
    */
-  void initialize(int proc_size0, int proc_size1,int IO_total_size, int IO_node_size);
+  void initialize(MPI_Comm com,int proc_size0, int proc_size1,int IO_total_size, int IO_node_size);
 
   /*!
    Overall LATfield2 initialization used when the output server is not used. Should be the first call in any LATfield2 based application, as it initialize MPI.
@@ -61,7 +61,7 @@ class Parallel2d{
    \param proc_size0 : size of the first dimension of the MPI process grid.
    \param proc_size1 : size of the second dimension of the MPI process grid.
    */
-  void initialize(int proc_size0, int proc_size1);
+  void initialize(MPI_Comm com,int proc_size0, int proc_size1);
 
   //ABORT AND BARRIER===============================
 
