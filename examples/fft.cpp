@@ -10,6 +10,7 @@
 
 #include <iostream>
 #include "LATfield2.hpp"
+#include <mpi.h>
 
 using namespace LATfield2;
 
@@ -17,6 +18,7 @@ using namespace LATfield2;
 
 int main(int argc, char **argv)
 {
+    MPI_Init(&argc,&argv);
     int n,m;
     int BoxSize = 64;
     int halo = 1;
@@ -43,7 +45,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-	parallel.initialize(n,m);
+	parallel.initialize(MPI_COMM_WORLD,n,m);
 
 
     Lattice lat;
@@ -77,5 +79,6 @@ int main(int argc, char **argv)
     planReal.execute(FFT_BACKWARD);
 
     
+    MPI_Finalize();
 
 }
