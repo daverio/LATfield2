@@ -13,6 +13,7 @@
 
 #include <iostream>
 #include "LATfield2.hpp"
+#include <mpi.h>
 
 using namespace LATfield2;
 
@@ -20,6 +21,7 @@ using namespace LATfield2;
 
 int main(int argc, char **argv)
 {
+    MPI_Init(&argc,&argv);
     int n=0,m=0;
     int BoxSize=64;
     int runs=3;
@@ -52,7 +54,7 @@ int main(int argc, char **argv)
 	}
 
 	
-    parallel.initialize(n,m);
+    parallel.initialize(MPI_COMM_WORLD,n,m);
     
     
     int halo = 1;
@@ -297,5 +299,6 @@ int main(int argc, char **argv)
 
 
 
+    MPI_Finalize();
 }
    

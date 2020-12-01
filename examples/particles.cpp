@@ -2,12 +2,13 @@
 #define HDF5
 #include <stdlib.h>
 #include "LATfield2.hpp"
+#include <mpi.h>
 
 using namespace LATfield2;
 
 int main(int argc, char **argv)
 {
-
+    MPI_Init(&argc,&argv);
 
     int n=0,m=0;
     #ifdef EXTERNAL_IO
@@ -53,10 +54,10 @@ int main(int argc, char **argv)
     }
 
 #ifndef EXTERNAL_IO
-    parallel.initialize(n,m);
+    parallel.initialize(MPI_COMM_WORLD,n,m);
 #else
 
-    parallel.initialize(n,m,io_size,io_groupe_size);
+    parallel.initialize(MPI_COMM_WORLD,n,m,io_size,io_groupe_size);
     if(parallel.isIO()) ioserver.start();
     else
     {
@@ -260,4 +261,5 @@ int main(int argc, char **argv)
         ioserver.stop();
     }
 #endif
+    MPI_Finalize();
 }

@@ -6,6 +6,7 @@
 
 
 #include "LATfield2.hpp"
+#include <mpi.h>
 using namespace LATfield2;
 
 #include <scorep/SCOREP_User.h>
@@ -22,6 +23,7 @@ using namespace LATfield2;
 
 int main(int argc, char **argv)
 {
+    MPI_Init(&argc,&argv);
 
     //-------- Initilization of the parallel object ---------
     int n,m;
@@ -47,7 +49,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-    parallel.initialize(n,m);
+    parallel.initialize(MPI_COMM_WORLD,n,m);
 
     SCOREP_USER_REGION_DEFINE(fadd_comp)
     SCOREP_USER_REGION_DEFINE(fder3)
@@ -126,5 +128,6 @@ int main(int argc, char **argv)
     COUT<<"field deriv_3p old time: "<<timer.timer(T_FDER3_OLD)<<endl;
     cout<<"done"<<endl;
     //--------------------------------------------------------
+    MPI_Finalize();
 
 }

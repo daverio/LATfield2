@@ -6,11 +6,13 @@
 
 
 #include "LATfield2.hpp"
+#include <mpi.h>
 using namespace LATfield2;
 
 
 int main(int argc, char **argv)
 {
+    MPI_Init(&argc,&argv);
 
     //-------- Initilization of the parallel object ---------
     int n,m;
@@ -27,11 +29,12 @@ int main(int argc, char **argv)
 				break;
 		}
 	}
-  parallel.initialize(n,m);
+  parallel.initialize(MPI_COMM_WORLD,n,m);
 
     COUT << "Parallel grid size: ("<<parallel.grid_size()[0]<<","<<parallel.grid_size()[1]<<"). "<<endl;
     //-----------------------   end   ------------------------
 
   
+    MPI_Finalize();
 
 }
