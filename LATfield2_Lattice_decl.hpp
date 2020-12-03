@@ -16,6 +16,9 @@ public:
     //! Constructor.
     Lattice();
     
+    Lattice(const Lattice&) = delete;
+    Lattice& operator=(const Lattice&) = delete;
+    
     /*!
      Constructor with initialization
      \sa initialize(int dim, const int* size, int halo);
