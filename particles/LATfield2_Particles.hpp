@@ -66,9 +66,9 @@
 #include "LATfield2_particlesIO.h"
 #endif
 
-#define GLOBAL_MASS     0
-#define INDIVIDUAL_MASS 1
-#define NO_MASS         2
+//#define GLOBAL_MASS     0
+//#define INDIVIDUAL_MASS 1
+//#define NO_MASS         2
 #include "projections.hpp"
 
 namespace LATfield2 
@@ -306,12 +306,12 @@ public:
      Method to get the mass type. The mass can be a global property (GLOBAL_MASS), a individual property (INDIVIDUAL_MASS) or can be not defined (NO_MASS).
      \return mass_type_
      */
-    int mass_type(){return mass_type_;};
+    // int mass_type(){return mass_type_;};
     /*!
      Method to get the offset of the mass property within its respective structure.
      \return mass_offset_
      */
-    size_t mass_offset(){return mass_offset_;};
+    // size_t mass_offset(){return mass_offset_;};
 
     long numParticles(){
       long temp = numParticles_;
@@ -332,8 +332,8 @@ protected:
 
   Field<partList<part>> field_part_;
 
-  int mass_type_;
-  size_t mass_offset_;
+  //int mass_type_;
+  //size_t mass_offset_;
 
   long numParticles_;
 
@@ -399,29 +399,31 @@ void Particles<part,part_info,part_dataType>::initialize(part_info part_global_i
 
   //does the mass is global or individual
 
-    has_maxi_mass<part> part_has_mass;
-    has_maxi_mass<part_info> info_has_mass;
+    // has_maxi_mass<part> part_has_mass;
+    // has_maxi_mass<part_info> info_has_mass;
 
 
 
-    if(part_has_mass.gos() != -1)
+    if( has_mass<part>::value )
     {
-        mass_offset_ = part_has_mass.gos();
+        //mass_offset_ = part_has_mass.gos();
         COUT<< "particles have individual mass" << endl;
-        mass_type_= INDIVIDUAL_MASS;
+        //mass_type_= INDIVIDUAL_MASS;
     }
-    else if(info_has_mass.gos() != -1)
+    else if( has_mass<part_info>::value )
     {
-        mass_offset_ = info_has_mass.gos();
-        COUT << "all particles have their mass set to: " << *(double*)((char*)&part_global_info_ + mass_offset_)<<endl;
-        mass_type_= GLOBAL_MASS;
+        // mass_offset_ = info_has_mass.gos();
+        COUT << "all particles have their mass set to: " << 
+        get_mass(part_global_info )
+        << std::endl;
+        // mass_type_= GLOBAL_MASS;
     }
     else
     {
         COUT<< "Particles have to have a mass!!! In part or in part_info."<<endl;
         COUT<< "no mass detected..."<<endl;
-        mass_type_= NO_MASS;
-        mass_offset_=-1;
+        //mass_type_= NO_MASS;
+        //mass_offset_=-1;
     }
 
 

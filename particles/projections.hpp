@@ -39,8 +39,8 @@ void projection_init(Field<Real> * f)
 
 
 
-static int const FROM_PART = INDIVIDUAL_MASS;
-static int const FROM_INFO = GLOBAL_MASS;
+//static int const FROM_PART = INDIVIDUAL_MASS;
+//static int const FROM_INFO = GLOBAL_MASS;
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
@@ -77,7 +77,7 @@ int CIC_mapv2[2][2][2][2] =   { { {{24,28},{25,29}},{{26,30},{27,31}} } , { {{28
  \sa projection_init(Field<Real> * f)
  */
 template<typename part, typename part_info, typename part_dataType>
-void scalarProjectionCIC_project(Particles<part,part_info,part_dataType> * parts,Field<Real> * rho, size_t * oset = NULL,int flag_where = FROM_INFO)
+void scalarProjectionCIC_project(Particles<part,part_info,part_dataType> * parts,Field<Real> * rho)
 {
 
     if(rho->lattice().halo() == 0)
@@ -100,34 +100,34 @@ void scalarProjectionCIC_project(Particles<part,part_info,part_dataType> * parts
     double rescalPosDown[3];
     double latresolution = parts->res();
 
-    double mass;
+    // double mass;
     double cicVol;
     cicVol= latresolution*latresolution*latresolution;
     cicVol *= cicVol;
 
     Real localCube[8]; // XYZ = 000 | 001 | 010 | 011 | 100 | 101 | 110 | 111
 
-    int sfrom;
+    //int sfrom;
 
-    size_t offset;
+    //size_t offset;
 
-    if(oset == NULL)
-    {
-        sfrom = parts->mass_type();
-        offset = parts->mass_offset();
-    }
-    else
-    {
-        sfrom =  flag_where;
-        offset = *oset;
-    }
+    //if(oset == NULL)
+    //{
+    //    sfrom = parts->mass_type();
+    //    offset = parts->mass_offset();
+    //}
+    //else
+    //{
+    //    sfrom =  flag_where;
+    //    offset = *oset;
+    //}
 
-    if(sfrom == FROM_INFO)
-    {
-        mass = *(double*)((char*)parts->parts_info() + offset);
-        mass /= cicVol;
-        //cout << mass<<endl;
-    }
+    //if(sfrom == FROM_INFO)
+    //{
+    //    mass = *(double*)((char*)parts->parts_info() + offset);
+    //    mass /= cicVol;
+    //    //cout << mass<<endl;
+    //}
 
 
 
@@ -148,12 +148,15 @@ void scalarProjectionCIC_project(Particles<part,part_info,part_dataType> * parts
                     rescalPos[i]=(*it).pos[i]-referPos[i];
                     rescalPosDown[i]=latresolution -rescalPos[i];
                 }
-
-                if(sfrom==FROM_PART)
-                {
-                    mass = *(double*)((char*)&(*it)+offset);
+                
+                
+                //if(sfrom==FROM_PART)
+                //{
+                //    mass = *(double*)((char*)&(*it)+offset);
+                //    mass /=cicVol;
+                //}
+                double mass = get_mass(*it,*parts->parts_info());
                     mass /=cicVol;
-                }
 
                 //000
                 localCube[0] += rescalPosDown[0]*rescalPosDown[1]*rescalPosDown[2] * mass;
@@ -423,7 +426,7 @@ void vertexProjectionCIC_comm(Field<Real> * vel)
  \sa projection_init(Field<Real> * f)
  */
 template<typename part, typename part_info, typename part_dataType>
-void vectorProjectionCICNGP_project(Particles<part,part_info,part_dataType> * parts,Field<Real> * vel, size_t * oset = NULL,int flag_where = FROM_INFO)
+void vectorProjectionCICNGP_project(Particles<part,part_info,part_dataType> * parts,Field<Real> * vel, size_t * oset = NULL)
 {
     Site xPart(parts->lattice());
     Site xVel(vel->lattice());
@@ -432,7 +435,7 @@ void vectorProjectionCICNGP_project(Particles<part,part_info,part_dataType> * pa
 
     double vi[36];//3 * 4 v0:0..3 v1:4..7 v2:8..11
 
-    double mass;
+    //double mass;
     double latresolution = parts->res();
 
     double cicVol = latresolution * latresolution * latresolution;
@@ -443,32 +446,32 @@ void vectorProjectionCICNGP_project(Particles<part,part_info,part_dataType> * pa
     double referPos[3];
 
 
-    int sfrom;
+    //int sfrom;
 
-    size_t offset_mass;
+    //size_t offset_mass;
     size_t offset_vel;
 
 
 
     if(oset == NULL)
     {
-        sfrom = parts->mass_type();
-        offset_mass = parts->mass_offset();
+        //sfrom = parts->mass_type();
+        //offset_mass = parts->mass_offset();
         offset_vel = offsetof(part,vel);
     }
     else
     {
-        sfrom =  flag_where;
-        offset_mass = oset[0];
+        //sfrom =  flag_where;
+        //offset_mass = oset[0];
         offset_vel = oset[1];
     }
 
-    if(sfrom == FROM_INFO)
-    {
-        mass = *(double*)((char*)parts->parts_info() + offset_mass);
-        mass /= cicVol;
-        //cout << mass<<endl;
-    }
+    //if(sfrom == FROM_INFO)
+    //{
+    //    mass = *(double*)((char*)parts->parts_info() + offset_mass);
+    //    mass /= cicVol;
+    //    //cout << mass<<endl;
+    //}
 
 
 
@@ -494,11 +497,13 @@ void vectorProjectionCICNGP_project(Particles<part,part_info,part_dataType> * pa
                 double massVel;
                 Real * v;
 
-                if(sfrom==FROM_PART)
-                {
-                    mass = *(double*)((char*)&(*it)+offset_mass);
-                    mass /= cicVol;
-                }
+                //if(sfrom==FROM_PART)
+                //{
+                //    mass = *(double*)((char*)&(*it)+offset_mass);
+                //    mass /= cicVol;
+                //}
+                double mass = get_mass(*it,*parts->parts_info());
+                mass /= cicVol;
                 v = (Real*)((char*)&(*it)+offset_vel);
                 //cout<< v[0]<<" , "<<v[1]<<" , "<<v[2]<<endl;
 
@@ -710,7 +715,7 @@ void vectorProjectionCICNGP_comm(Field<Real> * vel)
  \sa projection_init(Field<Real> * f)
  */
 template<typename part, typename part_info, typename part_dataType>
-void symtensorProjectionCICNGP_project(Particles<part,part_info,part_dataType> * parts,Field<Real> * Tij, size_t * oset = NULL,int flag_where = FROM_INFO)
+void symtensorProjectionCICNGP_project(Particles<part,part_info,part_dataType> * parts,Field<Real> * Tij, size_t * oset = NULL)
 {
 
     Site xPart(parts->lattice() );
@@ -718,7 +723,7 @@ void symtensorProjectionCICNGP_project(Particles<part,part_info,part_dataType> *
 
     typename std::list<part>::iterator it;
 
-    double mass;
+    //double mass;
     double latresolution = parts->res();
     double cicVol = latresolution * latresolution * latresolution;
 
@@ -731,32 +736,32 @@ void symtensorProjectionCICNGP_project(Particles<part,part_info,part_dataType> *
     double referPos[3];
 
 
-    int sfrom;
+    //int sfrom;
 
-    size_t offset_mass;
+    //size_t offset_mass;
     size_t offset_vel;
 
 
 
     if(oset == NULL)
     {
-        sfrom = parts->mass_type();
-        offset_mass = parts->mass_offset();
+        //sfrom = parts->mass_type();
+        //offset_mass = parts->mass_offset();
         offset_vel = offsetof(part,vel);
     }
     else
     {
-        sfrom =  flag_where;
-        offset_mass = oset[0];
+        //sfrom =  flag_where;
+        //offset_mass = oset[0];
         offset_vel = oset[1];
     }
 
-    if(sfrom == FROM_INFO)
-    {
-        mass = *(double*)((char*)parts->parts_info() + offset_mass);
-        mass /= cicVol;
-        //cout << mass<<endl;
-    }
+    //if(sfrom == FROM_INFO)
+    //{
+    //    mass = *(double*)((char*)parts->parts_info() + offset_mass);
+    //    mass /= cicVol;
+    //    //cout << mass<<endl;
+    //}
 
 
 
@@ -779,11 +784,13 @@ void symtensorProjectionCICNGP_project(Particles<part,part_info,part_dataType> *
                 }
 
                 Real * vel;
-                if(sfrom==FROM_PART)
-                {
-                    mass = *(double*)((char*)&(*it)+offset_mass);
-                    mass /= cicVol;
-                }
+                //if(sfrom==FROM_PART)
+                //{
+                //    mass = *(double*)((char*)&(*it)+offset_mass);
+                //    mass /= cicVol;
+                //}
+                double mass = get_mass(*it,*parts->parts_info());
+                    mass /=cicVol;
                 vel = (Real*)((char*)&(*it)+offset_vel);
 
 
@@ -981,7 +988,7 @@ void symtensorProjectionCICNGP_comm(Field<Real> * Tij)
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 template<typename part, typename part_info, typename part_dataType>
-void vectorProjectionCIC_project(Particles<part,part_info,part_dataType> * parts,Field<Real> * vel, size_t * oset = NULL,int flag_where = FROM_INFO)
+void vectorProjectionCIC_project(Particles<part,part_info,part_dataType> * parts,Field<Real> * vel, size_t * oset = NULL)
 {
 
     Site xPart(parts->lattice());
@@ -989,7 +996,7 @@ void vectorProjectionCIC_project(Particles<part,part_info,part_dataType> * parts
 
     typename std::list<part>::iterator it;
 
-    double mass;
+    //double mass;
     double latresolution = parts->res();
     double cicVol = latresolution * latresolution * latresolution;
 
@@ -1009,32 +1016,32 @@ void vectorProjectionCIC_project(Particles<part,part_info,part_dataType> * parts
 
 
 
-    int sfrom;
+    //int sfrom;
 
-    size_t offset_mass;
+    //size_t offset_mass;
     size_t offset_vel;
 
 
 
     if(oset == NULL)
     {
-        sfrom = parts->mass_type();
-        offset_mass = parts->mass_offset();
+        //sfrom = parts->mass_type();
+        //offset_mass = parts->mass_offset();
         offset_vel = offsetof(part,vel);
     }
     else
     {
-        sfrom =  flag_where;
-        offset_mass = oset[0];
+        //sfrom =  flag_where;
+        //offset_mass = oset[0];
         offset_vel = oset[1];
     }
 
-    if(sfrom == FROM_INFO)
-    {
-        mass = *(double*)((char*)parts->parts_info() + offset_mass);
-        mass /= cicVol;
-        //cout << mass<<endl;
-    }
+    //if(sfrom == FROM_INFO)
+    //{
+    //    mass = *(double*)((char*)parts->parts_info() + offset_mass);
+    //    mass /= cicVol;
+    //    //cout << mass<<endl;
+    //}
 
 
     for(xPart.first(),xVel.first();xPart.test();xPart.next(),xVel.next())
@@ -1076,13 +1083,15 @@ void vectorProjectionCIC_project(Particles<part,part_info,part_dataType> * parts
 
                 Real * v;
                 double massVel;
+                double mass = get_mass(*it,*parts->parts_info());
+                    mass /=cicVol;
 
 
-                if(sfrom==FROM_PART)
-                {
-                    mass = *(double*)((char*)&(*it)+offset_mass);
-                    mass /= cicVol;
-                }
+                //if(sfrom==FROM_PART)
+                //{
+                //    mass = *(double*)((char*)&(*it)+offset_mass);
+                //    mass /= cicVol;
+                //}
 
                 v = (Real*)((char*)&(*it)+offset_vel);
 
@@ -1357,14 +1366,14 @@ void vectorProjectionCIC_comm(Field<Real> * vel)
 
 
 template<typename part, typename part_info, typename part_dataType>
-void VecVecProjectionCIC_project(Particles<part,part_info,part_dataType> * parts,Field<Real> * Tij, size_t * oset = NULL,int flag_where = FROM_INFO)
+void VecVecProjectionCIC_project(Particles<part,part_info,part_dataType> * parts,Field<Real> * Tij, size_t * oset = NULL)
 {
     Site xPart(parts->lattice());
     Site xTij(Tij->lattice());
     typename std::list<part>::iterator it;
 
 
-    double mass;
+    //double mass;
     double latresolution = parts->res();
     double cicVol = latresolution * latresolution * latresolution;
 
@@ -1384,32 +1393,32 @@ void VecVecProjectionCIC_project(Particles<part,part_info,part_dataType> * parts
     double referPos[3];
     double referPosShift[3];
 
-    int sfrom;
+    //int sfrom;
 
-    size_t offset_mass;
+    //size_t offset_mass;
     size_t offset_vel;
 
 
 
     if(oset == NULL)
     {
-        sfrom = parts->mass_type();
-        offset_mass = parts->mass_offset();
+        //sfrom = parts->mass_type();
+        //offset_mass = parts->mass_offset();
         offset_vel = offsetof(part,vel);
     }
     else
     {
-        sfrom =  flag_where;
-        offset_mass = oset[0];
+        //sfrom =  flag_where;
+        //offset_mass = oset[0];
         offset_vel = oset[1];
     }
 
-    if(sfrom == FROM_INFO)
-    {
-        mass = *(double*)((char*)parts->parts_info() + offset_mass);
-        mass /= cicVol;
-        //cout << mass<<endl;
-    }
+    //if(sfrom == FROM_INFO)
+    //{
+    //    mass = *(double*)((char*)parts->parts_info() + offset_mass);
+    //    mass /= cicVol;
+    //    //cout << mass<<endl;
+    //}
 
 
 
@@ -1449,11 +1458,13 @@ void VecVecProjectionCIC_project(Particles<part,part_info,part_dataType> * parts
 
                 }
                 Real * vel;
-                if(sfrom==FROM_PART)
-                {
-                    mass = *(double*)((char*)&(*it)+offset_mass);
-                    mass /= cicVol;
-                }
+                //if(sfrom==FROM_PART)
+                //{
+                //    mass = *(double*)((char*)&(*it)+offset_mass);
+                //    mass /= cicVol;
+                //}
+                double mass = get_mass(*it,*parts->parts_info());
+                    mass /=cicVol;
                 vel = (Real*)((char*)&(*it)+offset_vel);
 
 
