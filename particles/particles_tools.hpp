@@ -1,6 +1,14 @@
 #ifndef PARTICLES_TOOLS_HPP
 #define PARTICLES_TOOLS_HPP
 
+#include <type_traits>
+#if __cplusplus < 201700L
+namespace std
+{
+    template<typename ...> using void_t = void;
+};
+#endif
+
 namespace LATfield2
 {
 
@@ -20,16 +28,24 @@ LATfield2::Real get_lattice_resolution(int npts[3],LATfield2::Real boxSize[3])
   }
 }
 
+#define CREATE_MEMBER_DETECTOR(X)                \
+template<typename T, typename = std::void_t<> >  \
+struct has_##X : std::false_type                 \
+{};                                              \
+template<typename T>                             \
+struct has_##X<T, std::void_t<decltype(T::X)> >  \
+    : std::true_type                             \
+{};
 
-#define CREATE_MEMBER_DETECTOR(X)            \
-  template<typename T> struct has_##X {      \
-    struct Fallback {int X; };               \
-    struct Derived : T, Fallback { };        \
-    template<typename C, C> struct ChT;      \
-    template<typename C> static char (&f(ChT<int Fallback::*, &C::X>*))[1]; \
-    template<typename C> static char (&f(...))[2]; \
-    static bool const value = sizeof(f<Derived>(0)) == 2; \
-  };
+//#define CREATE_MEMBER_DETECTOR(X)            \
+//  template<typename T> struct has_##X {      \
+//    struct Fallback {int X; };               \
+//    struct Derived : T, Fallback { };        \
+//    template<typename C, C> struct ChT;      \
+//    template<typename C> static char (&f(ChT<int Fallback::*, &C::X>*))[1]; \
+//    template<typename C> static char (&f(...))[2]; \
+//    static bool const value = sizeof(f<Derived>(0)) == 2; \
+//  };
 
 
 #define CREATE_MEMBER_DETECTOR_MAXI(X)          \
