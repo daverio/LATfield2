@@ -319,13 +319,25 @@ extern "C"{
 		{
 			if(mpi_rank==p)
 			{
+
 				plist_id = H5Pcreate(H5P_FILE_ACCESS);
 
-				file_id = H5Fopen(filename,H5F_ACC_RDWR,plist_id);
+				file_id = H5Fopen(filename,H5F_ACC_RDONLY,plist_id);
+        if(file_id<0)
+        {
+          cout<<"process "<<p << ", cant open file: "<<filename_str<<endl;
+          parallel.abortForce();
+        }
 				H5Pclose(plist_id);
 
 				root_id = H5Gopen(file_id,"/",H5P_DEFAULT);
 				dset_id = H5Dopen(root_id, dataset_name, H5P_DEFAULT);
+        if(dset_id<0)
+        {
+          cout<<"process "<<p << ", cant open dataset : "
+              <<dataset_name_str<<" in file "<<filename_str<<endl;
+          parallel.abortForce();
+        }
 				filespace = H5Dget_space(dset_id);
 				dtype_id = H5Dget_type(dset_id);
 				plist_id = H5Pcreate(H5P_DATASET_XFER);

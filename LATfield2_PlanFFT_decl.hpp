@@ -346,6 +346,8 @@ void PlanFFT<compType>::initialize(Field<compType>*  rfield,Field<compType>*  kf
 
   //general variable
 
+  COUT<<"INITIALIZING COMPLEX FFT"<<endl;
+
   if(rfield->components() != kfield->components())
   {
     cerr<<"Latfield2d::PlanFFT::initialize : fft curently work only for fields with same number of components"<<endl;
@@ -403,20 +405,9 @@ void PlanFFT<compType>::initialize(Field<compType>*  rfield,Field<compType>*  kf
 
   	//initialization of fftw plan
 
+    //Pointer to data
 
-  	//Forward plan
-  	fPlan_i_ = fftwf_plan_many_dft(1,&rSize_[0],rSizeLocal_[1] ,cData_,NULL,components_, rJump_[1]*components_,temp_,NULL,rSizeLocal_[1]*rSizeLocal_[2],1,FFTW_FORWARD,FFTW_ESTIMATE | FFTW_PRESERVE_INPUT);
-  	fPlan_j_ = fftwf_plan_many_dft(1,&rSize_[0],rSizeLocal_[1]*rSizeLocal_[2],temp_,NULL,rSizeLocal_[1]*rSizeLocal_[2],1,temp_,NULL,rSizeLocal_[1]*rSizeLocal_[2],1,FFTW_FORWARD,FFTW_ESTIMATE);
-  	fPlan_k_ = fftwf_plan_many_dft(1,&rSize_[0],rSizeLocal_[1] ,temp_,NULL,rSizeLocal_[1]*rSizeLocal_[2],1,kData_,NULL,components_, rJump_[1]*components_,FFTW_FORWARD,FFTW_ESTIMATE);
-  	//Backward plan
-
-  	bPlan_k_ = fftwf_plan_many_dft(1,&rSize_[0],rSizeLocal_[1] ,kData_,NULL,components_, rJump_[1]*components_,temp_,NULL,rSizeLocal_[1]*rSizeLocal_[2],1,FFTW_BACKWARD,FFTW_ESTIMATE | FFTW_PRESERVE_INPUT);
-  	bPlan_j_ = fftwf_plan_many_dft(1,&rSize_[0],rSizeLocal_[1]*rSizeLocal_[2],temp_,NULL,rSizeLocal_[1]*rSizeLocal_[2],1,temp_,NULL,rSizeLocal_[1]*rSizeLocal_[2],1,FFTW_BACKWARD,FFTW_ESTIMATE);
-  	bPlan_i_ = fftwf_plan_many_dft(1,&rSize_[0],rSizeLocal_[1] ,temp_,NULL,rSizeLocal_[1]*rSizeLocal_[2],1,kData_,NULL,components_, rJump_[1]*components_,FFTW_BACKWARD,FFTW_ESTIMATE);
-
-  	//allocation of field
-
-  	long rfield_size = rfield->lattice().sitesLocalGross();
+    long rfield_size = rfield->lattice().sitesLocalGross();
   	long kfield_size = kfield->lattice().sitesLocalGross();
 
   	if(mem_type_ == FFT_IN_PLACE)
@@ -438,13 +429,27 @@ void PlanFFT<compType>::initialize(Field<compType>*  rfield,Field<compType>*  kf
   		kfield->alloc();
   	}
 
-  	//Pointer to data
-
   	rData_ = (float*)rfield->data(); //to be sure that rData is instantiate !
   	cData_ = (fftwf_complex*)rfield->data();
   	cData_ += rfield->lattice().siteFirst()*components_;
   	kData_ = (fftwf_complex*)kfield->data();
   	kData_ += kfield->lattice().siteFirst()*components_;
+
+  	//Forward plan
+  	fPlan_i_ = fftwf_plan_many_dft(1,&rSize_[0],rSizeLocal_[1] ,cData_,NULL,components_, rJump_[1]*components_,temp_,NULL,rSizeLocal_[1]*rSizeLocal_[2],1,FFTW_FORWARD,FFTW_ESTIMATE | FFTW_PRESERVE_INPUT);
+  	fPlan_j_ = fftwf_plan_many_dft(1,&rSize_[0],rSizeLocal_[1]*rSizeLocal_[2],temp_,NULL,rSizeLocal_[1]*rSizeLocal_[2],1,temp_,NULL,rSizeLocal_[1]*rSizeLocal_[2],1,FFTW_FORWARD,FFTW_ESTIMATE);
+  	fPlan_k_ = fftwf_plan_many_dft(1,&rSize_[0],rSizeLocal_[1] ,temp_,NULL,rSizeLocal_[1]*rSizeLocal_[2],1,kData_,NULL,components_, rJump_[1]*components_,FFTW_FORWARD,FFTW_ESTIMATE);
+  	//Backward plan
+
+  	bPlan_k_ = fftwf_plan_many_dft(1,&rSize_[0],rSizeLocal_[1] ,kData_,NULL,components_, rJump_[1]*components_,temp_,NULL,rSizeLocal_[1]*rSizeLocal_[2],1,FFTW_BACKWARD,FFTW_ESTIMATE | FFTW_PRESERVE_INPUT);
+  	bPlan_j_ = fftwf_plan_many_dft(1,&rSize_[0],rSizeLocal_[1]*rSizeLocal_[2],temp_,NULL,rSizeLocal_[1]*rSizeLocal_[2],1,temp_,NULL,rSizeLocal_[1]*rSizeLocal_[2],1,FFTW_BACKWARD,FFTW_ESTIMATE);
+  	bPlan_i_ = fftwf_plan_many_dft(1,&rSize_[0],rSizeLocal_[1] ,temp_,NULL,rSizeLocal_[1]*rSizeLocal_[2],1,cData_,NULL,components_, rJump_[1]*components_,FFTW_BACKWARD,FFTW_ESTIMATE| FFTW_PRESERVE_INPUT);
+
+  	//allocation of field
+
+
+
+
 
 
   ///end of from latfield2d_IO
@@ -668,7 +673,7 @@ void PlanFFT<compType>::initialize(Field<compType>*  rfield,Field<compType>*  kf
 
   	bPlan_k_ = fftw_plan_many_dft(1,&rSize_[0],rSizeLocal_[1] ,kData_,NULL,components_, rJump_[1]*components_,temp_,NULL,rSizeLocal_[1]*rSizeLocal_[2],1,FFTW_BACKWARD,FFTW_ESTIMATE | FFTW_PRESERVE_INPUT);
   	bPlan_j_ = fftw_plan_many_dft(1,&rSize_[0],rSizeLocal_[1]*rSizeLocal_[2],temp_,NULL,rSizeLocal_[1]*rSizeLocal_[2],1,temp_,NULL,rSizeLocal_[1]*rSizeLocal_[2],1,FFTW_BACKWARD,FFTW_ESTIMATE);
-  	bPlan_i_ = fftw_plan_many_dft(1,&rSize_[0],rSizeLocal_[1] ,temp_,NULL,rSizeLocal_[1]*rSizeLocal_[2],1,kData_,NULL,components_, rJump_[1]*components_,FFTW_BACKWARD,FFTW_ESTIMATE);
+  	bPlan_i_ = fftw_plan_many_dft(1,&rSize_[0],rSizeLocal_[1] ,temp_,NULL,rSizeLocal_[1]*rSizeLocal_[2],1,cData_,NULL,components_, rJump_[1]*components_,FFTW_BACKWARD,FFTW_ESTIMATE);
 
   	//allocation of field
 
@@ -1048,7 +1053,7 @@ void PlanFFT<compType>::execute(int fft_type)
     		if(fft_type == FFT_FORWARD)
   			{
 
-  			         int i,j,k;
+  			   int i,j,k;
   				 int comp;
   				 int comm_rank;
 
@@ -1115,7 +1120,7 @@ void PlanFFT<compType>::execute(int fft_type)
   			if(fft_type == FFT_BACKWARD)
   			{
 
-  			         int i,j,k;
+  			   int i,j,k;
   				 int comp;
   				 int comm_rank;
 
@@ -1148,9 +1153,9 @@ void PlanFFT<compType>::execute(int fft_type)
   				  //step 2 : same as step 4 of forward
 
 
-  				  MPI_Alltoall(temp_,2*rSizeLocal_[2]*rSizeLocal_[2]*rSizeLocal_[1],MPI_DATA_PREC,temp1_,2*rSizeLocal_[2]*rSizeLocal_[2]*rSizeLocal_[1], MPI_DATA_PREC, parallel.dim0_comm()[parallel.grid_rank()[1]]);
+  				  //MPI_Alltoall(temp_,2*rSizeLocal_[2]*rSizeLocal_[2]*rSizeLocal_[1],MPI_DATA_PREC,temp1_,2*rSizeLocal_[2]*rSizeLocal_[2]*rSizeLocal_[1], MPI_DATA_PREC, parallel.dim0_comm()[parallel.grid_rank()[1]]);
 
-  				   for(i=0;i<parallel.grid_size()[0];i++)transpose_1_2(&temp1_[i*rSizeLocal_[2]*rSizeLocal_[2]*rSizeLocal_[1]],&temp_[i*rSizeLocal_[2]*rSizeLocal_[2]*rSizeLocal_[1]], rSizeLocal_[1],rSizeLocal_[2],rSizeLocal_[2]);
+  				   //for(i=0;i<parallel.grid_size()[0];i++)transpose_1_2(&temp1_[i*rSizeLocal_[2]*rSizeLocal_[2]*rSizeLocal_[1]],&temp_[i*rSizeLocal_[2]*rSizeLocal_[2]*rSizeLocal_[1]], rSizeLocal_[1],rSizeLocal_[2],rSizeLocal_[2]);
 
 
   #ifdef SINGLE
@@ -1173,6 +1178,7 @@ void PlanFFT<compType>::execute(int fft_type)
 
   #ifdef SINGLE
   					    fftwf_execute_dft(bPlan_i_,p_in,p_out);
+                //fftwf_execute(bPlan_i_);
   #else
   					    fftw_execute_dft(bPlan_i_,p_in,p_out);
   #endif

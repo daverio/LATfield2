@@ -18,9 +18,9 @@ using namespace LATfield2;
 int main(int argc, char **argv)
 {
     int n,m;
-    int BoxSize = 64;
+    int BoxSize = 512;
     int halo = 1;
-    int khalo =0;
+    int khalo =1;
     int dim = 3;
     int comp = 1;
     double sigma2=0.5;
@@ -52,6 +52,7 @@ int main(int argc, char **argv)
 
     //Real to complex fourier transform
 
+
     Lattice latKreal;
     latKreal.initializeRealFFT(lat, khalo);
 
@@ -76,30 +77,19 @@ int main(int argc, char **argv)
     planReal.execute(FFT_FORWARD);
     planReal.execute(FFT_BACKWARD);
 
-    //complex to complex fourier transform
-
 
     Lattice latKcomplex;
     latKcomplex.initializeComplexFFT(lat, khalo);
 
-    cKSite kComplex(latKcomplex);
-
-    Field<Imag> rho;//(lat,comp);
+    Field<Imag> rho;
     rho.initialize(lat,comp);
 
-    Field<Imag> rhoK;//(latKcomplex,comp);
+    Field<Imag> rhoK;
     rhoK.initialize(latKcomplex,comp);
 
     PlanFFT<Imag> planComplex(&rho,&rhoK);
 
-    for(kComplex.first();kComplex.test();kComplex.next())
-    {
-      rhoK(kComplex).real()=0.0;
-      rhoK(kComplex).imag()=0.0;
-    }
     planComplex.execute(FFT_FORWARD);
-
     planComplex.execute(FFT_BACKWARD);
-
 
 }
