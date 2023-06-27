@@ -192,10 +192,10 @@ public:
     */
     int indexTransform(int* local_coord);
 
+    template<class Type>
+    void iterator(std::function<void(Type)> &operation); // working name
     
-    // void iterator(); // working name
-    
-    
+
 private:
     int        status_;
     static int initialized;

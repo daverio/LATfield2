@@ -449,23 +449,39 @@ int Lattice::indexTransform(int* local_coord){
 	return index_flat;
 }
 
+template<class Type>
+void Lattice::iterator(std::function<void(Type)> &operation){
 
-// void Lattice::iterator(){
+	/* currently only implemented for dim=3 */
+	if(this->dim()==3)
+	{
+	
+		#pragma omp parallel for collapse(2)
+		for(int k=0; k<this->sizeLocal(2); k++)
+			for(int j=0; j<this->sizeLocal(1); j++)	{
+				
+				int ijk[] = {0,j,k};
+				int idx = this->indexTransform(ijk);
+				
+				Type x(*this, idx);
+				for(int i=0; i<this->sizeLocal(0); i++){
+					operation(x);
+					x.indexAdvance(1);
+				}
 
-// 	#pragma omp parallel for collapse(2)
-//     for(int k=0; k<lat.sizeLocal(2); k++)
-//         for(int j=0; j<lat.sizeLocal(1); j++){
-//             int ijk[] = {0,j,k};
-//             // int idx = indexTransform(&lat, ijk);
-//             int idx = lat.indexTransform(ijk);
-//             Site x(lat, idx);
-//             for(int i=0; i<lat.sizeLocal(0); i++){
-//                 phi2(x) = x.index();
-//                 x.indexAdvance(1);
-//             }
-//         }
+			}
+	}
+	
+	else
+	{
+		Type x(*this);
+		for(x.first(); x.test(); x.next()){
+			operation(x);
+		}
 
-// }	
+	}
+
+}	
 
 
 #endif

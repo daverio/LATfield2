@@ -18,6 +18,9 @@
 #include <forward_list>
 #include <vector>
 
+/* Should maybe have an option here */
+#include <omp.h>
+
 
 #ifdef FFT3D
 #include "fftw3.h"
