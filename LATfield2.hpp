@@ -16,6 +16,7 @@
 #include <typeinfo>
 #include <list>
 #include <forward_list>
+#include <vector>
 
 
 #ifdef FFT3D
