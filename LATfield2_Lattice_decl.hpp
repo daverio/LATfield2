@@ -182,6 +182,18 @@ public:
     
     int * sizeLocalAllProcDim0();
     int * sizeLocalAllProcDim1();
+
+
+    /* [NEW!] OpenMP stuff */
+
+    /*!
+    \param local_coord local coordinate to transform (in 3D case: {i,j,k})
+    \return int: flat index 
+    */
+    int indexTransform(int* local_coord);
+
+    
+    // void iterator(); // working name
     
     
 private:

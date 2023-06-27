@@ -431,5 +431,42 @@ long Lattice::siteLast() { return siteLast_; }
 int * Lattice::sizeLocalAllProcDim0(){ return sizeLocalAllProcDim0_; }
 int * Lattice::sizeLocalAllProcDim1(){ return sizeLocalAllProcDim1_; }
 
+
+
+int Lattice::indexTransform(int* local_coord){
+	int index_flat;
+
+	const int halo = this->halo();
+    const int dim = this->dim();
+
+    index_flat = 0;
+    int jump = 1;   // lack of better name
+    for(int n=0; n<dim; n++){
+        index_flat += jump * ( halo + local_coord[n] );
+        jump *= ( this->sizeLocal(n) + 2*halo );
+    }
+
+	return index_flat;
+}
+
+
+// void Lattice::iterator(){
+
+// 	#pragma omp parallel for collapse(2)
+//     for(int k=0; k<lat.sizeLocal(2); k++)
+//         for(int j=0; j<lat.sizeLocal(1); j++){
+//             int ijk[] = {0,j,k};
+//             // int idx = indexTransform(&lat, ijk);
+//             int idx = lat.indexTransform(ijk);
+//             Site x(lat, idx);
+//             for(int i=0; i<lat.sizeLocal(0); i++){
+//                 phi2(x) = x.index();
+//                 x.indexAdvance(1);
+//             }
+//         }
+
+// }	
+
+
 #endif
 
