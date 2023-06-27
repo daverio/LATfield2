@@ -192,8 +192,12 @@ public:
     */
     int indexTransform(int* local_coord);
 
-    template<class Type>
-    void iterator(std::function<void(Type)> &operation); // working name
+    template<class Site>
+    /*!
+    \param operation lambda function of LATfield2::Site 
+    \warning only implemented for 3D case (Work in progress)
+    */
+    void iterator(std::function<void(Site)> &operation); // working name
     
 
 private:

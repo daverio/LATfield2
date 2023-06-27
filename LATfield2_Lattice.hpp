@@ -439,31 +439,38 @@ int Lattice::indexTransform(int* local_coord){
 	const int halo = this->halo();
     const int dim = this->dim();
 
-    index_flat = 0;
+    // index_flat = 0;
     int jump = 1;   // lack of better name
-    for(int n=0; n<dim; n++){
+    // for(int n=0; n<dim; n++){
+    //     index_flat += jump * ( halo + local_coord[n] );
+    //     jump *= ( this->sizeLocal(n) + 2*halo );
+    // }
+	index_flat = halo + local_coord[0];
+	 for(int n=1; n<dim; n++){
+		jump *= ( this->sizeLocal(n-1) + 2*halo );
         index_flat += jump * ( halo + local_coord[n] );
-        jump *= ( this->sizeLocal(n) + 2*halo );
     }
 
 	return index_flat;
 }
 
-template<class Type>
-void Lattice::iterator(std::function<void(Type)> &operation){
+template<class Site>
+void Lattice::iterator(std::function<void(Site)> &operation){
 
 	/* currently only implemented for dim=3 */
 	if(this->dim()==3)
-	{
-	
+	{	
+		omp_set_num_threads(40); // random number FIXME
+		
 		#pragma omp parallel for collapse(2)
 		for(int k=0; k<this->sizeLocal(2); k++)
 			for(int j=0; j<this->sizeLocal(1); j++)	{
+
 				
 				int ijk[] = {0,j,k};
 				int idx = this->indexTransform(ijk);
 				
-				Type x(*this, idx);
+				Site x(*this, idx);
 				for(int i=0; i<this->sizeLocal(0); i++){
 					operation(x);
 					x.indexAdvance(1);
@@ -474,7 +481,7 @@ void Lattice::iterator(std::function<void(Type)> &operation){
 	
 	else
 	{
-		Type x(*this);
+		Site x(*this);
 		for(x.first(); x.test(); x.next()){
 			operation(x);
 		}
