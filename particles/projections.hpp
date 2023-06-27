@@ -86,7 +86,7 @@ void scalarProjectionCIC_project(Particles<part,part_info,part_dataType> * parts
     Site xPart(parts->lattice());
     Site xField(rho->lattice());
 
-    typename std::list<part>::iterator it;
+    typename std::forward_list<part>::iterator it;
 
     //size_t offset;
     //*offset = oset;
@@ -132,7 +132,7 @@ void scalarProjectionCIC_project(Particles<part,part_info,part_dataType> * parts
     {
 
 
-        if(parts->field()(xPart).size!=0)
+        if(!parts->field()(xPart).parts.empty())
         {
             for(int i=0;i<3;i++)referPos[i]=xPart.coord(i)*latresolution;
             for(int i=0;i<8;i++)localCube[i]=0;
@@ -424,7 +424,7 @@ void vectorProjectionCICNGP_project(Particles<part,part_info,part_dataType> * pa
     Site xPart(parts->lattice());
     Site xVel(vel->lattice());
 
-    typename std::list<part>::iterator it;
+    typename std::forward_list<part>::iterator it;
 
     double vi[36];//3 * 4 v0:0..3 v1:4..7 v2:8..11
 
@@ -712,7 +712,7 @@ void symtensorProjectionCICNGP_project(Particles<part,part_info,part_dataType> *
     Site xPart(parts->lattice() );
     Site xTij(Tij->lattice() );
 
-    typename std::list<part>::iterator it;
+    typename std::forward_list<part>::iterator it;
 
     double mass;
     double latresolution = parts->res();
@@ -983,7 +983,7 @@ void vectorProjectionCIC_project(Particles<part,part_info,part_dataType> * parts
     Site xPart(parts->lattice());
     Site xVel(vel->lattice());
 
-    typename std::list<part>::iterator it;
+    typename std::forward_list<part>::iterator it;
 
     double mass;
     double latresolution = parts->res();
@@ -1357,7 +1357,7 @@ void VecVecProjectionCIC_project(Particles<part,part_info,part_dataType> * parts
 {
     Site xPart(parts->lattice());
     Site xTij(Tij->lattice());
-    typename std::list<part>::iterator it;
+    typename std::forward_list<part>::iterator it;
 
 
     double mass;
