@@ -23,7 +23,7 @@ extern "C"{
      filename[filename_str.size()] = '\0';
 
 	   char  dataset_name[128];
-	   for(int i = 0;i<filename_str.size();i++)dataset_name[i]=dataset_name_str[i];
+	   for(int i = 0;i<dataset_name_str.size();i++)dataset_name[i]=dataset_name_str[i];
 	   dataset_name[dataset_name_str.size()] = '\0';
 
 	   herr_t status;
@@ -234,7 +234,7 @@ extern "C"{
 		filename[filename_str.size()] = '\0';
 
 		char  dataset_name[128];
-		for(int i = 0;i<filename_str.size();i++)dataset_name[i]=dataset_name_str[i];
+		for(int i = 0;i<dataset_name_str.size();i++)dataset_name[i]=dataset_name_str[i];
 		dataset_name[dataset_name_str.size()] = '\0';
 
 		herr_t status;
