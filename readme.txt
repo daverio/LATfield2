@@ -1,3 +1,8 @@
+LATfield2 version 1.2
+
+Some bug fixed (FFT and dataset name in hdf5)
+
+
 LATfield2 version 1.1
 
 Adds:
