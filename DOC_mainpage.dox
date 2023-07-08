@@ -6,6 +6,12 @@
 LATField2, the second version of the LATfield library is a simple C++ framework for lattice based simulation on massively parallel computer.
 
 
+Version 1.2
+
+Bug fix:
+FFT complex to complex fixed
+Save HDF5 dataset name fixed
+
 Version 1.1:
 
 - Output server completly rebuilt.
